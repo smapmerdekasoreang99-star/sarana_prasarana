@@ -66,7 +66,7 @@ const ISI = [
   /* ============================ 2 ============================ */
   H1("Masuk dan Hak Akses"),
   P("Masuk dengan **PIN pribadi** Anda, yaitu PIN yang sama dengan Matematika Dasar dan Asesmen. Tidak ada PIN baru yang perlu diingat."),
-  OL("Buka alamat aplikasi.", "Ketik PIN di kotak **PIN**, lalu tekan **Masuk**.",
+  OL("Buka alamat aplikasi.", "Ketik PIN di kotak **PIN**, lalu tekan **Masuk**. Tekan ikon **mata** di ujung kotak untuk melihat PIN yang diketik; tekan lagi untuk menyembunyikannya.",
     "Nama dan peran Anda tampil di pojok kanan atas. Untuk keluar, tekan **Keluar**. Bila tab peramban ditutup, Anda juga otomatis keluar."),
   H2("Tiga peran"),
   TB(["Peran", "Siapa", "Boleh"], [
@@ -76,7 +76,7 @@ const ISI = [
   ], [1.6, 2.4, 2.6]),
   TB(["Ruang", "Penanggung jawab"], [
     ["Lab Komputer", "Yeni Isnaeni"], ["Lab IPA", "Yanti Ratnasih, S.Pd."], ["Perpustakaan", "Candra Wibawa, S.Pd."], ["Ruang UKS", "Imas Kurniasih, S.Pd.I."],
-    ["Semua ruang kelas dan ruang lain yang belum punya penanggung jawab", "Staf Sarpras"],
+    ["Semua ruang kelas, Gudang A, Gudang B, dan ruang lain yang belum punya penanggung jawab", "Staf Sarpras"],
   ], [3, 3]),
   KOTAK("awas", "Batasan diperiksa di server",
     "Penanggung jawab tidak bisa mencatat barang di ruang orang lain, dan tidak bisa memindahkan barang ke ruang yang bukan tanggung jawabnya. Pemindahan antarruang dilakukan oleh Staf Sarpras.",

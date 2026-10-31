@@ -47,7 +47,7 @@
     <p class="sub">Masuk dengan <b>PIN pribadi</b> Anda, yang sama dengan PIN Matematika Dasar dan Asesmen.</p>
     <form id="form-pin" class="form-pin" autocomplete="off">
       <label class="f" for="pin">PIN
-        <input id="pin" type="password" autocomplete="off" placeholder="Ketik PIN" required>
+        <input id="pin" type="password" autocomplete="off" placeholder="Ketik PIN" required data-lihat>
       </label>
       <button class="tombol utama besar" type="submit"><span data-ikon="masuk"></span>Masuk</button>
     </form>
@@ -94,5 +94,39 @@
 <script src="assets/kop-dokumen.js?v=1"></script>
 <script src="assets/kepala-excel.js?v=1"></script>
 <script src="assets/sarana_prasarana.js?v=4"></script>
+<script>
+/* Tombol mata di kotak PIN (13 Okt 2026): ketuk untuk melihat PIN yang diketik, ketuk lagi untuk menyembunyikan.
+   Berdiri sendiri (gaya disisipkan di sini) supaya sama di semua aplikasi. Kotak PIN ditandai data-lihat. */
+(function () {
+  const MATA = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const TUTUP = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  const g = document.createElement("style");
+  g.textContent = ".pin-bungkus{position:relative;display:block}.pin-bungkus>input{width:100%;box-sizing:border-box}.pin-bungkus>input::placeholder{letter-spacing:normal}"
+    + ".pin-bungkus .pin-lihat{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:38px;height:38px;min-height:0;min-width:0;margin:0;padding:0;"
+    + "display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:#6b6b6b;box-shadow:none;cursor:pointer}"
+    + ".pin-bungkus .pin-lihat:hover,.pin-bungkus .pin-lihat[aria-pressed=true]{background:rgba(0,0,0,.06);color:#222}"
+    + ".pin-bungkus .pin-lihat:focus-visible{outline:2px solid #c29433;outline-offset:1px}";
+  document.head.appendChild(g);
+  document.querySelectorAll("input[data-lihat]").forEach(function (i) {
+    const w = document.createElement("span"); w.className = "pin-bungkus";
+    i.parentNode.insertBefore(w, i); w.appendChild(i);
+    i.style.paddingRight = "46px";
+    if (getComputedStyle(i).textAlign === "center") { i.style.paddingLeft = "46px"; i.style.textAlign = "center"; }   // isi rata tengah tetap di tengah
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "pin-lihat"; b.innerHTML = MATA;
+    b.title = "Lihat PIN"; b.setAttribute("aria-label", "Lihat PIN"); b.setAttribute("aria-pressed", "false");
+    b.onmousedown = function (e) { e.preventDefault(); };   // kursor tetap di kotak PIN
+    b.onclick = function (e) {
+      e.preventDefault();
+      const lihat = i.type === "password";
+      i.type = lihat ? "text" : "password";
+      b.innerHTML = lihat ? TUTUP : MATA;
+      b.title = lihat ? "Sembunyikan PIN" : "Lihat PIN"; b.setAttribute("aria-label", b.title); b.setAttribute("aria-pressed", String(lihat));
+      i.focus();
+    };
+    w.appendChild(b);
+  });
+})();
+</script>
 </body>
 </html>
