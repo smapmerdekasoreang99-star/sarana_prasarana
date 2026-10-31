@@ -57,7 +57,8 @@ Label QR membuka `?k=<kode>`: kartu barang **tanpa PIN**, tanpa harga dan bukti 
 
 `SMA-INV-<tahun>-<kategori>-<urut>`, mis. `SMA-INV-2024-O-0105`. Tahun = tahun perolehan (bila belum diketahui: tahun
 pencatatan). Kode diberikan sekali dan **tidak berubah** walaupun tahun, kategori, atau ruang diubah, karena labelnya sudah
-tertempel. Kode dari Excel disimpan sebagai *kode lama*.
+tertempel. **Barang yang sudah punya kode (BUKU INDUK.xlsx, mis. SMA-INV-005-F-RLKOM-BOS) memakai kode itu** (keputusan user
+31 Okt; kolom kode lama dihapus, migrasi 20261031101518). Kode boleh diisi sendiri untuk barang baru (formulir/unggahan); kosong = otomatis.
 
 Kategori: F Mebel · E Elektronik & TIK · L Alat praktikum lab · O Olahraga · S Kesenian & musik · K Kebersihan ·
 P Pelengkap ruangan · D Dapur · U Kesehatan (UKS) · PI Ibadah.

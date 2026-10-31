@@ -353,7 +353,7 @@ function pasangKlikTabel(root) {
 /* ---------------------------------------------------------------- sarana & alat */
 function saringAlat() {
   const { q, gol, kat, ruang, lengkap } = S.saring, qq = q.toLowerCase();
-  return S.alat.filter((a) => (!qq || (a.nama + " " + a.kode + " " + (a.kode_lama || "") + " " + (a.merek || "")).toLowerCase().includes(qq))
+  return S.alat.filter((a) => (!qq || (a.nama + " " + a.kode + " " + (a.merek || "")).toLowerCase().includes(qq))
     && (!gol || golongan(a) === gol) && (!kat || a.kategori === kat)
     && (!ruang || (ruang === "-" ? !a.ruang : ruang === "@saya" ? ruangSaya().includes(a.ruang) : a.ruang === ruang))
     && (!lengkap || (lengkap === "ya" ? !kurang(a).length : kurang(a).length)));
@@ -435,7 +435,7 @@ const kakiSimpan = (label, kiri = "") => `${kiri}<button class="tombol" value="b
 
 const JENIS_RIW = { baru: "Dicatat", impor: "Diunggah dari Excel", ubah: "Diubah", pindah: "Dipindah ruang", kondisi: "Kondisi diubah", hapus: "Dihapus",
   awal: "Stok awal", masuk: "Masuk", keluar: "Keluar", koreksi: "Hitung ulang" };
-const LABEL_ISIAN = { nama: "nama", kategori: "kategori", ruang: "ruang", merek: "merek", spesifikasi: "spesifikasi", baik: "baik", rusak_ringan: "rusak ringan",
+const LABEL_ISIAN = { kode: "kode inventaris", nama: "nama", kategori: "kategori", ruang: "ruang", merek: "merek", spesifikasi: "spesifikasi", baik: "baik", rusak_ringan: "rusak ringan",
   rusak_berat: "rusak berat", jumlah_pasti: "jumlah pasti", tahun: "tahun", sumber_dana: "dana", kode_arkas: "kode ARKAS", no_bukti: "no. bukti",
   tgl_bukti: "tgl bukti", harga_satuan: "harga", keterangan: "keterangan" };
 function htmlRiwayat(riw, judul = "Riwayat") {
@@ -472,7 +472,6 @@ function rincianAlat(a) {
     ${BOS(a.sumber_dana) ? `<dt>Kode rekening ARKAS</dt><dd class="kode">${esc(a.kode_arkas || "—")}</dd>` : ""}
     <dt>Bukti BKU</dt><dd>${esc([a.no_bukti, a.tgl_bukti].filter(Boolean).join(" · ") || "—")}</dd>
     <dt>Harga satuan</dt><dd>${esc(rp(a.harga_satuan) || "—")}</dd>
-    ${a.kode_lama ? `<dt>Kode lama</dt><dd class="kode">${esc(a.kode_lama)}</dd>` : ""}
     ${a.keterangan ? `<dt>Keterangan</dt><dd>${esc(a.keterangan)}</dd>` : ""}
   </dl>`;
 }
@@ -486,6 +485,7 @@ async function formAlat(a, awal = {}) {
   const isi = `
     <div class="isian-grid">
       <label class="f lebar" for="f-nama">Nama barang<input id="f-nama" value="${v(a.nama)}" maxlength="150" required placeholder="mis. Proyektor Epson EB-X51"></label>
+      ${baru ? `<label class="f lebar" for="f-kode">Kode inventaris (boleh dikosongkan)<input id="f-kode" maxlength="40" placeholder="Isi bila barang sudah punya kode/label; kosong = dibuat otomatis" autocapitalize="characters"></label>` : ""}
       <label class="f" for="f-kat">Kategori<select id="f-kat" required><option value="">Pilih kategori…</option>${katOpsi}</select></label>
       <label class="f" for="f-ruang">Ruang<select id="f-ruang">${admin() ? '<option value="">Belum ditentukan</option>' : ""}${opsi(ruangBoleh.map((r) => [r.kode, r.nama]), a.ruang)}</select></label>
       <label class="f" for="f-merek">Merek / tipe<input id="f-merek" value="${v(a.merek)}" maxlength="80"></label>
@@ -513,7 +513,7 @@ async function formAlat(a, awal = {}) {
     <label class="f" for="f-ket">Keterangan<textarea id="f-ket" maxlength="500">${v(a.keterangan)}</textarea></label>
     ${baru ? "" : '<p class="kecil">Kode inventaris tidak berubah walaupun tahun, kategori, atau ruang diubah, karena labelnya sudah tertempel.</p>'}
     ${htmlRiwayat(riw)}`;
-  dialog({ atas: baru ? "" : a.kode + (a.kode_lama ? " · kode lama " + a.kode_lama : ""), judul: baru ? "Catat sarana / alat baru" : a.nama, isi,
+  dialog({ atas: baru ? "" : a.kode, judul: baru ? "Catat sarana / alat baru" : a.nama, isi,
     kaki: kakiSimpan(baru ? "Catat" : "Simpan", !baru && admin() ? `<button class="tombol bahaya kiri" value="hapus" formnovalidate>${ikon("hapus")}Hapus</button>` : ""),
     onSimpan: async (aksi) => {
       if (aksi === "hapus") return konfirmasiHapus(a, "alat");
@@ -523,7 +523,7 @@ async function formAlat(a, awal = {}) {
         harga_satuan: n("f-harga"), kode_arkas: $("f-arkas").value, no_bukti: $("f-bukti").value, tgl_bukti: $("f-tglbukti").value, keterangan: $("f-ket").value };
       if (!data.kategori) throw new Error("Pilih kategori.");
       if (!BOS(data.sumber_dana)) data.kode_arkas = "";
-      if (!baru) data.id = a.id;
+      if (!baru) data.id = a.id; else if ($("f-kode").value.trim()) data.kode = $("f-kode").value.trim();
       if (!baru && !a.jumlah_pasti && $("f-pasti") && $("f-pasti").checked) data.jumlah_pasti = true;
       const hasil = await sibuk(() => rpc("sp_alat_simpan", { p_pin: S.pin, p_a: data }));
       const i = S.alat.findIndex((x) => x.id === hasil.id);
@@ -784,14 +784,14 @@ async function simpanBuku(wb, nama) {
 
 /* ---------------------------------------------------------------- unduhan berkop */
 const KOLOM_INDUK = [
-  { judul: "Kode Inventaris", lebar: 22 }, { judul: "Kode Lama", lebar: 26 }, { judul: "Nama Barang", lebar: 30 }, { judul: "Golongan", lebar: 9 },
+  { judul: "Kode Inventaris", lebar: 26 }, { judul: "Nama Barang", lebar: 30 }, { judul: "Golongan", lebar: 9 },
   { judul: "Kategori", lebar: 16 }, { judul: "Merek/Tipe", lebar: 14 }, { judul: "Spesifikasi", lebar: 16 }, { judul: "Ruang", lebar: 18 },
   { judul: "Penanggung Jawab", lebar: 20 }, { judul: "Jumlah", lebar: 8, tengah: true }, { judul: "Baik", lebar: 6, tengah: true },
   { judul: "Rusak Ringan", lebar: 7, tengah: true }, { judul: "Rusak Berat", lebar: 7, tengah: true }, { judul: "Tahun Perolehan", lebar: 9, tengah: true },
   { judul: "Sumber Dana", lebar: 13 }, { judul: "Kode Rekening ARKAS", lebar: 19 }, { judul: "No. Bukti BKU", lebar: 13 }, { judul: "Tgl Bukti", lebar: 11 },
   { judul: "Harga Satuan", lebar: 13, rupiah: true }, { judul: "Nilai Perolehan", lebar: 15, rupiah: true }, { judul: "Keterangan", lebar: 30 },
 ];
-const barisInduk = (a) => [a.kode, a.kode_lama || "", a.nama, golongan(a) === "sarana" ? "Sarana" : "Alat", namaKat(a.kategori), a.merek || "", a.spesifikasi || "",
+const barisInduk = (a) => [a.kode, a.nama, golongan(a) === "sarana" ? "Sarana" : "Alat", namaKat(a.kategori), a.merek || "", a.spesifikasi || "",
   namaRuang(a.ruang), a.ruang ? (ruangOf(a.ruang) || {}).pj_nama || "" : "", a.jumlah_pasti ? a.jumlah : "", a.baik, a.rusak_ringan, a.rusak_berat, a.tahun || "",
   a.sumber_dana || "", a.kode_arkas || "", a.no_bukti || "", a.tgl_bukti || "", a.harga_satuan == null ? "" : Number(a.harga_satuan),
   a.harga_satuan == null ? "" : Number(a.harga_satuan) * a.jumlah, a.keterangan || ""];
@@ -803,7 +803,7 @@ async function unduhBukuInduk(daftar, keterangan) {
       const wb = new ExcelJS.Workbook(); wb.creator = "Sarana Prasarana";
       const unit = daftar.reduce((s, a) => s + a.jumlah, 0), nilai = daftar.reduce((s, a) => s + (a.harga_satuan == null ? 0 : Number(a.harga_satuan) * a.jumlah), 0);
       await lembarBerkop(wb, { nama: "Buku Induk", judul: "Buku Induk Sarana dan Prasarana", sub: `${keterangan || "Semua ruang"}  ·  ${daftar.length} jenis barang  ·  ${bil(unit)} unit  ·  keadaan ${tglPanjang()}`,
-        kolom: KOLOM_INDUK, baris: daftar.map(barisInduk), jumlah: { label: "JUMLAH", kolom: { 9: unit, 19: nilai } } });
+        kolom: KOLOM_INDUK, baris: daftar.map(barisInduk), jumlah: { label: "JUMLAH", kolom: { 8: unit, 18: nilai } } });
       await simpanBuku(wb, "Buku_Induk_Sarpras");
     });
     toast(`${daftar.length} jenis barang diunduh`);
@@ -880,8 +880,8 @@ const TEMPLATE = {
       { judul: "Ruang", untuk: "Ruang", isi: S.ruang.filter((r) => r.aktif && bolehRuang(r.kode)).map((r) => r.nama) },
       { judul: "Sumber Dana", untuk: "Sumber Dana", isi: S.dana }],
     petunjuk: ["• Satu baris = satu jenis barang di satu ruang dari satu pembelian. Kolom berwarna merah wajib untuk barang baru: Nama Barang dan Kategori.",
-      "• Barang BARU: kosongkan Kode Inventaris. Kode dibuat otomatis saat diunggah.",
-      "• MENGUBAH barang yang sudah ada: isi Kode Inventaris (lihat Buku Induk), lalu isi hanya kolom yang ingin diubah. Sel kosong tidak menghapus isi lama.",
+      "• Barang BARU: isi Kode Inventaris bila barang sudah punya kode atau label; kosongkan agar kode dibuat otomatis (SMA-INV-tahun-kategori-urut).",
+      "• MENGUBAH barang yang sudah ada: isi Kode Inventaris persis seperti di Buku Induk, lalu isi hanya kolom yang ingin diubah. Sel kosong tidak menghapus isi lama.",
       "• Cara cepat melengkapi data: unduh Buku Induk, isi kolom yang kosong (harga, tahun, kode ARKAS, dst.), lalu unggah berkas itu. Kop dan tanda tangan diabaikan.",
       "• Jumlah ditulis menurut kondisi: Baik, Rusak Ringan, Rusak Berat. Bila ketiganya kosong untuk barang baru, dicatat 1 unit dan ditandai \"Jumlah\" belum pasti.",
       "• Kategori, Ruang, dan Sumber Dana pilih dari daftar (lembar Daftar). Penanggung jawab ruang hanya bisa mengunggah barang di ruangnya sendiri.",
@@ -977,11 +977,11 @@ const BAHAN_DI_ALAT = /kantong plastik|lap lembut/i;
 function bacaAlat(XLSX, wb, berkas) {
   const L = bacaLembar(XLSX, wb, /^nama barang$/);
   if (!L) throw new Error('Kolom "Nama Barang" tidak ditemukan. Pakai template Sarana & Alat, Buku Induk, atau BUKU INDUK.xlsx.');
-  const K = kolomDari(L.kep, { arkas: /arkas|rekening/, kodeLama: /^kode lama/, kode: /^kode( inventaris)?$/, nama: /^nama barang$/, kategori: /^kategori/, jenis: /^jenis/,
+  const K = kolomDari(L.kep, { arkas: /arkas|rekening/, kode: /^kode( inventaris)?$/, nama: /^nama barang$/, kategori: /^kategori/, jenis: /^jenis/,
     ruang: /^ruang$|lokasi/, merek: /merek/, spes: /spesifikasi/, jumlah: /^jumlah$/, baik: /^baik$/, rr: /rusak ringan/, rb: /rusak berat/, kondisi: /^kondisi/,
     tahun: /tahun/, dana: /dana/, bukti: /bukti bku|^no\.? ?bukti/, tgl: /^tgl|^tanggal/, harga: /^harga/, ket: /^keterangan/ });
   const ambil = (r, k) => (K[k] >= 0 ? r[K[k]] : "");
-  const formatLama = K.kodeLama < 0 && K.kode >= 0 && K.kategori < 0;   // BUKU INDUK.xlsx: KODE INVENTARIS berisi kode lama
+  const kodeDiBerkas = new Set();
   const hasil = { baris: [], galat: [], peringatan: [], baru: 0, ubah: 0, bahan: 0 };
   for (let i = L.hi + 1; i < L.rows.length; i++) {
     const r = L.rows[i], ke = i + 1;
@@ -1031,9 +1031,12 @@ function bacaAlat(XLSX, wb, berkas) {
       }
       hasil.ubah++;
     } else {
-      if (kodeX && /^SMA-INV-\d{4}-/.test(kodeX) && !formatLama) { hasil.galat.push(`Baris ${ke}: kode ${kodeX} tidak ada di inventaris. Kosongkan kolom Kode Inventaris untuk barang baru.`); continue; }
       if (!o.nama) { hasil.galat.push(`Baris ${ke}: Nama Barang kosong.`); continue; }
-      const kodeLama = normal(ambil(r, "kodeLama")) || (formatLama || !/^SMA-INV-\d{4}-/.test(kodeX) ? kodeX : "");
+      // Kode yang belum ada di inventaris = kode barang baru (mis. kode lama yang sudah tertempel); kosong = dibuat otomatis.
+      const kodeBaru = kodeX.replace(/\s/g, "");
+      if (kodeBaru && !/^[A-Z0-9][A-Z0-9./-]{2,39}$/.test(kodeBaru)) { hasil.galat.push(`Baris ${ke}: Kode Inventaris "${kodeX}" tidak valid (3–40 huruf/angka/titik/garis miring/tanda minus).`); continue; }
+      if (kodeBaru && kodeDiBerkas.has(kodeBaru)) { hasil.galat.push(`Baris ${ke}: Kode Inventaris ${kodeBaru} dipakai dua kali di berkas ini.`); continue; }
+      if (kodeBaru) kodeDiBerkas.add(kodeBaru);
       o.sumber = `${berkas} baris ${ke}`;
       if (BAHAN_DI_ALAT.test(o.nama)) {
         hasil.baris.push({ baris: ke, jenis_baris: "bahan", sumber: o.sumber, nama: o.nama, kategori: "Kebersihan", ruang: o.ruang || null,
@@ -1042,11 +1045,9 @@ function bacaAlat(XLSX, wb, berkas) {
       }
       if (!o.kategori) { hasil.galat.push(`Baris ${ke}: Kategori kosong.`); continue; }
       if (o.baik === undefined) Object.assign(o, { baik: 1, rusak_ringan: 0, rusak_berat: 0, jumlah_pasti: false });
-      if (kodeLama) {
-        o.kode_lama = kodeLama;
-        if (!o.tahun && /-(\d{4})$/.test(kodeLama)) o.tahun = +kodeLama.slice(-4);   // BUKU INDUK.xlsx: tahun di akhir kode lama
-        const p = kodeLama.split("-");
-        if (formatLama && p.length > 4 && (p[3] !== o.kategori || !o.ruang || (p[4] || "").toUpperCase() !== o.ruang)) ket.push("Kode lama tidak cocok dengan isi baris");
+      if (kodeBaru) {
+        o.kode = kodeBaru;
+        if (!o.tahun && /-(\d{4})$/.test(kodeBaru)) o.tahun = +kodeBaru.slice(-4);   // BUKU INDUK.xlsx: tahun di akhir kode
       }
       if (/^alat\s*-?\s*alat/i.test(o.nama)) ket.push("Perlu dirinci per alat");
       if (ketX) ket.push(ketX);
@@ -1117,8 +1118,8 @@ const UNGGAH = {
   alat: { judul: "Unggah sarana & alat", baca: bacaAlat, rpc: "sp_alat_unggah",
     ringkas: (h) => `${h.baru} barang baru, ${h.ubah} barang diubah${h.bahan ? `, ${h.bahan} bahan` : ""}`,
     hasil: (x) => `${x.baru} baru, ${x.ubah} diubah${x.sama ? `, ${x.sama} tanpa perubahan` : ""}${x.lewat ? `, ${x.lewat} dilewati (sudah pernah diunggah)` : ""}${x.bahan ? `, ${x.bahan} bahan` : ""}`,
-    kolom: (o) => [o.kode || '<span class="pil b">Baru</span>', esc(o.nama || (S.alat.find((a) => a.kode === o.kode) || {}).nama || ""), esc(o.jenis_baris === "bahan" ? "Bahan" : o.kategori ? namaKat(o.kategori) : ""), esc(namaRuang(o.ruang) || "—"),
-      esc(o.baik != null ? `${o.baik}/${o.rusak_ringan}/${o.rusak_berat}` : o.stok != null ? o.stok : ""), esc(Object.keys(o).filter((k) => !["baris", "kode", "nama", "kategori", "ruang", "baik", "rusak_ringan", "rusak_berat", "sumber", "jumlah_pasti", "jenis_baris", "stok", "satuan", "batas_min"].includes(k)).map((k) => LABEL_ISIAN[k] || (k === "kode_lama" ? "kode lama" : k)).join(", "))],
+    kolom: (o) => [S.alat.some((a) => a.kode === o.kode) ? esc(o.kode) : `<span class="pil b">Baru</span> ${esc(o.kode || "")}`, esc(o.nama || (S.alat.find((a) => a.kode === o.kode) || {}).nama || ""), esc(o.jenis_baris === "bahan" ? "Bahan" : o.kategori ? namaKat(o.kategori) : ""), esc(namaRuang(o.ruang) || "—"),
+      esc(o.baik != null ? `${o.baik}/${o.rusak_ringan}/${o.rusak_berat}` : o.stok != null ? o.stok : ""), esc(Object.keys(o).filter((k) => !["baris", "kode", "nama", "kategori", "ruang", "baik", "rusak_ringan", "rusak_berat", "sumber", "jumlah_pasti", "jenis_baris", "stok", "satuan", "batas_min"].includes(k)).map((k) => LABEL_ISIAN[k] || k).join(", "))],
     kepala: ["Kode", "Nama", "Kategori", "Ruang", "B/RR/RB", "Isian lain"] },
   bahan: { judul: "Unggah bahan habis pakai", baca: bacaBahan, rpc: "sp_bahan_unggah",
     ringkas: (h) => `${h.baru} bahan baru, ${h.ubah} bahan diperbarui`,
@@ -1193,7 +1194,7 @@ TAB.induk = () => {
 };
 function saringInduk() {
   const { q, ruang, gol, dana, tahun } = S.saringInduk, qq = kecil(q);
-  return S.alat.filter((a) => (!qq || kecil(a.nama + " " + a.kode + " " + (a.kode_lama || "") + " " + (a.merek || "")).includes(qq))
+  return S.alat.filter((a) => (!qq || kecil(a.nama + " " + a.kode + " " + (a.merek || "")).includes(qq))
     && (!ruang || (ruang === "-" ? !a.ruang : a.ruang === ruang)) && (!gol || golongan(a) === gol)
     && (!dana || (dana === "-" ? !a.sumber_dana : a.sumber_dana === dana)) && (!tahun || String(a.tahun) === String(tahun)))
     .sort((a, b) => a.kode.localeCompare(b.kode));
@@ -1206,7 +1207,7 @@ TAB.induk.sesudah = () => {
       <div class="${tanpaHarga ? "c" : "b"}"><span class="lambang">${ikon("tabel")}</span><span><b style="font-size:20px">${rp(nilai) || "Rp 0"}</b><span class="t">nilai perolehan${tanpaHarga ? ` · ${tanpaHarga} belum ada harga` : ""}</span></span></div>`;
     $("i-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table class="tabel-induk"><thead><tr><th>No.</th><th>Kode inventaris</th><th>Nama barang</th><th>Kategori</th><th>Ruang</th>
       <th class="n">Jml</th><th class="n">B</th><th class="n">RR</th><th class="n">RB</th><th>Tahun</th><th>Sumber dana</th><th>Kode ARKAS</th><th>Bukti BKU</th><th class="n">Harga satuan</th><th class="n">Nilai</th><th>Keterangan</th></tr></thead><tbody>
-      ${d.map((a, i) => `<tr class="klik" tabindex="0" data-alat="${a.id}"><td class="n">${i + 1}</td><td class="kode">${esc(a.kode)}${a.kode_lama ? `<p class="kecil">${esc(a.kode_lama)}</p>` : ""}</td>
+      ${d.map((a, i) => `<tr class="klik" tabindex="0" data-alat="${a.id}"><td class="n">${i + 1}</td><td class="kode">${esc(a.kode)}</td>
         <td class="nama-sel"><b>${esc(a.nama)}</b>${a.merek ? `<p class="kecil">${esc(a.merek)}</p>` : ""}</td><td>${esc(namaKat(a.kategori))}</td><td>${esc(namaRuang(a.ruang) || "—")}</td>
         <td class="n">${a.jumlah_pasti ? a.jumlah : "?"}</td><td class="n">${a.baik}</td><td class="n">${a.rusak_ringan || ""}</td><td class="n">${a.rusak_berat || ""}</td><td>${esc(a.tahun || "")}</td>
         <td>${esc(a.sumber_dana || "")}</td><td class="kode">${esc(a.kode_arkas || "")}</td><td class="kecil">${esc([a.no_bukti, a.tgl_bukti].filter(Boolean).join(" · "))}</td>

@@ -47,7 +47,7 @@ const ISI = [
   ], [1.4, 4.6]),
   P("Tombol **Unduh**, **Unduh template**, dan **Unggah data** ada di menu Ruang, Sarana & Alat, Bahan, dan Buku Induk (bagian 9)."),
   H2("Kode inventaris"),
-  P("Setiap barang (sarana atau alat) mendapat kode yang dibuat otomatis saat dicatat, misalnya **SMA-INV-2024-E-0029**:"),
+  P("Setiap barang (sarana atau alat) punya satu **kode inventaris**. Barang yang sudah punya kode, misalnya dari BUKU INDUK.xlsx (**SMA-INV-005-F-RLKOM-BOS**), **tetap memakai kode itu**. Barang yang belum punya kode mendapat kode otomatis saat dicatat, misalnya **SMA-INV-2024-E-0029**:"),
   TB(["Bagian", "Arti"], [
     ["**SMA-INV**", "Penanda inventaris sekolah."],
     ["**2024**", "Tahun perolehan. Bila tahunnya belum diketahui saat dicatat, dipakai tahun pencatatan."],
@@ -56,7 +56,7 @@ const ISI = [
   ], [1.2, 4.8]),
   KOTAK("info", "Kode tidak pernah berubah",
     "Kode diberikan sekali dan **tetap sama** walaupun tahun, kategori, atau ruang barang diubah kemudian, karena labelnya sudah tertempel. Barang yang pindah ruang tetap memakai label yang sama.",
-    "Kode dari Excel lama (mis. SMA-INV-005-F-RLKOM-BOS) disimpan sebagai **kode lama** dan tetap bisa dicari."),
+    "Saat mencatat barang baru, kode boleh diisi sendiri (mis. kode yang sudah tertempel pada barang). Bila dikosongkan, kode dibuat otomatis. Kode yang sudah dipakai barang lain ditolak."),
   TB(["Huruf", "Kategori", "Golongan"], [
     ["F", "Mebel", "Sarana"], ["P", "Pelengkap ruangan", "Sarana"], ["E", "Elektronik & TIK", "Alat"], ["L", "Alat praktikum lab", "Alat"],
     ["O", "Olahraga", "Alat"], ["S", "Kesenian & musik", "Alat"], ["K", "Kebersihan", "Alat"], ["D", "Dapur", "Alat"],
@@ -131,10 +131,10 @@ const ISI = [
   /* ============================ 6 ============================ */
   H1("Sarana & Alat"),
   H2("Daftar dan saringan"),
-  P("Menampilkan seluruh barang. Cari dengan nama, kode, kode lama, atau merek. Saring menurut **Golongan**, **Kategori**, **Ruang** (penanggung jawab bisa memilih **Ruang saya**), dan **Kelengkapan**. Kolom **Belum diisi** menyebut isian yang masih kosong; **Ruang** dan **Kode ARKAS** bertanda merah karena paling penting."),
+  P("Menampilkan seluruh barang. Cari dengan nama, kode, atau merek. Saring menurut **Golongan**, **Kategori**, **Ruang** (penanggung jawab bisa memilih **Ruang saya**), dan **Kelengkapan**. Kolom **Belum diisi** menyebut isian yang masih kosong; **Ruang** dan **Kode ARKAS** bertanda merah karena paling penting."),
   H2("Mencatat barang baru"),
   OL("Tekan **Catat barang** (atau **Catat sarana/alat** di halaman ruang).",
-    "Isi **Nama barang**, pilih **Kategori** dan **Ruang**. Isi merek dan spesifikasi atau nomor seri bila ada.",
+    "Isi **Nama barang**. Isi **Kode inventaris** bila barang sudah punya kode atau label; kosongkan agar dibuat otomatis. Pilih **Kategori** dan **Ruang**, lalu isi merek dan spesifikasi atau nomor seri bila ada.",
     "Isi **Jumlah menurut kondisi**: Baik, Rusak ringan, Rusak berat.",
     "Isi **Perolehan & pencatatan BOS** (lihat di bawah).",
     "Tekan **Catat**. Kode inventaris muncul di pesan dan di daftar."),
@@ -179,7 +179,7 @@ const ISI = [
 
   /* ============================ 8 ============================ */
   H1("Buku Induk"),
-  P("Buku Induk adalah daftar inventaris resmi seluruh sarana dan alat: kode, kode lama, nama, kategori, ruang, jumlah dan kondisi, tahun, sumber dana, kode ARKAS, bukti BKU, harga satuan, nilai perolehan, dan keterangan. Di bawah tabel ada jumlah unit dan jumlah nilai perolehan."),
+  P("Buku Induk adalah daftar inventaris resmi seluruh sarana dan alat: kode, nama, kategori, ruang, jumlah dan kondisi, tahun, sumber dana, kode ARKAS, bukti BKU, harga satuan, nilai perolehan, dan keterangan. Di bawah tabel ada jumlah unit dan jumlah nilai perolehan."),
   UL("Saring menurut **Ruang**, **Golongan**, **Sumber dana**, dan **Tahun**, atau cari dengan nama, kode, dan merek.",
     "Klik baris untuk membuka formulir barang.",
     "Tekan **Unduh** untuk mendapatkan Buku Induk dalam Excel **sesuai saringan yang sedang dipakai**."),
@@ -210,13 +210,13 @@ const ISI = [
     "**Sel kosong tidak menghapus** isi yang sudah ada. Untuk mengosongkan sebuah isian, ubah lewat formulir barang."),
   H2("Aturan unggah per menu"),
   TB(["Menu", "Baris dikenali sebagai", "Catatan"], [
-    ["**Sarana & Alat / Buku Induk**", "Kolom **Kode Inventaris** terisi → barang itu **diubah**. Kosong → **barang baru** dengan kode baru.", "Menerima template, Buku Induk berkop hasil unduhan, dan **BUKU INDUK.xlsx lama**. Berkas yang sama diunggah dua kali → baris barunya dilewati."],
+    ["**Sarana & Alat / Buku Induk**", "**Kode Inventaris** sudah ada di inventaris → barang itu **diubah**. Kode belum ada → **barang baru dengan kode itu**. Kosong → **barang baru** dengan kode otomatis.", "Menerima template, Buku Induk berkop hasil unduhan, dan **BUKU INDUK.xlsx lama**. Berkas yang sama diunggah dua kali → baris barunya dilewati."],
     ["**Bahan**", "**Nama bahan + ruang** sama (huruf besar/kecil tidak dibedakan) → **diperbarui**. Selain itu → **bahan baru**.", "Kolom Stok yang berbeda dicatat sebagai **Hitung ulang** di kartu stok."],
     ["**Ruang**", "**Kode** sudah ada → **diubah**. Kode baru → **ruang baru**.", "Hanya Staf Sarpras."],
   ], [1.5, 2.7, 2.8]),
   P("Penanggung jawab ruang hanya bisa mengunggah barang dan bahan untuk **ruangnya sendiri**. Baris untuk ruang lain akan ditolak."),
   H2("BUKU INDUK.xlsx lama"),
-  P("Berkas lama dikenali otomatis: penulisan jenis, ruang, dan dana disatukan; KODE INVENTARIS lama disimpan sebagai **kode lama**; kantong plastik dan lap masuk ke **Bahan**; jumlah kosong dicatat 1 dan bertanda belum pasti."),
+  P("Berkas lama dikenali otomatis: penulisan jenis, ruang, dan dana disatukan; KODE INVENTARIS di berkas itu langsung dipakai sebagai kode inventaris; kantong plastik dan lap masuk ke **Bahan**; jumlah kosong dicatat 1 dan bertanda belum pasti."),
 
   /* ============================ 10 ============================ */
   H1("Label QR"),
