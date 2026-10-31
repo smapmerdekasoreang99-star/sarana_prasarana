@@ -49,6 +49,6 @@ Kode rekening diambil dari ARKAS lewat bendahara; kode di RKAS hanya perkiraan.
 | `assets/vendor/` | SheetJS 0.20.3 (impor/unduh Excel), qrcodejs 1.0.0 (label) |
 | `config.js` | Alamat server Merdeka Tools (sama dengan Tryout/Matdas/ER) |
 
-Database: `../database_tryout/supabase/migrations/20261031073716_sarpras_tahap_1_ruang_alat_riwayat_dan_akses_pin.sql`,
-kontrak `../database_tryout/kontrak/sarana_prasarana.sql`. Tabel `sp_kategori`, `sp_ruang`, `sp_alat`, `sp_riwayat` hanya
+Database: `../database/supabase/migrations/20261031073716_sarpras_tahap_1_ruang_alat_riwayat_dan_akses_pin.sql`,
+kontrak `../database/kontrak/sarana_prasarana.sql`. Tabel `sp_kategori`, `sp_ruang`, `sp_alat`, `sp_riwayat` hanya
 bisa diakses lewat fungsi.
