@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Sarana Prasarana · Inventaris — SMA Plus Merdeka Soreang</title>
-<meta name="description" content="Inventaris alat dan bahan sekolah: ruang, kondisi, sumber dana, dan label QR.">
+<meta name="description" content="Inventaris sarana, alat, dan bahan sekolah per ruang, lengkap dengan kondisi, sumber dana, dan label QR.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SMA Plus Merdeka Soreang">
 <meta property="og:locale" content="id_ID">
 <meta property="og:title" content="Sarana Prasarana · Inventaris — SMA Plus Merdeka Soreang">
-<meta property="og:description" content="Inventaris alat dan bahan sekolah: ruang, kondisi, sumber dana, dan label QR.">
+<meta property="og:description" content="Inventaris sarana, alat, dan bahan sekolah per ruang, lengkap dengan kondisi, sumber dana, dan label QR.">
 <meta property="og:image" content="https://smapmerdekasoreang99-star.github.io/sarana_prasarana/assets/pratinjau.jpg?v=1">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/ikon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/ikon-192.png">
@@ -18,45 +18,55 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1D2A3A">
 <link rel="stylesheet" href="assets/dasar.css?v=1">
-<link rel="stylesheet" href="assets/sarana_prasarana.css?v=1">
+<link rel="stylesheet" href="assets/sarana_prasarana.css?v=2">
 <script src="config.js?v=2"></script>
 </head>
 <body>
 <header class="atas">
   <div class="atas-dalam">
-    <img src="assets/logo.png" alt="Logo SMA Plus Merdeka Soreang" class="logo">
-    <div class="judul"><span class="sek">SMA Plus Merdeka Soreang</span><b>Sarana Prasarana</b></div>
-    <div class="siapa" id="siapa" hidden></div>
-    <button class="tombol-atas" id="keluar" hidden>Keluar</button>
+    <a class="merek" href="./" aria-label="Sarana Prasarana, halaman awal">
+      <img src="assets/ikon-192.png" alt="" class="merek-ikon">
+      <span class="merek-teks"><span class="sek">SMA Plus Merdeka Soreang</span><b>Sarana Prasarana</b></span>
+    </a>
+    <div class="pengguna" id="pengguna" hidden></div>
   </div>
 </header>
 
 <!-- Kartu barang dari label QR (tanpa PIN) -->
-<main class="isi" id="layar-publik" hidden></main>
+<main class="isi sempit" id="layar-publik" hidden></main>
 
 <!-- Masuk -->
-<main class="isi sempit" id="layar-masuk" hidden>
-  <section class="kartu">
-    <h1>Inventaris Alat &amp; Bahan</h1>
-    <p class="sub">Masuk dengan PIN pribadi yang sama dengan PIN Matematika Dasar dan Asesmen. Penanggung jawab ruang bisa mengubah barang di ruangnya sendiri. Ruang kelas dikelola Staf Sarpras.</p>
-    <form id="form-pin" class="baris-isian" autocomplete="off">
+<main class="isi masuk" id="layar-masuk" hidden>
+  <section class="kartu kartu-masuk">
+    <img src="assets/ikon-192.png" alt="" class="ikon-besar">
+    <h1>Inventaris Sarana, Alat &amp; Bahan</h1>
+    <p class="sub">Masuk dengan <b>PIN pribadi</b> Anda, yang sama dengan PIN Matematika Dasar dan Asesmen.</p>
+    <form id="form-pin" class="form-pin" autocomplete="off">
       <label class="f" for="pin">PIN
-        <input id="pin" type="password" inputmode="text" autocomplete="off" placeholder="Ketik PIN" required>
+        <input id="pin" type="password" autocomplete="off" placeholder="Ketik PIN" required>
       </label>
-      <button class="tombol utama" type="submit">Masuk</button>
+      <button class="tombol utama besar" type="submit"><span data-ikon="masuk"></span>Masuk</button>
     </form>
-    <p class="galat" id="galat-pin" hidden></p>
+    <p class="galat" id="galat-pin" role="alert" hidden></p>
+    <ul class="peran-daftar">
+      <li><span class="peran-titik admin"></span><span><b>Staf Sarpras</b> mengelola semua ruang, termasuk seluruh ruang kelas.</span></li>
+      <li><span class="peran-titik pj"></span><span><b>Penanggung jawab ruang</b> mencatat barang di ruangnya sendiri.</span></li>
+      <li><span class="peran-titik lihat"></span><span><b>Guru lain</b> dapat melihat isi semua ruang.</span></li>
+    </ul>
   </section>
 </main>
 
 <!-- Aplikasi -->
 <div id="layar-app" hidden>
-  <nav class="tab" id="tab" role="tablist" aria-label="Bagian aplikasi">
-    <button role="tab" data-tab="ringkas" aria-selected="true">Ringkasan</button>
-    <button role="tab" data-tab="alat" aria-selected="false">Daftar Alat</button>
-    <button role="tab" data-tab="ruang" aria-selected="false">Ruang</button>
-    <button role="tab" data-tab="label" aria-selected="false">Label QR</button>
-    <button role="tab" data-tab="impor" aria-selected="false" data-admin hidden>Impor Excel</button>
+  <nav class="tab-wadah" aria-label="Bagian aplikasi">
+    <div class="tab" id="tab" role="tablist">
+      <button role="tab" data-tab="ringkas" aria-selected="true"><span data-ikon="ringkas"></span>Ringkasan</button>
+      <button role="tab" data-tab="ruang" aria-selected="false"><span data-ikon="ruang"></span>Ruang</button>
+      <button role="tab" data-tab="alat" aria-selected="false"><span data-ikon="alat"></span>Sarana &amp; Alat</button>
+      <button role="tab" data-tab="bahan" aria-selected="false"><span data-ikon="bahan"></span>Bahan</button>
+      <button role="tab" data-tab="label" aria-selected="false"><span data-ikon="qr"></span>Label QR</button>
+      <button role="tab" data-tab="impor" aria-selected="false" data-admin hidden><span data-ikon="unggah"></span>Impor Excel</button>
+    </div>
   </nav>
   <main class="isi" id="isi"></main>
 </div>
@@ -65,17 +75,17 @@
 
 <dialog id="dlg" aria-labelledby="dlg-judul">
   <form method="dialog" id="dlg-form">
-    <div class="dlg-kepala"><h2 id="dlg-judul"></h2><button class="tutup" value="batal" aria-label="Tutup">×</button></div>
+    <div class="dlg-kepala"><div><p class="dlg-atas" id="dlg-atas"></p><h2 id="dlg-judul"></h2></div><button class="tutup" value="batal" aria-label="Tutup" formnovalidate><span data-ikon="x"></span></button></div>
     <div class="dlg-isi" id="dlg-isi"></div>
-    <p class="galat" id="dlg-galat" hidden></p>
+    <p class="galat" id="dlg-galat" role="alert" hidden></p>
     <div class="dlg-kaki" id="dlg-kaki"></div>
   </form>
 </dialog>
 
 <div class="pesan" id="toast" role="status" aria-live="polite"></div>
-<div class="sibuk" id="sibuk" hidden><span>Memproses…</span></div>
+<div class="sibuk" id="sibuk" hidden><span><i class="putar"></i>Memproses…</span></div>
 
 <script src="assets/vendor/qrcode-1.0.0.min.js"></script>
-<script src="assets/sarana_prasarana.js?v=1"></script>
+<script src="assets/sarana_prasarana.js?v=2"></script>
 </body>
 </html>
