@@ -30,6 +30,17 @@ Alamat (setelah repositori `sarana_prasarana` dibuat di akun sekolah): https://s
 
 Tahap berikutnya: lapor kerusakan & peminjaman, stok opname & penghapusan aset.
 
+## Panduan
+
+`Panduan_Sarana_Prasarana.pdf` dan `.docx` (16 halaman, 31 Okt 2026), dibuka lewat tombol **Panduan** di kepala halaman.
+Isi panduan ada di `alat/buat-panduan.js` (mesin sama dengan Kehadiran Guru). Setelah tampilan atau aturan berubah:
+
+```
+NODE_PATH=../Tryout_Guru/node_modules node alat/buat-panduan.js
+```
+
+Jangan menulis PIN di panduan: berkasnya terbuka untuk umum.
+
 ## Hak akses (diperiksa di server)
 
 Masuk dengan **PIN pribadi yang sama dengan Matematika Dasar dan Asesmen** (tabel `mtd_guru`), atau PIN admin Sarpras. PIN operator Tryout tidak berlaku di sini.

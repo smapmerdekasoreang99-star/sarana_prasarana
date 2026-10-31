@@ -75,6 +75,7 @@ const P = {
   kantor: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>',
   layanan: '<path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/>',
   lainnya: '<circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>',
+  panduan: '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
   tabel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
   dokumen: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/>',
   buku: '<path d="M4 19.5V5a2 2 0 0 1 2-2h13v17H6.5A2.5 2.5 0 0 0 4 22.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H19"/><path d="M8 7h7"/>',
@@ -1266,6 +1267,7 @@ TAB.profil.sesudah = async () => {
 /* ================================================================ mulai */
 document.addEventListener("DOMContentLoaded", async () => {
   pasangIkon();
+  document.addEventListener("click", (e) => { const d = document.querySelector(".panduan"); if (d && d.open && !d.contains(e.target)) d.open = false; });
   $("tab").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) buka(b.dataset.tab); });
   $("form-pin").onsubmit = async (e) => {
     e.preventDefault(); $("galat-pin").hidden = true;

@@ -36,6 +36,19 @@ svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-widt
 .tombol-atas { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--tinta-terang); border: 1px solid rgba(255,255,255,.28); border-radius: var(--r2); padding: 0 var(--j3); min-height: 38px; font: 600 var(--h-s) var(--f-isi); cursor: pointer; }
 .tombol-atas:hover { border-color: var(--emas); background: rgba(255,255,255,.06); }
 
+/* ---------- Tombol Panduan ---------- */
+.panduan { position: relative; }
+.atas:has(.panduan[open]) { z-index: var(--lapis-saran); }
+.panduan > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--tinta-terang); border: 1px solid rgba(255,255,255,.28); border-radius: var(--r2); padding: 0 var(--j3); min-height: 38px; font: 600 var(--h-s) var(--f-isi); white-space: nowrap; }
+.panduan > summary::-webkit-details-marker { display: none; }
+.panduan > summary:hover, .panduan[open] > summary { border-color: var(--emas); background: rgba(255,255,255,.06); }
+.panduan-menu { position: absolute; right: 0; top: calc(100% + 8px); width: min(300px, calc(100vw - 32px)); background: var(--kertas-2); color: var(--tinta); border: 1px solid var(--garis); border-radius: var(--r3); box-shadow: 0 14px 34px -14px rgba(34,30,23,.45); padding: 6px; z-index: calc(var(--lapis-nav) + 1); }
+.panduan-menu a { display: block; padding: 10px 12px; border-radius: var(--r2); color: var(--gelap); font-weight: 700; text-decoration: none; }
+.panduan-menu a:hover { background: var(--kertas-3); }
+.panduan-menu small { display: block; font-weight: 400; color: var(--tinta-2); font-size: var(--h-xs); margin-top: 2px; }
+.panduan-menu p { margin: 4px 12px 6px; font-size: var(--h-xs); color: var(--tinta-2); }
+@media (max-width: 720px) { .panduan > summary .t { display: none; } .panduan-menu { position: fixed; left: 16px; right: 16px; top: 72px; width: auto; } }
+
 /* ---------- Tab ---------- */
 .tab-wadah { position: sticky; top: 64px; z-index: var(--lapis-nav); background: linear-gradient(var(--kertas) 70%, rgba(250,247,240,0)); padding: var(--j3) var(--j4) var(--j2); }
 .tab { max-width: var(--lebar); margin: 0 auto; display: flex; gap: var(--j1); padding: 5px; background: var(--kertas-2); border: 1px solid var(--garis); border-radius: var(--r3); box-shadow: var(--bayang-2); overflow-x: auto; scrollbar-width: none; }
