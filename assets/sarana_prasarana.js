@@ -75,6 +75,9 @@ const P = {
   kantor: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>',
   layanan: '<path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/>',
   lainnya: '<circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>',
+  tabel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
+  dokumen: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/>',
+  buku: '<path d="M4 19.5V5a2 2 0 0 1 2-2h13v17H6.5A2.5 2.5 0 0 0 4 22.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H19"/><path d="M8 7h7"/>',
   masukStok: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
   keluarStok: '<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>',
 };
@@ -84,7 +87,7 @@ function pasangIkon(root) { (root || document).querySelectorAll("[data-ikon]").f
 /* ================================================================ keadaan */
 const S = { pin: null, akses: null, kategori: [], katBahan: [], ruang: [], dana: [], guru: null, alat: [], bahan: [],
   tab: "ringkas", ruangBuka: null, segmen: "sarana",
-  saring: { q: "", gol: "", kat: "", ruang: "", lengkap: "" }, saringBahan: { q: "", kat: "", ruang: "", status: "" }, labelRuang: "" };
+  saring: { q: "", gol: "", kat: "", ruang: "", lengkap: "" }, saringBahan: { q: "", kat: "", ruang: "", status: "" }, saringInduk: { q: "", ruang: "", gol: "", dana: "", tahun: "" }, labelRuang: "", profil: null };
 const admin = () => S.akses && S.akses.peran === "admin";
 const bisaUbah = () => S.akses && S.akses.peran !== "lihat";
 const ruangSaya = () => (S.akses && S.akses.ruang) || [];
@@ -149,7 +152,8 @@ async function kartuPublik(kode) {
 async function masuk(pin) {
   const d = await rpc("sp_masuk", { p_pin: pin });
   Object.assign(S, { pin, akses: d.akses, kategori: d.kategori, katBahan: d.kategori_bahan || [], ruang: d.ruang, dana: d.dana, guru: d.guru });
-  [S.alat, S.bahan] = await Promise.all([rpc("sp_alat_daftar", { p_pin: pin }), rpc("sp_bahan_daftar", { p_pin: pin })]);
+  [S.alat, S.bahan, S.profil] = await Promise.all([rpc("sp_alat_daftar", { p_pin: pin }), rpc("sp_bahan_daftar", { p_pin: pin }),
+    rpc("sp_profil", { p_pin: pin }).catch(() => null)]);
   ssSet("sp_pin", pin);
   $("layar-masuk").hidden = true; $("layar-app").hidden = false;
   const peran = { admin: "Staf Sarpras · semua ruang", pj: "Penanggung jawab · " + ruangSaya().map(namaRuang).join(", "), lihat: "Hanya melihat" }[S.akses.peran];
@@ -169,7 +173,7 @@ function keluar() { ssSet("sp_pin", null); location.href = location.pathname; }
 /* ================================================================ tab */
 const TAB = {};
 function buka(tab, tetap) {
-  if (tab === "impor" && !admin()) tab = "ringkas";
+  if (!TAB[tab]) tab = "ringkas";
   if (tab !== S.tab && !tetap) S.ruangBuka = null;
   S.tab = tab;
   document.querySelectorAll("#tab button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
@@ -197,7 +201,7 @@ TAB.ringkas = () => {
   </div>
   <div class="grid2">
     <section class="kartu"><div class="kepala-bagian"><div><h2>Per kategori</h2><p class="sub">Biru = sarana (perabot &amp; perlengkapan ruang), emas = alat.</p></div></div>
-      <div class="batang">${perKat.map(([n, v, g]) => `<div class="r"><span>${esc(n)}</span><div class="jalur"><i class="${g === "alat" ? "c" : ""}" style="width:${(v / mk) * 100}%"></i></div><span class="n">${v}</span></div>`).join("") || `<div class="kosong">${ikon("kotak")}<span>Belum ada data. Staf Sarpras dapat mengimpor BUKU INDUK.xlsx.</span></div>`}</div>
+      <div class="batang">${perKat.map(([n, v, g]) => `<div class="r"><span>${esc(n)}</span><div class="jalur"><i class="${g === "alat" ? "c" : ""}" style="width:${(v / mk) * 100}%"></i></div><span class="n">${v}</span></div>`).join("") || `<div class="kosong">${ikon("kotak")}<span>Belum ada data. Unggah BUKU INDUK.xlsx lewat menu Buku Induk → Unggah data.</span></div>`}</div>
     </section>
     <section class="kartu"><div class="kepala-bagian"><div><h2>Isian yang masih kosong</h2><p class="sub">Jumlah jenis sarana &amp; alat yang isiannya belum diisi. Kode ARKAS hanya untuk barang dana BOS.</p></div>
       <button class="tombol kecil" type="button" id="b-lengkapi">${ikon("ubah")}Lengkapi</button></div>
@@ -237,7 +241,7 @@ function denah() {
   const tidakAktif = S.ruang.filter((r) => !r.aktif);
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Denah ruang</h2><p class="sub">Pilih ruang untuk melihat sarana, alat, dan bahan di dalamnya. ${S.akses.peran === "pj" ? "Ruang Anda bertanda emas." : ""}</p></div>
-      ${admin() ? `<div class="aksi"><button class="tombol utama" type="button" id="b-ruang-baru">${ikon("tambah")}Tambah ruang</button></div>` : ""}</div>
+      <div class="aksi">${tombolBerkas("ruang", "b-unduh-ruang")}${admin() ? `<button class="tombol utama" type="button" id="b-ruang-baru">${ikon("tambah")}Tambah ruang</button>` : ""}</div></div>
     <div class="legenda">${urut.map((j) => `<span style="${warnaRuang(j)}"><i></i>${JENIS_RUANG[j][0]}</span>`).join("")}</div>
   </section>
   ${kelompok}
@@ -295,6 +299,7 @@ TAB.ruang.sesudah = () => {
   isi.querySelectorAll("[data-tambah]").forEach((b) => b.onclick = () => formRuang(null, b.dataset.tambah));
   isi.querySelectorAll("[data-ubah-ruang]").forEach((a) => a.onclick = (e) => { e.preventDefault(); formRuang(ruangOf(a.dataset.ubahRuang)); });
   if ($("b-ruang-baru")) $("b-ruang-baru").onclick = () => formRuang(null);
+  if ($("b-unduh-ruang")) { $("b-unduh-ruang").onclick = unduhRuang; pasangTombolBerkas(isi); }
   if (!S.ruangBuka) return;
   $("b-kembali").onclick = () => { S.ruangBuka = null; segarkan(); };
   isi.querySelectorAll("[data-seg]").forEach((b) => b.onclick = () => { S.segmen = b.dataset.seg; segarkan(); });
@@ -357,8 +362,7 @@ TAB.alat = () => {
   const s = S.saring;
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Sarana &amp; Alat</h2><p class="sub">Seluruh sarana dan alat di semua ruang. Klik baris untuk melihat rincian dan riwayatnya.</p></div>
-      <div class="aksi">${bisaUbah() ? `<button class="tombol utama" id="b-baru" type="button">${ikon("tambah")}Catat barang</button>` : ""}
-        <button class="tombol" id="b-unduh" type="button">${ikon("unduh")}Unduh Excel</button></div></div>
+      <div class="aksi">${tombolBerkas("alat", "b-unduh")}${bisaUbah() ? `<button class="tombol utama" id="b-baru" type="button">${ikon("tambah")}Catat barang</button>` : ""}</div></div>
     <div class="saring">
       <label class="f cari" for="s-q">Cari${ikon("cari")}<input type="search" id="s-q" value="${esc(s.q)}" placeholder="Nama, kode, atau merek"></label>
       <label class="f" for="s-gol">Golongan<select id="s-gol"><option value="">Sarana &amp; alat</option>${opsi([["sarana", "Sarana"], ["alat", "Alat"]], s.gol)}</select></label>
@@ -375,7 +379,8 @@ TAB.alat.sesudah = () => {
   isi();
   [["s-q", "q"], ["s-gol", "gol"], ["s-kat", "kat"], ["s-ruang", "ruang"], ["s-lengkap", "lengkap"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { S.saring[k] = e.target.value; isi(); }));
   if ($("b-baru")) $("b-baru").onclick = () => formAlat(null, { ruang: S.akses.peran === "pj" ? ruangSaya()[0] : "" });
-  $("b-unduh").onclick = () => unduhExcel(saringAlat());
+  $("b-unduh").onclick = () => unduhBukuInduk(saringAlat().sort((a, b) => a.kode.localeCompare(b.kode)), "Sarana & Alat");
+  pasangTombolBerkas($("isi"));
 };
 
 /* ---------------------------------------------------------------- bahan */
@@ -383,7 +388,7 @@ TAB.bahan = () => {
   const s = S.saringBahan;
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Bahan habis pakai</h2><p class="sub">Stok bahan di setiap ruang. Catat setiap bahan masuk (pembelian) dan keluar (pemakaian); sisa stok dihitung otomatis.</p></div>
-      <div class="aksi">${bisaUbah() ? `<button class="tombol utama" id="b-bahan-baru" type="button">${ikon("tambah")}Tambah bahan</button>` : ""}</div></div>
+      <div class="aksi">${tombolBerkas("bahan", "b-unduh-bahan")}${bisaUbah() ? `<button class="tombol utama" id="b-bahan-baru" type="button">${ikon("tambah")}Tambah bahan</button>` : ""}</div></div>
     <div class="saring">
       <label class="f cari" for="sb-q">Cari${ikon("cari")}<input type="search" id="sb-q" value="${esc(s.q)}" placeholder="Nama bahan"></label>
       <label class="f" for="sb-kat">Kategori<select id="sb-kat"><option value="">Semua</option>${opsi(S.katBahan.map((k) => [k, k]), s.kat)}</select></label>
@@ -403,6 +408,8 @@ TAB.bahan.sesudah = () => {
   isi();
   [["sb-q", "q"], ["sb-kat", "kat"], ["sb-ruang", "ruang"], ["sb-status", "status"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { S.saringBahan[k] = e.target.value; isi(); }));
   if ($("b-bahan-baru")) $("b-bahan-baru").onclick = () => formBahan(null, S.akses.peran === "pj" ? ruangSaya()[0] : "");
+  $("b-unduh-bahan").onclick = () => unduhBahan(S.bahan);
+  pasangTombolBerkas($("isi"));
 };
 
 /* ---------------------------------------------------------------- dialog */
@@ -425,7 +432,7 @@ function dialog({ atas = "", judul, isi, kaki, onSimpan }) {
 const tutupDialog = () => $("dlg").close();
 const kakiSimpan = (label, kiri = "") => `${kiri}<button class="tombol" value="batal" formnovalidate>Batal</button><button class="tombol utama" value="simpan">${ikon("centang")}${label}</button>`;
 
-const JENIS_RIW = { baru: "Dicatat", impor: "Diimpor dari Excel", ubah: "Diubah", pindah: "Dipindah ruang", kondisi: "Kondisi diubah", hapus: "Dihapus",
+const JENIS_RIW = { baru: "Dicatat", impor: "Diunggah dari Excel", ubah: "Diubah", pindah: "Dipindah ruang", kondisi: "Kondisi diubah", hapus: "Dihapus",
   awal: "Stok awal", masuk: "Masuk", keluar: "Keluar", koreksi: "Hitung ulang" };
 const LABEL_ISIAN = { nama: "nama", kategori: "kategori", ruang: "ruang", merek: "merek", spesifikasi: "spesifikasi", baik: "baik", rusak_ringan: "rusak ringan",
   rusak_berat: "rusak berat", jumlah_pasti: "jumlah pasti", tahun: "tahun", sumber_dana: "dana", kode_arkas: "kode ARKAS", no_bukti: "no. bukti",
@@ -667,152 +674,594 @@ TAB.label.sesudah = () => {
 };
 
 /* ---------------------------------------------------------------- impor Excel */
-let IMPOR = null;
-TAB.impor = () => `<section class="kartu">
-  <div class="kepala-bagian"><div><h2>Impor BUKU INDUK.xlsx</h2><p class="sub">Setiap baris diperiksa dan dirapikan lebih dulu: penulisan jenis, ruang, dan dana disatukan; kode lama yang tidak cocok ditandai; barang habis pakai masuk ke Bahan. Belum ada yang tersimpan sampai Anda menekan Impor. Baris yang pernah diimpor otomatis dilewati.</p></div></div>
-  <label class="f" for="berkas">Pilih berkas Excel<input id="berkas" type="file" accept=".xlsx,.xls"></label>
-  <div id="hasil-baca"></div>
-</section>`;
-TAB.impor.sesudah = () => {
-  $("berkas").onchange = async (e) => {
-    const f = e.target.files[0]; if (!f) return;
+/* ================================================================ dokumen: Excel berkop, template, unggah
+   Unduhan berkop memakai kop bersama (assets/kop-dokumen.js, sama persis dengan Data Induk, Kehadiran Guru,
+   Absensi Ekskul, Induk Pembiayaan) dan profil dari Data Induk → Profil Dokumen (sp_profil). ExcelJS dimuat dari
+   CDN dengan pemeriksaan integritas, sama dengan Data Induk. Membaca unggahan memakai SheetJS (assets/vendor). */
+const CDN_EXCELJS = ["https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js", "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"];
+const SRI_EXCELJS = "sha384-Pqp51FUN2/qzfxZxBCtF0stpc9ONI6MYZpVqmo8m20SoaQCzf+arZvACkLkirlPz";
+async function muatExcelJS() {
+  if (window.ExcelJS) return window.ExcelJS;
+  for (const alamat of CDN_EXCELJS) {
     try {
-      if (!window.XLSX) await sibuk(() => muatSkrip("assets/vendor/xlsx-0.20.3.full.min.js"));
-      IMPOR = bacaBukuInduk(XLSX.read(await f.arrayBuffer()), f.name);
-      tampilImpor();
-    } catch (err) { $("hasil-baca").innerHTML = `<p class="galat">${esc(err.message)}</p>`; }
-  };
-};
+      await new Promise((ok, gagal) => { const s = document.createElement("script"); s.src = alamat; s.integrity = SRI_EXCELJS; s.crossOrigin = "anonymous";
+        s.onload = ok; s.onerror = () => gagal(new Error(alamat)); document.head.appendChild(s); });
+      if (window.ExcelJS) return window.ExcelJS;
+    } catch (e) { /* coba CDN berikutnya */ }
+  }
+  throw new Error("Pembuat Excel (ExcelJS) tidak bisa diunduh. Biasanya jaringan memblokir cdnjs.cloudflare.com dan cdn.jsdelivr.net; coba jaringan lain.");
+}
 function muatSkrip(src) { return new Promise((ok, gagal) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => gagal(new Error("Pustaka Excel gagal dimuat. Periksa internet lalu coba lagi.")); document.head.appendChild(s); }); }
-function kategoriDari(j) {
-  j = String(j || "").toLowerCase();
-  if (/furni|mebel|meubel/.test(j)) return "F";
-  if (/elektronik|tik|komputer/.test(j)) return "E";
-  if (/kebersihan/.test(j)) return "K";
-  if (/olahraga/.test(j)) return "O";
-  if (/praktikum|lab/.test(j)) return "L";
-  if (/kesenian|musik|seni/.test(j)) return "S";
-  if (/dapur/.test(j)) return "D";
-  if (/medis|uks|kesehatan/.test(j)) return "U";
-  if (/ibadah|pai/.test(j)) return "PI";
-  return "P";
+async function muatSheetJS() { if (!window.XLSX) await muatSkrip("assets/vendor/xlsx-0.20.3.full.min.js"); return window.XLSX; }
+function unduhBlob(blob, nama) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nama;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
-const BAHAN_IMPOR = /kantong plastik|lap lembut/i;
-function bacaBukuInduk(wb, namaBerkas) {
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: false });
-  const hi = rows.findIndex((r) => r.some((v) => /nama\s*barang/i.test(String(v))));
-  if (hi < 0) throw new Error('Kolom "NAMA BARANG" tidak ditemukan di lembar pertama.');
-  const kep = rows[hi].map((v) => String(v).trim().toLowerCase());
-  const kol = (re) => kep.findIndex((k) => re.test(k));
-  const K = { nama: kol(/nama\s*barang/), jml: kol(/jumlah/), jenis: kol(/jenis/), merek: kol(/merek/), kondisi: kol(/kondisi/),
-    tahun: kol(/tahun/), lokasi: kol(/lokasi/), dana: kol(/dana/), kode: kol(/kode/), ket: kol(/keterangan/) };
-  const ambil = (r, k) => (K[k] >= 0 ? String(r[K[k]] ?? "") : "").trim();
-  const cariRuang = (nama) => {
-    const n = nama.toLowerCase().replace(/\s+/g, " ").trim();
-    if (!n) return null;
-    if (/^ruang kelas$/.test(n)) return "RK";
-    const r = S.ruang.find((x) => x.nama.toLowerCase() === n || x.kode.toLowerCase() === n);
-    return r ? r.kode : undefined;
-  };
-  const baris = [], tanda = { ruangTakDikenal: new Set(), kodeTakCocok: [], bahan: [] };
-  rows.slice(hi + 1).forEach((r, i) => {
-    const nama = ambil(r, "nama").replace(/\s*-\s*$/, "");
-    if (!nama) return;
-    const ke = hi + 2 + i;
-    const ket = [];
-    const lok = String(K.lokasi >= 0 ? r[K.lokasi] : "").split(/\n|,|\//).map((s) => s.trim()).filter(Boolean);
-    let ruang = null;
-    if (lok.length) {
-      ruang = cariRuang(lok[0]);
-      if (ruang === undefined) { tanda.ruangTakDikenal.add(lok[0]); ket.push("Lokasi di Excel: " + lok[0]); ruang = null; }
-      if (lok.length > 1) ket.push("Juga di: " + lok.slice(1).join(", "));
-    }
-    const jmlX = parseInt(ambil(r, "jml").replace(/\D/g, ""), 10);
-    const ketX = ambil(r, "ket");
-    if (BAHAN_IMPOR.test(nama)) {
-      tanda.bahan.push(nama);
-      if (ketX) ket.push(ketX);
-      baris.push({ jenis_baris: "bahan", sumber: `${namaBerkas} baris ${ke}`, nama: nama.charAt(0).toUpperCase() + nama.slice(1), kategori: "Kebersihan",
-        ruang, satuan: /kantong/i.test(nama) ? "pak" : "buah", stok: jmlX > 0 ? jmlX : 0, batas_min: 0, keterangan: ket.join(". ") });
-      return;
-    }
-    const kat = kategoriDari(ambil(r, "jenis"));
-    const danaX = ambil(r, "dana");
-    const dana = !danaX ? null : /yayasan/i.test(danaX) ? "Yayasan" : /bos/i.test(danaX) ? "BOS Reguler" : "Lainnya";
-    if (dana === "Lainnya") ket.push("Dana di Excel: " + danaX);
-    const kodeLama = ambil(r, "kode");
-    let tahun = parseInt(ambil(r, "tahun"), 10);
-    if (!tahun && /-(\d{4})$/.test(kodeLama)) tahun = +kodeLama.slice(-4);
-    const kond = ambil(r, "kondisi").toLowerCase(), n = jmlX > 0 ? jmlX : 1;
-    const kondisi = /berat/.test(kond) ? { baik: 0, rusak_ringan: 0, rusak_berat: n } : /rusak/.test(kond) ? { baik: 0, rusak_ringan: n, rusak_berat: 0 } : { baik: n, rusak_ringan: 0, rusak_berat: 0 };
-    if (kodeLama) {
-      const p = kodeLama.split("-"), kj = p[3], kr = (p[4] || "").toUpperCase();
-      if (kj !== kat || !ruang || kr !== ruang) { tanda.kodeTakCocok.push(`${nama} (baris ${ke}): ${kodeLama}`); ket.push("Kode lama tidak cocok dengan isi baris"); }
-    }
-    if (/^alat\s*-?\s*alat/i.test(nama)) ket.push("Perlu dirinci per alat");
-    if (/obat/i.test(nama)) ket.push("Obat-obatan sebaiknya dicatat juga sebagai bahan");
-    if (ketX) ket.push(ketX);
-    baris.push({ sumber: `${namaBerkas} baris ${ke}`, nama: nama.charAt(0).toUpperCase() + nama.slice(1), kategori: kat, ruang, ...kondisi,
-      jumlah_pasti: jmlX > 0, tahun: tahun || null, sumber_dana: dana, merek: ambil(r, "merek"), kode_lama: kodeLama, keterangan: ket.join(". ") });
-  });
-  return { berkas: namaBerkas, baris, tanda, kolomHilang: Object.entries(K).filter(([, v]) => v < 0).map(([k]) => k) };
+const stempel = () => { const t = new Date(), p = (n) => String(n).padStart(2, "0"); return `${t.getFullYear()}${p(t.getMonth() + 1)}${p(t.getDate())}`; };
+const tglPanjang = () => new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+const MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const ISI_KEPALA = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEDE8DD" } };
+const GARIS_TIPIS = { style: "hair", color: { argb: "FFD6DEDC" } };
+
+function profilKop() {
+  return S.profil || { nama_sekolah: "SMA Plus Merdeka Soreang", kota: "Soreang", logo_url: "assets/logo.png" };
 }
-function tampilImpor() {
-  const I = IMPOR, B = I.baris, A = B.filter((b) => b.jenis_baris !== "bahan"), H = B.filter((b) => b.jenis_baris === "bahan");
-  $("hasil-baca").innerHTML = `
-    <div class="ubin">
-      <div class="b"><span class="lambang">${ikon("kotak")}</span><span><b>${A.length}</b><span class="t">sarana &amp; alat siap diimpor</span></span></div>
-      <div class="i"><span class="lambang">${ikon("bahan")}</span><span><b>${H.length}</b><span class="t">bahan habis pakai</span></span></div>
-      <div class="c"><span class="lambang">${ikon("ruang")}</span><span><b>${A.filter((b) => !b.ruang).length}</b><span class="t">tanpa ruang</span></span></div>
-      <div class="k"><span class="lambang">${ikon("awas")}</span><span><b>${I.tanda.kodeTakCocok.length}</b><span class="t">kode lama tidak cocok</span></span></div>
-    </div>
-    ${I.kolomHilang.length ? `<p class="catatan awas">${ikon("awas")}<span>Kolom tidak ditemukan: ${esc(I.kolomHilang.join(", "))}. Isinya dianggap kosong.</span></p>` : ""}
-    ${H.length ? `<p class="catatan">${ikon("bahan")}<span>Masuk ke <b>Bahan</b> dengan stok sesuai kolom JUMLAH: ${H.map((b) => esc(b.nama)).join(", ")}.</span></p>` : ""}
-    ${I.tanda.ruangTakDikenal.size ? `<p class="catatan awas">${ikon("awas")}<span>Lokasi yang belum ada di daftar ruang: <b>${esc([...I.tanda.ruangTakDikenal].join(", "))}</b>. Barangnya diimpor tanpa ruang. Tambahkan ruangnya lebih dulu bila ingin langsung terhubung, lalu pilih berkas lagi.</span></p>` : ""}
-    ${I.tanda.kodeTakCocok.length ? `<p class="catatan emas">${ikon("info")}<span>Kode lama tidak cocok dengan isi baris (tetap disimpan sebagai kode lama dan ditandai di keterangan):<br>${I.tanda.kodeTakCocok.map(esc).join("<br>")}</span></p>` : ""}
-    ${A.filter((b) => !b.jumlah_pasti).length ? `<p class="catatan emas">${ikon("info")}<span>${A.filter((b) => !b.jumlah_pasti).length} baris jumlahnya kosong. Sementara dicatat 1 dan ditandai "Jumlah" sampai dihitung ulang.</span></p>` : ""}
-    <div class="gulir" style="max-height:440px"><table><thead><tr><th>Baris</th><th>Nama</th><th>Masuk ke</th><th>Ruang</th><th class="n">Jml</th><th>Dana</th><th>Tahun</th><th>Kode lama</th><th>Keterangan</th></tr></thead><tbody>
-      ${B.map((b) => `<tr><td class="kecil">${esc(b.sumber.replace(I.berkas + " baris ", ""))}</td><td><b>${esc(b.nama)}</b></td>
-        <td>${b.jenis_baris === "bahan" ? '<span class="pil i">Bahan</span>' : `<span class="pil n">${esc(namaKat(b.kategori))}</span>`}</td><td>${esc(namaRuang(b.ruang) || "—")}</td>
-        <td class="n">${b.jenis_baris === "bahan" ? bil(b.stok) : b.jumlah_pasti ? b.baik + b.rusak_ringan + b.rusak_berat : "?"}</td><td>${esc(b.sumber_dana || "—")}</td><td>${esc(b.tahun || "—")}</td>
-        <td class="kode">${esc(b.kode_lama || "")}</td><td class="kecil">${esc(b.keterangan)}</td></tr>`).join("")}
-    </tbody></table></div>
-    <div class="aksi" style="justify-content:flex-end"><button class="tombol utama besar" id="b-impor" type="button">${ikon("unggah")}Impor ${B.length} baris</button></div>`;
-  $("b-impor").onclick = async () => {
-    try {
-      const h = await sibuk(() => rpc("sp_impor", { p_pin: S.pin, p_baris: B }));
-      await muatUlang();
-      $("hasil-baca").innerHTML = `<p class="catatan">${ikon("centang")}<span>Selesai: <b>${h.masuk}</b> baris diimpor${h.lewat ? `, ${h.lewat} baris dilewati karena sudah pernah diimpor` : ""}. Lanjutkan di tab Ruang atau di Sarana &amp; Alat (saring "Perlu dilengkapi").</span></p>`;
-      toast(`${h.masuk} baris diimpor`);
-    } catch (err) { $("hasil-baca").insertAdjacentHTML("afterbegin", `<p class="galat">${esc(err.message)}</p>`); }
-  };
+let _logo;
+async function logoKop() {
+  if (_logo !== undefined) return _logo;
+  try { _logo = { buffer: await fetch(profilKop().logo_url || "assets/logo.png").then((r) => r.ok ? r.arrayBuffer() : Promise.reject()) }; }
+  catch (e) { _logo = null; }
+  return _logo;
+}
+// Penanda tangan dokumen Sarpras: Kepala Sekolah (Profil Dokumen) dan Wakasek Sarana Prasarana, atau bila belum ada, Staf Sarana Prasarana (Tugas Guru).
+function penandaTangan() {
+  const p = profilKop();
+  const kanan = p.wakasek_sarpras ? ["Wakasek Sarana Prasarana,", p.wakasek_sarpras] : ["Staf Sarana Prasarana,", p.staf_sarpras || ""];
+  return [
+    { atas: ["Mengetahui,", "Kepala Sekolah,"], nama: p.kepala_sekolah || "", nip: p.nip_kepala ? "NIP. " + p.nip_kepala : null },
+    { atas: [(p.kota || "") + ", " + tglPanjang(), kanan[0]], nama: kanan[1] },
+  ];
 }
 
-/* ---------------------------------------------------------------- unduh Excel */
-async function unduhExcel(daftar) {
-  try {
-    if (!window.XLSX) await sibuk(() => muatSkrip("assets/vendor/xlsx-0.20.3.full.min.js"));
-    const kepala = ["No", "Kode Inventaris", "Kode Lama", "Nama Barang", "Golongan", "Kategori", "Merek/Tipe", "Spesifikasi", "Ruang", "Penanggung Jawab",
-      "Jumlah", "Baik", "Rusak Ringan", "Rusak Berat", "Tahun Perolehan", "Sumber Dana", "Kode Rekening ARKAS", "No. Bukti BKU", "Tgl Bukti",
-      "Harga Satuan", "Nilai Perolehan", "Keterangan"];
-    const isi = daftar.map((a, i) => [i + 1, a.kode, a.kode_lama || "", a.nama, golongan(a) === "sarana" ? "Sarana" : "Alat", namaKat(a.kategori), a.merek || "", a.spesifikasi || "",
-      namaRuang(a.ruang), a.ruang ? (ruangOf(a.ruang) || {}).pj_nama || "" : "", a.jumlah_pasti ? a.jumlah : "", a.baik, a.rusak_ringan, a.rusak_berat,
-      a.tahun || "", a.sumber_dana || "", a.kode_arkas || "", a.no_bukti || "", a.tgl_bukti || "",
-      a.harga_satuan == null ? "" : Number(a.harga_satuan), a.harga_satuan == null ? "" : Number(a.harga_satuan) * a.jumlah, a.keterangan || ""]);
-    const ws = XLSX.utils.aoa_to_sheet([["BUKU INVENTARIS SARANA & ALAT"], ["SMA PLUS MERDEKA SOREANG"], ["Diunduh " + new Date().toLocaleString("id-ID")], [], kepala, ...isi]);
-    ws["!cols"] = [5, 22, 24, 34, 9, 18, 16, 20, 20, 24, 8, 7, 8, 8, 9, 14, 20, 14, 11, 14, 15, 40].map((w) => ({ wch: w }));
-    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: kepala.length - 1 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: kepala.length - 1 } }];
-    const kb = ["No", "Nama Bahan", "Kategori", "Ruang", "Stok", "Satuan", "Batas Minimum", "Status", "Keterangan"];
-    const isiB = S.bahan.map((b, i) => [i + 1, b.nama, b.kategori, namaRuang(b.ruang), Number(b.stok), b.satuan, Number(b.batas_min), statusBahan(b)[0], b.keterangan || ""]);
-    const wsB = XLSX.utils.aoa_to_sheet([["STOK BAHAN HABIS PAKAI"], ["SMA PLUS MERDEKA SOREANG"], [], kb, ...isiB]);
-    wsB["!cols"] = [5, 34, 16, 22, 8, 10, 12, 10, 40].map((w) => ({ wch: w }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sarana & Alat");
-    XLSX.utils.book_append_sheet(wb, wsB, "Bahan");
-    XLSX.writeFile(wb, `Buku_Inventaris_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  } catch (err) { toast(err.message); }
+/* Satu lembar tabel berkop. kolom: [{ judul, lebar, angka?, rupiah? }]; baris: array nilai; jumlah: { label, kolom: {indeks: nilai} } */
+async function lembarBerkop(wb, { nama, judul, sub, kolom, baris, jumlah, ttd = true }) {
+  const K = window.KopDokumen;
+  if (!K) throw new Error("Berkas assets/kop-dokumen.js belum termuat. Muat ulang halaman.");
+  const ws = wb.addWorksheet(nama.slice(0, 31), { pageSetup: { paperSize: 9, orientation: kolom.length > 7 ? "landscape" : "portrait",
+    fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } } });
+  const kolomAkhir = kolom.length + 1;
+  ws.columns = [{ width: 5 }, ...kolom.map((k) => ({ width: k.lebar }))];
+  let r = K.kopExcel(ws, { wb, logo: await logoKop(), profil: profilKop(), judul: judul.toUpperCase(), sub, kolomAkhir, warnaGaris: "FF12262E" });
+  const rKepala = r;
+  const kep = ws.getRow(r);
+  ["No.", ...kolom.map((k) => k.judul)].forEach((t, i) => {
+    const c = kep.getCell(i + 1);
+    c.value = t; c.font = { bold: true, size: 10.5, color: { argb: "FF221E17" } }; c.fill = ISI_KEPALA;
+    c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    c.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
+  });
+  kep.height = 24;
+  if (window.pasKepalaExcel) window.pasKepalaExcel(ws, rKepala, rKepala, { kolomAkhir });
+  r++;
+  baris.forEach((isi, i) => {
+    const br = ws.getRow(r);
+    br.getCell(1).value = i + 1; br.getCell(1).alignment = { horizontal: "center" };
+    isi.forEach((v, n) => {
+      const c = br.getCell(n + 2);
+      c.value = v === null || v === undefined ? "" : v;
+      if (kolom[n].rupiah && typeof v === "number") c.numFmt = '#,##0';
+      if (kolom[n].tengah) c.alignment = { horizontal: "center" };
+    });
+    for (let k = 1; k <= kolomAkhir; k++) {
+      const c = br.getCell(k);
+      c.font = { size: 10 }; c.border = { top: GARIS_TIPIS, bottom: GARIS_TIPIS, left: GARIS_TIPIS, right: GARIS_TIPIS };
+      c.alignment = Object.assign({ vertical: "middle", wrapText: true }, c.alignment || {});
+      if (i % 2) c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF7FAF9" } };
+    }
+    r++;
+  });
+  if (jumlah) {
+    // Baris jumlah: labelnya digabung dari kolom No. sampai sebelum kolom angka pertama, supaya kolom nama tetap kosong
+    // (unggahan berkas ini berhenti membaca di baris tanpa nama barang).
+    const awalAngka = Math.min(...Object.keys(jumlah.kolom).map(Number)) + 2;
+    if (awalAngka > 2) ws.mergeCells(r, 1, r, awalAngka - 1);
+    const c = ws.getCell(r, 1); c.value = jumlah.label; c.alignment = { horizontal: "right" };
+    Object.entries(jumlah.kolom).forEach(([n, v]) => { const x = ws.getCell(r, +n + 2); x.value = v; if (kolom[n].rupiah) x.numFmt = '#,##0'; });
+    for (let k = 1; k <= kolomAkhir; k++) { const x = ws.getCell(r, k); x.font = { bold: true, size: 10 }; x.fill = ISI_KEPALA; x.border = { top: { style: "thin" }, bottom: { style: "thin" } }; }
+    r++;
+  }
+  ws.views = [{ state: "frozen", ySplit: rKepala }];
+  if (baris.length) ws.autoFilter = { from: { row: rKepala, column: 1 }, to: { row: rKepala + baris.length, column: kolomAkhir } };
+  r = K.kakiExcel(ws, r + 1, { profil: profilKop(), kolomAkhir });
+  if (ttd) K.ttdExcel(ws, r + 2, { kolomAkhir, ruang: 3, blok: penandaTangan() });
+  return ws;
 }
+async function simpanBuku(wb, nama) {
+  const buf = await wb.xlsx.writeBuffer();
+  unduhBlob(new Blob([buf], { type: MIME_XLSX }), `${nama}_${stempel()}.xlsx`);
+}
+
+/* ---------------------------------------------------------------- unduhan berkop */
+const KOLOM_INDUK = [
+  { judul: "Kode Inventaris", lebar: 22 }, { judul: "Kode Lama", lebar: 26 }, { judul: "Nama Barang", lebar: 30 }, { judul: "Golongan", lebar: 9 },
+  { judul: "Kategori", lebar: 16 }, { judul: "Merek/Tipe", lebar: 14 }, { judul: "Spesifikasi", lebar: 16 }, { judul: "Ruang", lebar: 18 },
+  { judul: "Penanggung Jawab", lebar: 20 }, { judul: "Jumlah", lebar: 8, tengah: true }, { judul: "Baik", lebar: 6, tengah: true },
+  { judul: "Rusak Ringan", lebar: 7, tengah: true }, { judul: "Rusak Berat", lebar: 7, tengah: true }, { judul: "Tahun Perolehan", lebar: 9, tengah: true },
+  { judul: "Sumber Dana", lebar: 13 }, { judul: "Kode Rekening ARKAS", lebar: 19 }, { judul: "No. Bukti BKU", lebar: 13 }, { judul: "Tgl Bukti", lebar: 11 },
+  { judul: "Harga Satuan", lebar: 13, rupiah: true }, { judul: "Nilai Perolehan", lebar: 15, rupiah: true }, { judul: "Keterangan", lebar: 30 },
+];
+const barisInduk = (a) => [a.kode, a.kode_lama || "", a.nama, golongan(a) === "sarana" ? "Sarana" : "Alat", namaKat(a.kategori), a.merek || "", a.spesifikasi || "",
+  namaRuang(a.ruang), a.ruang ? (ruangOf(a.ruang) || {}).pj_nama || "" : "", a.jumlah_pasti ? a.jumlah : "", a.baik, a.rusak_ringan, a.rusak_berat, a.tahun || "",
+  a.sumber_dana || "", a.kode_arkas || "", a.no_bukti || "", a.tgl_bukti || "", a.harga_satuan == null ? "" : Number(a.harga_satuan),
+  a.harga_satuan == null ? "" : Number(a.harga_satuan) * a.jumlah, a.keterangan || ""];
+async function unduhBukuInduk(daftar, keterangan) {
+  if (!daftar.length) return toast("Tidak ada barang untuk diunduh.");
+  try {
+    await sibuk(async () => {
+      const ExcelJS = await muatExcelJS();
+      const wb = new ExcelJS.Workbook(); wb.creator = "Sarana Prasarana";
+      const unit = daftar.reduce((s, a) => s + a.jumlah, 0), nilai = daftar.reduce((s, a) => s + (a.harga_satuan == null ? 0 : Number(a.harga_satuan) * a.jumlah), 0);
+      await lembarBerkop(wb, { nama: "Buku Induk", judul: "Buku Induk Sarana dan Prasarana", sub: `${keterangan || "Semua ruang"}  ·  ${daftar.length} jenis barang  ·  ${bil(unit)} unit  ·  keadaan ${tglPanjang()}`,
+        kolom: KOLOM_INDUK, baris: daftar.map(barisInduk), jumlah: { label: "JUMLAH", kolom: { 9: unit, 19: nilai } } });
+      await simpanBuku(wb, "Buku_Induk_Sarpras");
+    });
+    toast(`${daftar.length} jenis barang diunduh`);
+  } catch (e) { toast(e.message); }
+}
+async function unduhBahan(daftar) {
+  if (!daftar.length) return toast("Tidak ada bahan untuk diunduh.");
+  try {
+    await sibuk(async () => {
+      const ExcelJS = await muatExcelJS();
+      const wb = new ExcelJS.Workbook();
+      await lembarBerkop(wb, { nama: "Stok Bahan", judul: "Stok Bahan Habis Pakai", sub: `${daftar.length} jenis bahan  ·  keadaan ${tglPanjang()}`,
+        kolom: [{ judul: "Nama Bahan", lebar: 30 }, { judul: "Kategori", lebar: 16 }, { judul: "Ruang", lebar: 20 }, { judul: "Stok", lebar: 8, tengah: true },
+          { judul: "Satuan", lebar: 9 }, { judul: "Batas Minimum", lebar: 9, tengah: true }, { judul: "Status", lebar: 10 }, { judul: "Keterangan", lebar: 30 }],
+        baris: daftar.map((b) => [b.nama, b.kategori, namaRuang(b.ruang), Number(b.stok), b.satuan, Number(b.batas_min), statusBahan(b)[0], b.keterangan || ""]) });
+      await simpanBuku(wb, "Stok_Bahan");
+    });
+  } catch (e) { toast(e.message); }
+}
+async function unduhRuang() {
+  try {
+    await sibuk(async () => {
+      const ExcelJS = await muatExcelJS();
+      const wb = new ExcelJS.Workbook();
+      await lembarBerkop(wb, { nama: "Daftar Ruang", judul: "Daftar Ruang dan Penanggung Jawab", sub: `${S.ruang.length} ruang  ·  keadaan ${tglPanjang()}`,
+        kolom: [{ judul: "Kode", lebar: 10 }, { judul: "Nama Ruang", lebar: 26 }, { judul: "Jenis", lebar: 15 }, { judul: "Penanggung Jawab", lebar: 26 },
+          { judul: "Sarana", lebar: 8, tengah: true }, { judul: "Alat", lebar: 8, tengah: true }, { judul: "Bahan", lebar: 8, tengah: true }, { judul: "Status", lebar: 12 }],
+        baris: S.ruang.map((r) => { const h = hitungRuang(r.kode); return [r.kode, r.nama, (JENIS_RUANG[r.jenis] || ["Lainnya"])[0], r.pj_nama, h.sarana.length, h.alat.length, h.bahan.length, r.aktif ? "Dipakai" : "Tidak dipakai"]; }) });
+      await simpanBuku(wb, "Daftar_Ruang");
+    });
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------------------------------------------------------- template */
+async function unduhTemplate(jenis) {
+  try {
+    await sibuk(async () => {
+      const ExcelJS = await muatExcelJS();
+      const wb = new ExcelJS.Workbook();
+      const T = TEMPLATE[jenis]();
+      const ws = wb.addWorksheet("Data");
+      ws.columns = T.kolom.map((k) => ({ header: k.judul, key: k.judul, width: k.lebar }));
+      const kep = ws.getRow(1); kep.height = 30;
+      kep.eachCell((c, i) => { c.font = { bold: true, color: { argb: T.kolom[i - 1].wajib ? "FF7C2F1F" : "FF221E17" } }; c.fill = ISI_KEPALA;
+        c.alignment = { horizontal: "center", vertical: "middle", wrapText: true }; c.border = { bottom: { style: "thin" } }; });
+      (T.isi || []).forEach((b) => ws.addRow(b));
+      ws.views = [{ state: "frozen", ySplit: 1 }];
+      // Daftar pilihan (lembar Daftar) + validasi isian
+      const daftar = wb.addWorksheet("Daftar");
+      T.daftar.forEach((d, i) => {
+        const kol = String.fromCharCode(65 + i);
+        daftar.getCell(`${kol}1`).value = d.judul; daftar.getCell(`${kol}1`).font = { bold: true }; daftar.getColumn(i + 1).width = 30;
+        d.isi.forEach((v, j) => { daftar.getCell(`${kol}${j + 2}`).value = v; });
+        const kolData = String.fromCharCode(65 + T.kolom.findIndex((k) => k.judul === d.untuk));
+        if (d.isi.length) ws.dataValidations.add(`${kolData}2:${kolData}2000`, { type: "list", allowBlank: true, showErrorMessage: false,
+          formulae: [`Daftar!$${kol}$2:$${kol}$${d.isi.length + 1}`] });
+      });
+      const pt = wb.addWorksheet("Petunjuk");
+      pt.getColumn(1).width = 110;
+      ["PETUNJUK MENGISI — " + T.judul.toUpperCase(), "", ...T.petunjuk].forEach((t, i) => { const c = pt.getCell(i + 1, 1); c.value = t; c.alignment = { wrapText: true };
+        if (i === 0) c.font = { bold: true, size: 13 }; });
+      wb.views = [{ activeTab: 0 }];
+      await simpanBuku(wb, "Template_" + T.berkas);
+    });
+  } catch (e) { toast(e.message); }
+}
+const TEMPLATE = {
+  alat: () => ({ judul: "Sarana & Alat", berkas: "Sarana_Alat",
+    kolom: [{ judul: "Kode Inventaris", lebar: 22 }, { judul: "Nama Barang", lebar: 30, wajib: true }, { judul: "Kategori", lebar: 18, wajib: true }, { judul: "Ruang", lebar: 22 },
+      { judul: "Merek/Tipe", lebar: 16 }, { judul: "Spesifikasi", lebar: 18 }, { judul: "Baik", lebar: 7 }, { judul: "Rusak Ringan", lebar: 8 }, { judul: "Rusak Berat", lebar: 8 },
+      { judul: "Tahun Perolehan", lebar: 10 }, { judul: "Sumber Dana", lebar: 15 }, { judul: "Kode Rekening ARKAS", lebar: 20 }, { judul: "No. Bukti BKU", lebar: 14 },
+      { judul: "Tgl Bukti", lebar: 12 }, { judul: "Harga Satuan", lebar: 14 }, { judul: "Keterangan", lebar: 30 }],
+    daftar: [{ judul: "Kategori", untuk: "Kategori", isi: S.kategori.map((k) => k.nama) },
+      { judul: "Ruang", untuk: "Ruang", isi: S.ruang.filter((r) => r.aktif && bolehRuang(r.kode)).map((r) => r.nama) },
+      { judul: "Sumber Dana", untuk: "Sumber Dana", isi: S.dana }],
+    petunjuk: ["• Satu baris = satu jenis barang di satu ruang dari satu pembelian. Kolom berwarna merah wajib untuk barang baru: Nama Barang dan Kategori.",
+      "• Barang BARU: kosongkan Kode Inventaris. Kode dibuat otomatis saat diunggah.",
+      "• MENGUBAH barang yang sudah ada: isi Kode Inventaris (lihat Buku Induk), lalu isi hanya kolom yang ingin diubah. Sel kosong tidak menghapus isi lama.",
+      "• Cara cepat melengkapi data: unduh Buku Induk, isi kolom yang kosong (harga, tahun, kode ARKAS, dst.), lalu unggah berkas itu. Kop dan tanda tangan diabaikan.",
+      "• Jumlah ditulis menurut kondisi: Baik, Rusak Ringan, Rusak Berat. Bila ketiganya kosong untuk barang baru, dicatat 1 unit dan ditandai \"Jumlah\" belum pasti.",
+      "• Kategori, Ruang, dan Sumber Dana pilih dari daftar (lembar Daftar). Penanggung jawab ruang hanya bisa mengunggah barang di ruangnya sendiri.",
+      "• Kode Rekening ARKAS hanya untuk dana BOS, berupa angka bertitik (mis. 5.1.02.01.02.0001), diambil dari ARKAS lewat bendahara.",
+      "• Tahun Perolehan 4 angka. Tgl Bukti berformat tanggal. Harga Satuan angka tanpa titik/Rp.",
+      "• Berkas BUKU INDUK.xlsx lama juga bisa langsung diunggah; kolomnya dikenali otomatis.",
+      "• Satu unggahan disimpan seluruhnya atau tidak sama sekali. Bila ada baris yang ditolak, pesannya menyebut nomor barisnya."] }),
+  bahan: () => ({ judul: "Bahan Habis Pakai", berkas: "Bahan",
+    kolom: [{ judul: "Nama Bahan", lebar: 30, wajib: true }, { judul: "Kategori", lebar: 18 }, { judul: "Ruang", lebar: 22 }, { judul: "Satuan", lebar: 10 },
+      { judul: "Stok", lebar: 8 }, { judul: "Batas Minimum", lebar: 10 }, { judul: "Keterangan", lebar: 30 }],
+    isi: S.bahan.filter((b) => bolehRuang(b.ruang)).map((b) => [b.nama, b.kategori, namaRuang(b.ruang), b.satuan, Number(b.stok), Number(b.batas_min), b.keterangan || ""]),
+    daftar: [{ judul: "Kategori", untuk: "Kategori", isi: S.katBahan }, { judul: "Ruang", untuk: "Ruang", isi: S.ruang.filter((r) => r.aktif && bolehRuang(r.kode)).map((r) => r.nama) }],
+    petunjuk: ["• Template sudah berisi bahan di ruang Anda. Ubah, tambah baris baru, lalu unggah.",
+      "• Bahan dikenali dari Nama Bahan + Ruang (huruf besar/kecil tidak dibedakan). Yang belum ada menjadi bahan baru dengan stok awal sesuai kolom Stok.",
+      "• Bila Stok berbeda dengan stok di aplikasi, dicatat sebagai \"Hitung ulang\" di kartu stok. Pemakaian sehari-hari sebaiknya dicatat lewat tombol Masuk/Keluar.",
+      "• Status Menipis muncul bila stok sama dengan atau di bawah Batas Minimum.",
+      "• Satu unggahan disimpan seluruhnya atau tidak sama sekali."] }),
+  ruang: () => ({ judul: "Ruang", berkas: "Ruang",
+    kolom: [{ judul: "Kode", lebar: 12, wajib: true }, { judul: "Nama Ruang", lebar: 28, wajib: true }, { judul: "Jenis", lebar: 16 }, { judul: "Penanggung Jawab", lebar: 30 }, { judul: "Status", lebar: 14 }],
+    isi: S.ruang.map((r) => [r.kode, r.nama, (JENIS_RUANG[r.jenis] || ["Lainnya"])[0], r.pj ? r.pj_nama : "Staf Sarpras", r.aktif ? "Dipakai" : "Tidak dipakai"]),
+    daftar: [{ judul: "Jenis", untuk: "Jenis", isi: Object.values(JENIS_RUANG).map((x) => x[0]) },
+      { judul: "Penanggung Jawab", untuk: "Penanggung Jawab", isi: ["Staf Sarpras", ...(S.guru || []).map((g) => g.nama)] },
+      { judul: "Status", untuk: "Status", isi: ["Dipakai", "Tidak dipakai"] }],
+    petunjuk: ["• Template sudah berisi semua ruang. Tambahkan baris untuk ruang baru, mis. Kode RK-X1, Nama Kelas X-1, Jenis Ruang kelas.",
+      "• Kode 1–12 huruf/angka/tanda minus dan tidak bisa diubah. Baris dengan Kode yang sudah ada mengubah ruang itu.",
+      "• Ruang kelas selalu di bawah Staf Sarpras; kolom Penanggung Jawab untuk ruang kelas diabaikan.",
+      "• Hanya Staf Sarpras yang bisa mengunggah data ruang."] }),
+};
+
+/* ---------------------------------------------------------------- membaca unggahan */
+const normal = (s) => String(s == null ? "" : s).replace(/\s+/g, " ").trim();
+const kecil = (s) => normal(s).toLowerCase();
+function bacaLembar(XLSX, wb, cocokKepala) {
+  // Lembar pertama yang punya baris kepala cocok (lembar "Petunjuk"/"Daftar" dilewati).
+  for (const nama of wb.SheetNames) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[nama], { header: 1, defval: "", raw: true });
+    const hi = rows.findIndex((r) => r.some((v) => cocokKepala.test(kecil(v))));
+    if (hi >= 0) return { rows, hi, kep: rows[hi].map(kecil) };
+  }
+  return null;
+}
+function kolomDari(kep, aturan) {
+  const K = {};
+  Object.entries(aturan).forEach(([k, re]) => { K[k] = kep.findIndex((h) => re.test(h)); });
+  return K;
+}
+function tanggalISO(v) {
+  if (v instanceof Date) return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, "0")}-${String(v.getDate()).padStart(2, "0")}`;
+  if (typeof v === "number" && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 86400000)); return d.toISOString().slice(0, 10); }
+  const s = normal(v); let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  if ((m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/))) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  return s ? undefined : "";
+}
+const angka = (v) => { if (v === "" || v == null) return null; if (typeof v === "number") return v; const s = String(v).replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", "."); return s === "" || isNaN(+s) ? undefined : +s; };
+function cariRuangDari(v) {
+  const n = kecil(v);
+  if (!n) return null;
+  if (n === "ruang kelas") return "RK";
+  const r = S.ruang.find((x) => kecil(x.nama) === n || kecil(x.kode) === n);
+  return r ? r.kode : undefined;
+}
+function kategoriDari(j) {
+  const n = kecil(j);
+  const pas = S.kategori.find((k) => kecil(k.nama) === n || kecil(k.kode) === n);
+  if (pas) return pas.kode;
+  if (/furni|mebel|meubel/.test(n)) return "F";
+  if (/elektronik|tik|komputer/.test(n)) return "E";
+  if (/kebersihan/.test(n)) return "K";
+  if (/olahraga/.test(n)) return "O";
+  if (/praktikum|lab/.test(n)) return "L";
+  if (/kesenian|musik|seni/.test(n)) return "S";
+  if (/dapur/.test(n)) return "D";
+  if (/medis|uks|kesehatan/.test(n)) return "U";
+  if (/ibadah|pai/.test(n)) return "PI";
+  return n ? "P" : "";
+}
+function danaDari(v) {
+  const n = kecil(v);
+  if (!n) return null;
+  const pas = S.dana.find((d) => kecil(d) === n);
+  if (pas) return pas;
+  if (/yayasan/.test(n)) return "Yayasan";
+  if (/kinerja/.test(n)) return "BOS Kinerja";
+  if (/bopd/.test(n)) return "BOPD";
+  if (/bos/.test(n)) return "BOS Reguler";
+  if (/komite/.test(n)) return "Komite";
+  if (/hibah|sumbangan/.test(n)) return "Hibah/Sumbangan";
+  return "Lainnya";
+}
+const BAHAN_DI_ALAT = /kantong plastik|lap lembut/i;
+
+function bacaAlat(XLSX, wb, berkas) {
+  const L = bacaLembar(XLSX, wb, /^nama barang$/);
+  if (!L) throw new Error('Kolom "Nama Barang" tidak ditemukan. Pakai template Sarana & Alat, Buku Induk, atau BUKU INDUK.xlsx.');
+  const K = kolomDari(L.kep, { arkas: /arkas|rekening/, kodeLama: /^kode lama/, kode: /^kode( inventaris)?$/, nama: /^nama barang$/, kategori: /^kategori/, jenis: /^jenis/,
+    ruang: /^ruang$|lokasi/, merek: /merek/, spes: /spesifikasi/, jumlah: /^jumlah$/, baik: /^baik$/, rr: /rusak ringan/, rb: /rusak berat/, kondisi: /^kondisi/,
+    tahun: /tahun/, dana: /dana/, bukti: /bukti bku|^no\.? ?bukti/, tgl: /^tgl|^tanggal/, harga: /^harga/, ket: /^keterangan/ });
+  const ambil = (r, k) => (K[k] >= 0 ? r[K[k]] : "");
+  const formatLama = K.kodeLama < 0 && K.kode >= 0 && K.kategori < 0;   // BUKU INDUK.xlsx: KODE INVENTARIS berisi kode lama
+  const hasil = { baris: [], galat: [], peringatan: [], baru: 0, ubah: 0, bahan: 0 };
+  for (let i = L.hi + 1; i < L.rows.length; i++) {
+    const r = L.rows[i], ke = i + 1;
+    const nama = normal(ambil(r, "nama")).replace(/\s*-\s*$/, ""), kodeX = normal(ambil(r, "kode")).toUpperCase();
+    if (!nama && !kodeX) { if (r.every((v) => normal(v) === "")) continue; break; }   // baris JUMLAH / tanda tangan: berhenti
+    const ada = kodeX && S.alat.find((a) => a.kode === kodeX);
+    const ket = [];
+    const o = { baris: ke };
+    // isian bersama
+    if (nama) o.nama = nama.charAt(0).toUpperCase() + nama.slice(1);
+    const katX = normal(ambil(r, "kategori")) || normal(ambil(r, "jenis"));
+    if (katX) o.kategori = kategoriDari(katX);
+    const ruangX = String(ambil(r, "ruang") || "").split(/\n|,|\//).map(normal).filter(Boolean);
+    if (ruangX.length) {
+      const rk = cariRuangDari(ruangX[0]);
+      if (rk === undefined) { (ada ? hasil.peringatan : ket).push(ada ? `Baris ${ke}: ruang "${ruangX[0]}" tidak dikenal, ruang barang tidak diubah.` : "Lokasi di Excel: " + ruangX[0]); }
+      else o.ruang = rk;
+      if (ruangX.length > 1) ket.push("Juga di: " + ruangX.slice(1).join(", "));
+    }
+    [["merek", "merek"], ["spes", "spesifikasi"]].forEach(([k, f]) => { const v = normal(ambil(r, k)); if (v) o[f] = v; });
+    const th = angka(ambil(r, "tahun"));
+    if (th) o.tahun = th; else if (th === undefined) hasil.galat.push(`Baris ${ke}: Tahun Perolehan "${ambil(r, "tahun")}" bukan angka.`);
+    const danaX = normal(ambil(r, "dana"));
+    if (danaX) { o.sumber_dana = danaDari(danaX); if (o.sumber_dana === "Lainnya" && kecil(danaX) !== "lainnya") ket.push("Dana di Excel: " + danaX); }
+    const ark = normal(ambil(r, "arkas")); if (ark) o.kode_arkas = ark;
+    const bk = normal(ambil(r, "bukti")); if (bk) o.no_bukti = bk;
+    const tg = tanggalISO(ambil(r, "tgl")); if (tg) o.tgl_bukti = tg; else if (tg === undefined) hasil.galat.push(`Baris ${ke}: Tgl Bukti "${ambil(r, "tgl")}" tidak dikenali.`);
+    const hg = angka(ambil(r, "harga")); if (hg != null && hg !== undefined) o.harga_satuan = hg; else if (hg === undefined) hasil.galat.push(`Baris ${ke}: Harga Satuan bukan angka.`);
+    // jumlah & kondisi
+    const nb = angka(ambil(r, "baik")), nr = angka(ambil(r, "rr")), nB = angka(ambil(r, "rb")), nj = angka(ambil(r, "jumlah"));
+    const kond = kecil(ambil(r, "kondisi"));
+    if (nb != null || nr != null || nB != null) {
+      o.baik = nb ?? (ada ? ada.baik : 0); o.rusak_ringan = nr ?? (ada ? ada.rusak_ringan : 0); o.rusak_berat = nB ?? (ada ? ada.rusak_berat : 0); o.jumlah_pasti = true;
+    } else if (nj) {
+      const n = Math.round(nj);
+      Object.assign(o, /berat/.test(kond) ? { baik: 0, rusak_ringan: 0, rusak_berat: n } : /rusak/.test(kond) ? { baik: 0, rusak_ringan: n, rusak_berat: 0 }
+        : ada && ada.rusak_ringan + ada.rusak_berat ? {} : { baik: n, rusak_ringan: 0, rusak_berat: 0 });
+      o.jumlah_pasti = true;
+    }
+    const ketX = normal(ambil(r, "ket"));
+    if (ada) {
+      if (ketX) o.keterangan = ketX;
+      o.kode = kodeX;
+      // Unggah ulang Buku Induk tanpa mengubah jumlah: jangan menandai jumlah yang belum pasti menjadi pasti.
+      if (!ada.jumlah_pasti && !nj && o.baik === ada.baik && o.rusak_ringan === ada.rusak_ringan && o.rusak_berat === ada.rusak_berat) {
+        delete o.jumlah_pasti; delete o.baik; delete o.rusak_ringan; delete o.rusak_berat;
+      }
+      hasil.ubah++;
+    } else {
+      if (kodeX && /^SMA-INV-\d{4}-/.test(kodeX) && !formatLama) { hasil.galat.push(`Baris ${ke}: kode ${kodeX} tidak ada di inventaris. Kosongkan kolom Kode Inventaris untuk barang baru.`); continue; }
+      if (!o.nama) { hasil.galat.push(`Baris ${ke}: Nama Barang kosong.`); continue; }
+      const kodeLama = normal(ambil(r, "kodeLama")) || (formatLama || !/^SMA-INV-\d{4}-/.test(kodeX) ? kodeX : "");
+      o.sumber = `${berkas} baris ${ke}`;
+      if (BAHAN_DI_ALAT.test(o.nama)) {
+        hasil.baris.push({ baris: ke, jenis_baris: "bahan", sumber: o.sumber, nama: o.nama, kategori: "Kebersihan", ruang: o.ruang || null,
+          satuan: /kantong/i.test(o.nama) ? "pak" : "buah", stok: nj ? Math.round(nj) : 0, batas_min: 0, keterangan: [...ket, ketX].filter(Boolean).join(". ") });
+        hasil.bahan++; continue;
+      }
+      if (!o.kategori) { hasil.galat.push(`Baris ${ke}: Kategori kosong.`); continue; }
+      if (o.baik === undefined) Object.assign(o, { baik: 1, rusak_ringan: 0, rusak_berat: 0, jumlah_pasti: false });
+      if (kodeLama) {
+        o.kode_lama = kodeLama;
+        if (!o.tahun && /-(\d{4})$/.test(kodeLama)) o.tahun = +kodeLama.slice(-4);   // BUKU INDUK.xlsx: tahun di akhir kode lama
+        const p = kodeLama.split("-");
+        if (formatLama && p.length > 4 && (p[3] !== o.kategori || !o.ruang || (p[4] || "").toUpperCase() !== o.ruang)) ket.push("Kode lama tidak cocok dengan isi baris");
+      }
+      if (/^alat\s*-?\s*alat/i.test(o.nama)) ket.push("Perlu dirinci per alat");
+      if (ketX) ket.push(ketX);
+      if (ket.length) o.keterangan = ket.join(". ");
+      if (o.ruang && !bolehRuang(o.ruang)) { hasil.galat.push(`Baris ${ke}: ${namaRuang(o.ruang)} bukan ruang tanggung jawab Anda.`); continue; }
+      if (!o.ruang && !admin()) { hasil.galat.push(`Baris ${ke}: isi kolom Ruang dengan ruang Anda.`); continue; }
+      hasil.baru++;
+    }
+    hasil.baris.push(o);
+  }
+  return hasil;
+}
+function bacaBahan(XLSX, wb) {
+  const L = bacaLembar(XLSX, wb, /^nama bahan$/);
+  if (!L) throw new Error('Kolom "Nama Bahan" tidak ditemukan. Pakai template Bahan.');
+  const K = kolomDari(L.kep, { nama: /^nama bahan$/, kategori: /^kategori/, ruang: /^ruang/, satuan: /^satuan/, stok: /^stok/, batas: /batas/, ket: /^keterangan/ });
+  const ambil = (r, k) => (K[k] >= 0 ? r[K[k]] : "");
+  const hasil = { baris: [], galat: [], peringatan: [], baru: 0, ubah: 0 };
+  for (let i = L.hi + 1; i < L.rows.length; i++) {
+    const r = L.rows[i], ke = i + 1, nama = normal(ambil(r, "nama"));
+    if (!nama) { if (r.every((v) => normal(v) === "")) continue; break; }
+    const o = { baris: ke, nama };
+    const katX = normal(ambil(r, "kategori"));
+    if (katX) o.kategori = S.katBahan.find((k) => kecil(k) === kecil(katX)) || "Lainnya";
+    const rx = normal(ambil(r, "ruang")), rk = cariRuangDari(rx);
+    if (rk === undefined) { hasil.galat.push(`Baris ${ke}: ruang "${rx}" tidak dikenal.`); continue; }
+    o.ruang = rk || "";
+    if (!bolehRuang(o.ruang) && !(admin() && !o.ruang)) { hasil.galat.push(`Baris ${ke}: ${namaRuang(o.ruang) || "tanpa ruang"} bukan ruang tanggung jawab Anda.`); continue; }
+    const st = normal(ambil(r, "satuan")); if (st) o.satuan = st;
+    const sk = angka(ambil(r, "stok")); if (sk === undefined || sk < 0) { hasil.galat.push(`Baris ${ke}: Stok bukan angka.`); continue; } if (sk != null) o.stok = sk;
+    const bm = angka(ambil(r, "batas")); if (bm != null && bm !== undefined) o.batas_min = bm;
+    const kt = normal(ambil(r, "ket")); if (kt) o.keterangan = kt;
+    const ada = S.bahan.find((b) => kecil(b.nama) === kecil(nama) && (b.ruang || "") === o.ruang);
+    if (ada) hasil.ubah++; else hasil.baru++;
+    hasil.baris.push(o);
+  }
+  return hasil;
+}
+function bacaRuang(XLSX, wb) {
+  const L = bacaLembar(XLSX, wb, /^nama ruang$/);
+  if (!L) throw new Error('Kolom "Nama Ruang" tidak ditemukan. Pakai template Ruang.');
+  const K = kolomDari(L.kep, { kode: /^kode/, nama: /^nama ruang$/, jenis: /^jenis/, pj: /penanggung/, status: /^status/ });
+  const ambil = (r, k) => (K[k] >= 0 ? r[K[k]] : "");
+  const hasil = { baris: [], galat: [], peringatan: [], baru: 0, ubah: 0 };
+  for (let i = L.hi + 1; i < L.rows.length; i++) {
+    const r = L.rows[i], ke = i + 1, kode = normal(ambil(r, "kode")).toUpperCase(), nama = normal(ambil(r, "nama"));
+    if (!kode && !nama) { if (r.every((v) => normal(v) === "")) continue; break; }
+    if (!/^[A-Z0-9-]{1,12}$/.test(kode)) { hasil.galat.push(`Baris ${ke}: Kode "${kode}" harus 1–12 huruf/angka/tanda minus.`); continue; }
+    if (!nama) { hasil.galat.push(`Baris ${ke}: Nama Ruang kosong.`); continue; }
+    const jx = kecil(ambil(r, "jenis"));
+    const jenis = (Object.entries(JENIS_RUANG).find(([k, [n]]) => kecil(n) === jx || k === jx) || [jx.includes("kelas") ? "kelas" : jx.includes("lab") ? "lab" : "lainnya"])[0];
+    const px = kecil(ambil(r, "pj"));
+    let pj = "";
+    if (px && px !== "staf sarpras" && jenis !== "kelas") {
+      const g = (S.guru || []).find((g) => kecil(g.nama) === px) || (S.guru || []).find((g) => kecil(g.nama).startsWith(px));
+      if (!g) { hasil.galat.push(`Baris ${ke}: penanggung jawab "${ambil(r, "pj")}" tidak ditemukan di data guru.`); continue; }
+      pj = g.id;
+    }
+    const aktif = !/tidak/.test(kecil(ambil(r, "status")));
+    if (S.ruang.some((x) => x.kode === kode)) hasil.ubah++; else hasil.baru++;
+    hasil.baris.push({ baris: ke, kode, nama, jenis, pj, aktif });
+  }
+  return hasil;
+}
+
+/* Tombol Unggah: pilih berkas → baca → pratinjau → simpan */
+const UNGGAH = {
+  alat: { judul: "Unggah sarana & alat", baca: bacaAlat, rpc: "sp_alat_unggah",
+    ringkas: (h) => `${h.baru} barang baru, ${h.ubah} barang diubah${h.bahan ? `, ${h.bahan} bahan` : ""}`,
+    hasil: (x) => `${x.baru} baru, ${x.ubah} diubah${x.sama ? `, ${x.sama} tanpa perubahan` : ""}${x.lewat ? `, ${x.lewat} dilewati (sudah pernah diunggah)` : ""}${x.bahan ? `, ${x.bahan} bahan` : ""}`,
+    kolom: (o) => [o.kode || '<span class="pil b">Baru</span>', esc(o.nama || (S.alat.find((a) => a.kode === o.kode) || {}).nama || ""), esc(o.jenis_baris === "bahan" ? "Bahan" : o.kategori ? namaKat(o.kategori) : ""), esc(namaRuang(o.ruang) || "—"),
+      esc(o.baik != null ? `${o.baik}/${o.rusak_ringan}/${o.rusak_berat}` : o.stok != null ? o.stok : ""), esc(Object.keys(o).filter((k) => !["baris", "kode", "nama", "kategori", "ruang", "baik", "rusak_ringan", "rusak_berat", "sumber", "jumlah_pasti", "jenis_baris", "stok", "satuan", "batas_min"].includes(k)).map((k) => LABEL_ISIAN[k] || (k === "kode_lama" ? "kode lama" : k)).join(", "))],
+    kepala: ["Kode", "Nama", "Kategori", "Ruang", "B/RR/RB", "Isian lain"] },
+  bahan: { judul: "Unggah bahan habis pakai", baca: bacaBahan, rpc: "sp_bahan_unggah",
+    ringkas: (h) => `${h.baru} bahan baru, ${h.ubah} bahan diperbarui`,
+    hasil: (x) => `${x.baru} baru, ${x.ubah} diperbarui${x.stok ? ` (${x.stok} stok dihitung ulang)` : ""}${x.sama ? `, ${x.sama} tanpa perubahan` : ""}`,
+    kolom: (o) => [esc(o.nama), esc(o.kategori || ""), esc(namaRuang(o.ruang) || "—"), esc(o.stok ?? ""), esc(o.satuan || ""), esc(o.batas_min ?? "")],
+    kepala: ["Nama bahan", "Kategori", "Ruang", "Stok", "Satuan", "Batas min."] },
+  ruang: { judul: "Unggah data ruang", baca: bacaRuang, rpc: "sp_ruang_unggah",
+    ringkas: (h) => `${h.baru} ruang baru, ${h.ubah} ruang diperbarui`,
+    hasil: (x) => `${x.baru} ruang baru, ${x.ubah} diperbarui`,
+    kolom: (o) => [esc(o.kode), esc(o.nama), esc((JENIS_RUANG[o.jenis] || ["Lainnya"])[0]), esc(o.pj ? ((S.guru || []).find((g) => g.id === o.pj) || {}).nama : "Staf Sarpras"), o.aktif ? "Dipakai" : "Tidak dipakai"],
+    kepala: ["Kode", "Nama ruang", "Jenis", "Penanggung jawab", "Status"] },
+};
+function pilihUnggah(jenis) {
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = ".xlsx,.xls";
+  inp.onchange = async () => {
+    const f = inp.files[0]; if (!f) return;
+    try {
+      const XLSX = await sibuk(muatSheetJS);
+      const h = UNGGAH[jenis].baca(XLSX, XLSX.read(await f.arrayBuffer(), { cellDates: true }), f.name);
+      pratinjauUnggah(jenis, f.name, h);
+    } catch (e) { toast(e.message); }
+  };
+  inp.click();
+}
+function pratinjauUnggah(jenis, berkas, h) {
+  const U = UNGGAH[jenis], bisa = h.baris.length && !h.galat.length;
+  dialog({ atas: berkas, judul: U.judul, isi: `
+    <div class="ubin">
+      <div class="${h.baris.length ? "b" : "c"}"><span class="lambang">${ikon("unggah")}</span><span><b>${h.baris.length}</b><span class="t">${esc(U.ringkas(h))}</span></span></div>
+      <div class="${h.galat.length ? "k" : "b"}"><span class="lambang">${ikon(h.galat.length ? "awas" : "centang")}</span><span><b>${h.galat.length}</b><span class="t">baris perlu diperbaiki</span></span></div>
+    </div>
+    ${h.galat.length ? `<p class="catatan awas">${ikon("awas")}<span>Perbaiki baris berikut di Excel, lalu unggah lagi. Belum ada yang disimpan.<br>${h.galat.slice(0, 30).map(esc).join("<br>")}${h.galat.length > 30 ? `<br>… dan ${h.galat.length - 30} lainnya` : ""}</span></p>` : ""}
+    ${h.peringatan.length ? `<p class="catatan emas">${ikon("info")}<span>${h.peringatan.slice(0, 20).map(esc).join("<br>")}</span></p>` : ""}
+    ${h.baris.length ? `<div class="gulir" style="max-height:340px"><table><thead><tr><th>Baris</th>${U.kepala.map((k) => `<th>${k}</th>`).join("")}</tr></thead><tbody>
+      ${h.baris.slice(0, 300).map((o) => `<tr><td class="kecil">${o.baris}</td>${U.kolom(o).map((v) => `<td>${v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      ${h.baris.length > 300 ? `<p class="kecil">Menampilkan 300 baris pertama dari ${h.baris.length}.</p>` : ""}` : ""}
+    <p class="kecil">Satu unggahan disimpan seluruhnya atau tidak sama sekali. Sel kosong tidak menghapus isi yang sudah ada.</p>`,
+    kaki: `<button class="tombol" value="batal" formnovalidate>Batal</button>${bisa ? `<button class="tombol utama" value="simpan">${ikon("unggah")}Simpan ${h.baris.length} baris</button>` : ""}`,
+    onSimpan: async () => {
+      const x = await sibuk(() => rpc(U.rpc, { p_pin: S.pin, p_baris: h.baris }));
+      await sibuk(muatUlang);
+      tutupDialog(); segarkan(); toast("Tersimpan: " + U.hasil(x));
+    } });
+}
+const tombolBerkas = (jenis, unduhId) => `
+  ${unduhId ? `<button class="tombol" type="button" id="${unduhId}">${ikon("unduh")}Unduh</button>` : ""}
+  ${bisaUbah() && (jenis !== "ruang" || admin()) ? `<button class="tombol" type="button" data-template="${jenis}">${ikon("tabel")}Unduh template</button>
+  <button class="tombol" type="button" data-unggah="${jenis}">${ikon("unggah")}Unggah data</button>` : ""}`;
+function pasangTombolBerkas(root) {
+  root.querySelectorAll("[data-template]").forEach((b) => b.onclick = () => unduhTemplate(b.dataset.template));
+  root.querySelectorAll("[data-unggah]").forEach((b) => b.onclick = () => pilihUnggah(b.dataset.unggah));
+}
+
+/* ---------------------------------------------------------------- Buku Induk */
+TAB.induk = () => {
+  const s = S.saringInduk;
+  const tahun = [...new Set(S.alat.map((a) => a.tahun).filter(Boolean))].sort((a, b) => b - a);
+  return `<section class="kartu">
+    <div class="kepala-bagian"><div><h2>Buku Induk Sarana &amp; Prasarana</h2><p class="sub">Daftar inventaris resmi seluruh sarana dan alat. Unduhannya memakai kop dan penanda tangan dari Profil Dokumen.</p></div>
+      <div class="aksi">${tombolBerkas("alat", "b-unduh-induk")}</div></div>
+    <div class="saring">
+      <label class="f cari" for="i-q">Cari${ikon("cari")}<input type="search" id="i-q" value="${esc(s.q)}" placeholder="Nama, kode, merek"></label>
+      <label class="f" for="i-ruang">Ruang<select id="i-ruang"><option value="">Semua ruang</option>${opsi(S.ruang.map((r) => [r.kode, r.nama]), s.ruang)}${opsi([["-", "Belum ada ruang"]], s.ruang)}</select></label>
+      <label class="f" for="i-gol">Golongan<select id="i-gol"><option value="">Sarana &amp; alat</option>${opsi([["sarana", "Sarana"], ["alat", "Alat"]], s.gol)}</select></label>
+      <label class="f" for="i-dana">Sumber dana<select id="i-dana"><option value="">Semua</option>${opsi(S.dana.map((d) => [d, d]), s.dana)}${opsi([["-", "Belum diisi"]], s.dana)}</select></label>
+      <label class="f" for="i-tahun">Tahun<select id="i-tahun"><option value="">Semua</option>${opsi(tahun.map((t) => [t, t]), s.tahun)}</select></label>
+    </div>
+    <div class="ubin" id="i-ringkas"></div>
+    <div id="i-tabel"></div>
+  </section>`;
+};
+function saringInduk() {
+  const { q, ruang, gol, dana, tahun } = S.saringInduk, qq = kecil(q);
+  return S.alat.filter((a) => (!qq || kecil(a.nama + " " + a.kode + " " + (a.kode_lama || "") + " " + (a.merek || "")).includes(qq))
+    && (!ruang || (ruang === "-" ? !a.ruang : a.ruang === ruang)) && (!gol || golongan(a) === gol)
+    && (!dana || (dana === "-" ? !a.sumber_dana : a.sumber_dana === dana)) && (!tahun || String(a.tahun) === String(tahun)))
+    .sort((a, b) => a.kode.localeCompare(b.kode));
+}
+TAB.induk.sesudah = () => {
+  const isi = () => {
+    const d = saringInduk(), unit = d.reduce((s, a) => s + a.jumlah, 0);
+    const nilai = d.reduce((s, a) => s + (a.harga_satuan == null ? 0 : Number(a.harga_satuan) * a.jumlah), 0), tanpaHarga = d.filter((a) => a.harga_satuan == null).length;
+    $("i-ringkas").innerHTML = `<div class="i"><span class="lambang">${ikon("kotak")}</span><span><b>${bil(d.length)}</b><span class="t">jenis barang · ${bil(unit)} unit</span></span></div>
+      <div class="${tanpaHarga ? "c" : "b"}"><span class="lambang">${ikon("tabel")}</span><span><b style="font-size:20px">${rp(nilai) || "Rp 0"}</b><span class="t">nilai perolehan${tanpaHarga ? ` · ${tanpaHarga} belum ada harga` : ""}</span></span></div>`;
+    $("i-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table class="tabel-induk"><thead><tr><th>No.</th><th>Kode inventaris</th><th>Nama barang</th><th>Kategori</th><th>Ruang</th>
+      <th class="n">Jml</th><th class="n">B</th><th class="n">RR</th><th class="n">RB</th><th>Tahun</th><th>Sumber dana</th><th>Kode ARKAS</th><th>Bukti BKU</th><th class="n">Harga satuan</th><th class="n">Nilai</th><th>Keterangan</th></tr></thead><tbody>
+      ${d.map((a, i) => `<tr class="klik" tabindex="0" data-alat="${a.id}"><td class="n">${i + 1}</td><td class="kode">${esc(a.kode)}${a.kode_lama ? `<p class="kecil">${esc(a.kode_lama)}</p>` : ""}</td>
+        <td class="nama-sel"><b>${esc(a.nama)}</b>${a.merek ? `<p class="kecil">${esc(a.merek)}</p>` : ""}</td><td>${esc(namaKat(a.kategori))}</td><td>${esc(namaRuang(a.ruang) || "—")}</td>
+        <td class="n">${a.jumlah_pasti ? a.jumlah : "?"}</td><td class="n">${a.baik}</td><td class="n">${a.rusak_ringan || ""}</td><td class="n">${a.rusak_berat || ""}</td><td>${esc(a.tahun || "")}</td>
+        <td>${esc(a.sumber_dana || "")}</td><td class="kode">${esc(a.kode_arkas || "")}</td><td class="kecil">${esc([a.no_bukti, a.tgl_bukti].filter(Boolean).join(" · "))}</td>
+        <td class="n">${a.harga_satuan == null ? "" : bil(a.harga_satuan)}</td><td class="n">${a.harga_satuan == null ? "" : bil(Number(a.harga_satuan) * a.jumlah)}</td><td class="kecil">${esc(a.keterangan || "")}</td></tr>`).join("")}
+      </tbody><tfoot><tr><td colspan="5">Jumlah</td><td class="n">${bil(unit)}</td><td colspan="8"></td><td class="n">${bil(nilai)}</td><td></td></tr></tfoot></table></div>`
+      : `<div class="kosong">${ikon("kotak")}<span>${S.alat.length ? "Tidak ada barang yang cocok dengan saringan." : "Buku induk masih kosong. Unggah BUKU INDUK.xlsx atau template Sarana & Alat lewat tombol Unggah data."}</span></div>`;
+    pasangKlikTabel($("i-tabel"));
+  };
+  isi();
+  [["i-q", "q"], ["i-ruang", "ruang"], ["i-gol", "gol"], ["i-dana", "dana"], ["i-tahun", "tahun"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { S.saringInduk[k] = e.target.value; isi(); }));
+  $("b-unduh-induk").onclick = () => {
+    const s = S.saringInduk;
+    const ket = [s.ruang ? (s.ruang === "-" ? "Belum ada ruang" : namaRuang(s.ruang)) : "", s.gol ? (s.gol === "sarana" ? "Sarana" : "Alat") : "", s.dana && s.dana !== "-" ? s.dana : "", s.tahun ? "Tahun " + s.tahun : ""].filter(Boolean).join(" · ");
+    unduhBukuInduk(saringInduk(), ket);
+  };
+  pasangTombolBerkas($("isi"));
+};
+
+/* ---------------------------------------------------------------- Profil Dokumen */
+TAB.profil = () => {
+  const p = profilKop();
+  const isian = [["Nama sekolah", p.nama_sekolah], ["Alamat", p.alamat], ["Kota tanda tangan", p.kota], ["NPSN", p.npsn], ["Telepon", p.telepon], ["Email", p.email],
+    ["Laman", p.laman], ["Kepala sekolah", p.kepala_sekolah], ["NIP kepala sekolah", p.nip_kepala], ["Berkas logo", p.logo_url], ["Catatan kaki", p.catatan_kaki]];
+  const ttd = [["Kepala Sekolah", p.kepala_sekolah, "Profil Dokumen", "Kiri: Mengetahui"],
+    ["Wakasek Sarana Prasarana", p.wakasek_sarpras, "Tugas Guru", p.wakasek_sarpras ? "Kanan" : "Belum ada; dipakai Staf Sarpras"],
+    ["Staf Sarana Prasarana", p.staf_sarpras, "Tugas Guru", p.wakasek_sarpras ? "Tidak dipakai" : "Kanan"]];
+  return `<section class="kartu">
+    <div class="kepala-bagian"><div><h2>Profil Dokumen</h2><p class="sub">Identitas sekolah, tata letak kop, dan penanda tangan yang dipakai semua unduhan Excel di aplikasi ini. Sama dengan Data Induk, Kehadiran Guru, Absensi Ekskul, dan Induk Pembiayaan.</p></div>
+      <div class="aksi"><a class="tombol" href="https://smapmerdekasoreang99-star.github.io/data_induk/" target="_blank" rel="noopener">${ikon("ubah")}Ubah di Data Induk</a>
+        <button class="tombol utama" type="button" id="b-contoh">${ikon("unduh")}Unduh contoh</button></div></div>
+    ${!S.profil ? `<p class="catatan awas">${ikon("awas")}<span>Profil dokumen belum terbaca, sehingga kop memakai nilai bawaan.</span></p>` : ""}
+    <p class="catatan">${ikon("info")}<span>Profil dan kop berlaku untuk seluruh aplikasi sekolah, jadi hanya diubah oleh operator Data Induk (menu Profil Dokumen) yang masuk dengan akun. Perubahan di sana langsung terpakai di sini.</span></p>
+  </section>
+  <section class="kartu"><div class="kepala-bagian"><div><h3>Pratinjau kop</h3><p class="sub">Susunan sama persis dengan yang keluar di berkas Excel.</p></div></div>
+    <div class="kop-pratinjau"><canvas id="kop-kanvas" aria-label="Pratinjau kop dokumen"></canvas></div></section>
+  <div class="grid2">
+    <section class="kartu"><h3>Isian</h3><div class="gulir"><table><tbody>${isian.map(([l, v]) => `<tr><td class="kecil" style="width:180px">${esc(l)}</td><td>${v ? esc(v) : '<span class="kecil">belum diisi</span>'}</td></tr>`).join("")}</tbody></table></div></section>
+    <section class="kartu"><h3>Penanda tangan dokumen Sarpras</h3>
+      <div class="gulir"><table><thead><tr><th>Jabatan</th><th>Nama</th><th>Asal</th><th>Di dokumen</th></tr></thead><tbody>
+      ${ttd.map(([j, n, asal, pakai]) => `<tr><td>${esc(j)}</td><td>${n ? `<b>${esc(n)}</b>` : '<span class="pil c">belum ada</span>'}</td><td class="kecil">${esc(asal)}</td><td class="kecil">${esc(pakai)}</td></tr>`).join("")}
+      </tbody></table></div>
+      <p class="kecil">Nama pejabat diturunkan dari jabatan di Data Induk → Tugas Guru, tidak diketik di sini. Bila Wakasek Sarana Prasarana dipasang di sana, ia otomatis menggantikan Staf Sarpras di kolom kanan.</p></section>
+  </div>`;
+};
+TAB.profil.sesudah = async () => {
+  $("b-contoh").onclick = () => unduhBukuInduk(S.alat.slice(0, 5).length ? S.alat.slice(0, 5) : [{ kode: "SMA-INV-2026-E-0001", nama: "Contoh: Proyektor", kategori: "E", ruang: "", baik: 1, rusak_ringan: 0, rusak_berat: 0, jumlah: 1, jumlah_pasti: true }], "Contoh unduhan");
+  const K = window.KopDokumen, kv = $("kop-kanvas");
+  if (!K || !kv) return;
+  const lebar = 760, judul = "BUKU INDUK SARANA DAN PRASARANA", sub = "Semua ruang · keadaan " + tglPanjang();
+  const tinggi = K.tinggiKopKanvas(profilKop(), judul, sub);
+  const skala = window.devicePixelRatio || 1;
+  kv.width = lebar * skala; kv.height = tinggi * skala; kv.style.width = lebar + "px"; kv.style.height = tinggi + "px";
+  const g = kv.getContext("2d"); g.scale(skala, skala); g.fillStyle = "#fff"; g.fillRect(0, 0, lebar, tinggi);
+  const gambar = (logo) => K.kopKanvas(g, { logo, profil: profilKop(), judul, sub, padding: 16, lebar });
+  const img = new Image(); img.onload = () => gambar(img); img.onerror = () => gambar(null); img.src = profilKop().logo_url || "assets/logo.png";
+};
 
 /* ================================================================ mulai */
 document.addEventListener("DOMContentLoaded", async () => {

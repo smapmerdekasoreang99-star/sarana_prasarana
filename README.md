@@ -11,8 +11,19 @@ Alamat (setelah repositori `sarana_prasarana` dibuat di akun sekolah): https://s
 | Ruang | **Denah kotak** per jenis ruang (laboratorium, layanan, kantor, kelas, lainnya) dengan jumlah Sarana · Alat · Bahan, tanda rusak / bahan menipis / belum lengkap. Pilih kotak → halaman ruang dengan pilihan **Sarana · Alat · Bahan**, tombol catat langsung di ruang itu, cetak label ruang |
 | Sarana & Alat | Seluruh barang, saring golongan/kategori/ruang/kelengkapan, formulir + riwayat, unduh Excel (lembar Sarana & Alat + Bahan) |
 | Bahan | Stok bahan habis pakai per ruang, status Cukup/Menipis/Habis, tombol Masuk/Keluar, kartu stok, hitung ulang |
+| Buku Induk | Tampilan buku induk (semua kolom, jumlah unit & nilai perolehan), saring ruang/golongan/dana/tahun, **Unduh** xlsx berkop (format Profil Dokumen + tanda tangan), **Unduh template**, **Unggah data** |
 | Label QR | Lembar stiker A4 3 × 8 (70 × 37 mm), per ruang/golongan, satu label per jenis atau per unit |
-| Impor Excel | BUKU INDUK.xlsx diperiksa & dirapikan sebelum disimpan; kantong plastik & lap masuk ke Bahan; baris yang sudah diimpor dilewati |
+| Profil Dokumen | Pratinjau kop, isian profil, penanda tangan dokumen Sarpras. Dibaca dari Data Induk → Profil Dokumen (diubah di sana) |
+
+**Unduh / Unduh template / Unggah data** ada di Ruang, Sarana & Alat, Bahan, dan Buku Induk:
+- Unduhan berkop memakai `assets/kop-dokumen.js` + `assets/kepala-excel.js` (salinan sama persis dari Data Induk; `md5sum */assets/kop-dokumen.js` harus sama)
+  dan ExcelJS 4.4.0 dari CDN dengan SRI (sama dengan Data Induk). Tanda tangan: kiri Kepala Sekolah (Mengetahui), kanan Wakasek Sarana Prasarana,
+  atau Staf Sarana Prasarana bila Wakasek belum dipasang di Tugas Guru.
+- Template: lembar Data (kolom wajib merah, pilihan daftar), Daftar, Petunjuk. Template Ruang & Bahan sudah berisi data yang ada.
+- Unggah Sarana & Alat menerima template, Buku Induk berkop hasil unduhan (kop/tanda tangan diabaikan), dan BUKU INDUK.xlsx lama.
+  Baris dengan Kode Inventaris yang ada = diubah (sel kosong tidak menghapus), tanpa kode = barang baru, berkas yang sama diunggah ulang = dilewati.
+- Bahan dikenali dari Nama + Ruang; Stok yang berbeda dicatat sebagai Hitung ulang. Ruang: hanya Staf Sarpras.
+- Satu unggahan = satu transaksi; baris yang ditolak disebut nomornya dan tidak ada yang tersimpan.
 
 **Sarana** = perabot & perlengkapan ruang (kategori Mebel, Pelengkap ruangan). **Alat** = peralatan (kategori lain).
 **Bahan** = habis pakai, dicatat stoknya (ATK, Kebersihan, Bahan praktikum, Kesehatan (UKS), Konsumsi, Lainnya).
@@ -54,7 +65,8 @@ Kode rekening diambil dari ARKAS lewat bendahara; kode di RKAS hanya perkiraan.
 | `config.js` | Alamat server Merdeka Tools (sama dengan Tryout/Matdas/ER) |
 
 Database: `../database/supabase/migrations/20261031073716_sarpras_tahap_1_ruang_alat_riwayat_dan_akses_pin.sql`,
-lanjutan `20261031083443_sarpras_admin_pin_uks_golongan_dan_bahan_habis_pakai.sql` (PIN admin, UKS, golongan, bahan),
+lanjutan `20261031083443_sarpras_admin_pin_uks_golongan_dan_bahan_habis_pakai.sql` (PIN admin, UKS, golongan, bahan) dan
+`20261031092510_sarpras_profil_dokumen_dan_unggah_data_ruang_alat_bahan.sql` (sp_profil, sp_*_unggah),
 kontrak `../database/kontrak/sarana_prasarana.sql`. Tabel `sp_kategori`, `sp_ruang`, `sp_alat`, `sp_riwayat`, `sp_bahan`,
 `sp_bahan_gerak`, `sp_privat` hanya
 bisa diakses lewat fungsi.
