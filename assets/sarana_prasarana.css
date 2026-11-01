@@ -23,10 +23,10 @@ svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-widt
 .atas { position: sticky; top: 0; z-index: var(--lapis-topbar); background: linear-gradient(180deg, #213149 0%, var(--gelap) 100%); color: var(--tinta-terang); box-shadow: 0 1px 0 var(--gelap-2); }
 .atas-dalam { max-width: var(--lebar); margin: 0 auto; padding: 10px var(--j4); display: flex; align-items: center; gap: var(--j4); min-height: 64px; }
 .merek { display: flex; align-items: center; gap: var(--j3); color: inherit; text-decoration: none; min-width: 0; margin-right: auto; }
-.merek-ikon { width: 40px; height: 40px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
-.merek-teks { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
-.merek-teks .sek { font-size: 11px; color: var(--tinta-terang-2); letter-spacing: .08em; text-transform: uppercase; }
-.merek-teks b { font-family: var(--f-judul); font-size: 20px; font-weight: 600; }
+.merek-lambang { height: 46px; width: auto; flex: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+.merek-teks { display: flex; flex-direction: column; align-items: flex-start; text-align: left; line-height: 1.2; min-width: 0; }
+.merek-teks .aplikasi { font-size: 13px; font-weight: 600; color: var(--emas); letter-spacing: .03em; margin-top: 2px; }
+.merek-teks b { font-family: var(--f-judul); font-size: 19px; font-weight: 600; white-space: nowrap; }
 .pengguna { display: flex; align-items: center; gap: var(--j3); }
 .pengguna .chip { display: flex; align-items: center; gap: 10px; padding: 4px 6px 4px 4px; border-radius: var(--r-bulat); background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); }
 .avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: var(--gelap); background: var(--emas); flex: none; }
@@ -286,7 +286,9 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
 }
 
 @media (max-width: 720px) {
-  .merek-teks .sek { display: none; }
+  .merek-lambang { height: 40px; }
+  .merek-teks b { font-size: 15px; }
+  .merek-teks .aplikasi { font-size: 12px; }
   .pengguna .nama { display: none; }
   .tab button { flex: 0 0 auto; }
   .kartu { padding: var(--j4); }
