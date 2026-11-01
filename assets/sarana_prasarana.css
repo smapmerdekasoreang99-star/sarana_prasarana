@@ -47,10 +47,10 @@ svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-widt
 .panduan-menu a:hover { background: var(--kertas-3); }
 .panduan-menu small { display: block; font-weight: 400; color: var(--tinta-2); font-size: var(--h-xs); margin-top: 2px; }
 .panduan-menu p { margin: 4px 12px 6px; font-size: var(--h-xs); color: var(--tinta-2); }
-@media (max-width: 720px) { .panduan > summary .t { display: none; } .panduan-menu { position: fixed; left: 16px; right: 16px; top: 72px; width: auto; } }
+@media (max-width: 720px) { .panduan > summary .t { display: none; } .panduan-menu { position: fixed; left: 12px; right: 12px; top: calc(var(--tinggi-atas, 64px) + 6px); width: auto; } }
 
 /* ---------- Tab ---------- */
-.tab-wadah { position: sticky; top: 64px; z-index: var(--lapis-nav); background: linear-gradient(var(--kertas) 70%, rgba(250,247,240,0)); padding: var(--j3) var(--j4) var(--j2); }
+.tab-wadah { position: sticky; top: var(--tinggi-atas, 64px); z-index: var(--lapis-nav); background: linear-gradient(var(--kertas) 70%, rgba(250,247,240,0)); padding: var(--j3) var(--j4) var(--j2); }
 .tab { max-width: var(--lebar); margin: 0 auto; display: flex; gap: var(--j1); padding: 5px; background: var(--kertas-2); border: 1px solid var(--garis); border-radius: var(--r3); box-shadow: var(--bayang-2); overflow-x: auto; scrollbar-width: none; }
 .tab::-webkit-scrollbar { display: none; }
 .tab button { flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: var(--j2); background: transparent; border: 0; color: var(--tinta-2); font: 600 var(--h-s) var(--f-isi); min-height: 42px; padding: 0 var(--j4); border-radius: var(--r2); cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
@@ -286,14 +286,25 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
 }
 
 @media (max-width: 720px) {
-  .merek-lambang { height: 40px; }
-  .merek-teks b { font-size: 15px; }
+  /* Kepala di HP (1 Nov 2026): nama sekolah boleh turun baris supaya tidak menimpa tombol Panduan. */
+  .atas-dalam { gap: var(--j2); padding: 8px 12px; }
+  .merek { flex: 1 1 auto; gap: 10px; }
+  .merek-lambang { height: 38px; }
+  .merek-teks b { font-size: 15px; white-space: normal; line-height: 1.15; }
   .merek-teks .aplikasi { font-size: 12px; }
+  .pengguna, .panduan { flex: none; }
+  .pengguna { gap: var(--j2); }
+  .panduan > summary, .tombol-atas { min-height: 36px; padding: 0 10px; }
   .pengguna .nama { display: none; }
   .tab button { flex: 0 0 auto; }
   .kartu { padding: var(--j4); }
   .dl { grid-template-columns: 1fr; gap: 2px; } .dl dd { margin-bottom: var(--j2); }
   .riwayat li { grid-template-columns: 1fr; gap: 0; }
   .tombol-atas .t { display: none; }
+}
+@media (max-width: 420px) {
+  .pengguna .chip { padding: 0; border: 0; background: none; }
+  .avatar { width: 30px; height: 30px; font-size: 12px; }
+  .merek-lambang { height: 34px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before { transition: none !important; animation: none !important; } }

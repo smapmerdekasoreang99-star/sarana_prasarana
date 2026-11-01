@@ -1268,6 +1268,11 @@ TAB.profil.sesudah = async () => {
 /* ================================================================ mulai */
 document.addEventListener("DOMContentLoaded", async () => {
   pasangIkon();
+  // Tinggi kepala halaman bisa berubah (nama sekolah turun baris di HP): bilah tab & menu Panduan menempel tepat di bawahnya.
+  const atas = document.querySelector(".atas");
+  const aturTinggi = () => document.documentElement.style.setProperty("--tinggi-atas", atas.offsetHeight + "px");
+  aturTinggi();
+  if (window.ResizeObserver) new ResizeObserver(aturTinggi).observe(atas); else window.addEventListener("resize", aturTinggi);
   document.addEventListener("click", (e) => { const d = document.querySelector(".panduan"); if (d && d.open && !d.contains(e.target)) d.open = false; });
   $("tab").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) buka(b.dataset.tab); });
   $("form-pin").onsubmit = async (e) => {
