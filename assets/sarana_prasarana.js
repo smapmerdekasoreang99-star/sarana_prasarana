@@ -1312,24 +1312,34 @@ function saringInduk() {
     && (!dana || (dana === "-" ? !a.sumber_dana : a.sumber_dana === dana)) && (!tahun || String(a.tahun) === String(tahun)))
     .sort((a, b) => a.kode.localeCompare(b.kode));
 }
+// Posisi kolom beku mengikuti lebar kolom sebelumnya, yang berubah menurut isi.
+function aturKolomBeku() {
+  const t = document.querySelector("#i-tabel table");
+  if (!t) return;
+  const [a, b] = t.querySelectorAll("thead th");
+  t.style.setProperty("--kiri-2", a.offsetWidth + "px");
+  t.style.setProperty("--kiri-3", a.offsetWidth + b.offsetWidth + "px");
+}
 TAB.induk.sesudah = () => {
   const isi = () => {
     const d = saringInduk(), unit = d.reduce((s, a) => s + a.jumlah, 0);
     const nilai = d.reduce((s, a) => s + (a.harga_satuan == null ? 0 : Number(a.harga_satuan) * a.jumlah), 0), tanpaHarga = d.filter((a) => a.harga_satuan == null).length;
     $("i-ringkas").innerHTML = `<div class="i"><span class="lambang">${ikon("kotak")}</span><span><b>${bil(d.length)}</b><span class="t">jenis barang · ${bil(unit)} unit</span></span></div>
       <div class="${tanpaHarga ? "c" : "b"}"><span class="lambang">${ikon("tabel")}</span><span><b style="font-size:20px">${rp(nilai) || "Rp 0"}</b><span class="t">nilai perolehan${tanpaHarga ? ` · ${tanpaHarga} belum ada harga` : ""}</span></span></div>`;
-    $("i-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table class="tabel-induk"><thead><tr><th>No.</th><th>Kode inventaris</th><th>Nama barang</th><th>Kategori</th><th>Ruang</th>
+    $("i-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table class="tabel-induk"><thead><tr><th class="beku">No.</th><th class="beku">Kode inventaris</th><th class="beku beku-akhir">Nama barang</th><th>Kategori</th><th>Ruang</th>
       <th class="n">Jml</th><th class="n">B</th><th class="n">RR</th><th class="n">RB</th><th>Tahun</th><th>Sumber dana</th><th>Kode ARKAS</th><th>Bukti BKU</th><th class="n">Harga satuan</th><th class="n">Nilai</th><th>Keterangan</th></tr></thead><tbody>
-      ${d.map((a, i) => `<tr class="klik" tabindex="0" data-alat="${a.id}"><td class="n">${i + 1}</td><td class="kode">${esc(a.kode)}</td>
-        <td class="nama-sel"><b>${esc(a.nama)}</b>${a.merek ? `<p class="kecil">${esc(a.merek)}</p>` : ""}</td><td>${esc(namaKat(a.kategori))}</td><td>${esc(namaRuang(a.ruang) || "—")}</td>
+      ${d.map((a, i) => `<tr class="klik" tabindex="0" data-alat="${a.id}"><td class="n beku">${i + 1}</td><td class="kode beku">${esc(a.kode)}</td>
+        <td class="nama-sel beku beku-akhir"><b>${esc(a.nama)}</b>${a.merek ? `<p class="kecil">${esc(a.merek)}</p>` : ""}</td><td>${esc(namaKat(a.kategori))}</td><td>${esc(namaRuang(a.ruang) || "—")}</td>
         <td class="n">${a.jumlah_pasti ? a.jumlah : "?"}</td><td class="n">${a.baik}</td><td class="n">${a.rusak_ringan || ""}</td><td class="n">${a.rusak_berat || ""}</td><td>${esc(a.tahun || "")}</td>
         <td>${esc(a.sumber_dana || "")}</td><td class="kode">${esc(a.kode_arkas || "")}</td><td class="kecil">${esc([a.no_bukti, a.tgl_bukti].filter(Boolean).join(" · "))}</td>
         <td class="n">${a.harga_satuan == null ? "" : bil(a.harga_satuan)}</td><td class="n">${a.harga_satuan == null ? "" : bil(Number(a.harga_satuan) * a.jumlah)}</td><td class="kecil">${esc(a.keterangan || "")}</td></tr>`).join("")}
-      </tbody><tfoot><tr><td colspan="5">Jumlah</td><td class="n">${bil(unit)}</td><td colspan="8"></td><td class="n">${bil(nilai)}</td><td></td></tr></tfoot></table></div>`
+      </tbody><tfoot><tr><td colspan="3" class="beku beku-akhir">Jumlah</td><td colspan="2"></td><td class="n">${bil(unit)}</td><td colspan="8"></td><td class="n">${bil(nilai)}</td><td></td></tr></tfoot></table></div>`
       : `<div class="kosong">${ikon("kotak")}<span>${S.alat.length ? "Tidak ada barang yang cocok dengan saringan." : "Buku induk masih kosong. Unggah BUKU INDUK.xlsx atau template Sarana & Alat lewat tombol Unggah data."}</span></div>`;
     pasangKlikTabel($("i-tabel"));
+    aturKolomBeku();
   };
   isi();
+  if (document.fonts) document.fonts.ready.then(aturKolomBeku);
   [["i-q", "q"], ["i-ruang", "ruang"], ["i-gol", "gol"], ["i-dana", "dana"], ["i-tahun", "tahun"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { S.saringInduk[k] = e.target.value; isi(); }));
   $("b-unduh-induk").onclick = () => {
     const s = S.saringInduk;

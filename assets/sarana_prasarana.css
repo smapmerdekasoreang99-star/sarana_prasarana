@@ -144,6 +144,17 @@ tbody tr.klik:hover { background: var(--emas-kabut); }
 .tabel-induk td { white-space: nowrap; }
 .tabel-induk td.nama-sel, .tabel-induk td.kecil { white-space: normal; min-width: 160px; }
 tfoot td { background: var(--kertas-3); font-weight: 700; border-top: 2px solid var(--garis-2); position: sticky; bottom: 0; }
+/* Buku Induk: No., Kode, dan Nama barang tetap terlihat saat tabel digeser. Di HP tidak dibekukan: lebarnya memenuhi layar. */
+@media (min-width: 721px) {
+  .tabel-induk { border-collapse: separate; border-spacing: 0; } /* pada collapse, garis sel beku ikut tergeser */
+  .tabel-induk td.nama-sel { max-width: 260px; }
+  .tabel-induk .beku { position: sticky; left: 0; z-index: 1; background: var(--kertas-2); }
+  .tabel-induk .beku:nth-child(2) { left: var(--kiri-2, 0); }
+  .tabel-induk .beku:nth-child(3) { left: var(--kiri-3, 0); }
+  .tabel-induk .beku-akhir { box-shadow: inset -1px 0 0 var(--garis-2), 5px 0 6px -4px rgba(29,42,58,.18); }
+  .tabel-induk tbody tr.klik:hover .beku { background: linear-gradient(var(--emas-kabut), var(--emas-kabut)), var(--kertas-2); }
+  .tabel-induk th.beku, .tabel-induk tfoot .beku { z-index: 3; background: var(--kertas-3); }
+}
 .kop-pratinjau { overflow-x: auto; background: var(--kertas-3); border-radius: var(--r2); padding: var(--j4); }
 .kop-pratinjau canvas { display: block; margin: 0 auto; background: #fff; box-shadow: 0 6px 20px -10px rgba(0,0,0,.3); max-width: none; }
 .tab button { padding: 0 var(--j3); }
