@@ -1,8 +1,9 @@
 /* Pembuat Panduan Sarana Prasarana (31 Okt 2026) — mesin sama dengan kehadiran_guru/alat/buat-panduan.js
    ---------------------------------------------------------------
-   Satu sumber isi (ISI di bawah) → dua berkas di akar proyek, dibuka lewat tombol 📘 Panduan di kepala halaman:
-     Panduan_Sarana_Prasarana.pdf   (dicetak Chrome/Edge tanpa jendela, lewat DevTools Protocol)
-     Panduan_Sarana_Prasarana.docx  (paket npm "docx")
+   Lima panduan per peran (2 Nov 2026): Staf Sarpras & admin (ISI_STAF di bawah), lalu penanggung jawab ruang, Perpustakaan, Pojok Literasi,
+   dan siswa (alat/panduan-peran.js). Tiap panduan menjadi dua berkas di akar proyek, dibuka lewat tombol Panduan di kepala halaman:
+     <nama>.pdf   (dicetak Chrome/Edge tanpa jendela, lewat DevTools Protocol)
+     <nama>.docx  (paket npm "docx")
    Jalankan dari akar proyek (paket docx dipinjam dari Tryout_Guru, tidak perlu node_modules di sini):
      NODE_PATH=../Tryout_Guru/node_modules node alat/buat-panduan.js
    Ubah isi panduan di sini bila tampilan atau aturan aplikasi berubah, lalu jalankan ulang.
@@ -10,9 +11,8 @@
 "use strict";
 const fs = require("fs"), path = require("path"), os = require("os"), { spawn } = require("child_process");
 
-const SUBJUDUL = "Inventaris sarana, alat, dan bahan per ruang · Buku Induk · label QR", UNTUK = "Staf Sarana Prasarana, penanggung jawab ruang, guru, dan pimpinan";
-const AKAR = path.join(__dirname, ".."), NAMA = "Panduan_Sarana_Prasarana";
-const JUDUL = "Panduan Sarana Prasarana", VERSI = "31 Oktober 2026", MEREK = "SARANA PRASARANA · SMA PLUS MERDEKA SOREANG";
+let SUBJUDUL, UNTUK, NAMA, JUDUL, ISI, DAFTAR;
+const AKAR = path.join(__dirname, ".."), VERSI = "2 November 2026", MEREK = "SARANA PRASARANA · SMA PLUS MERDEKA SOREANG";
 
 /* ================= Isi panduan =================
    Blok: H1/H2/H3 (judul, dinomori otomatis), P (paragraf), UL/OL (daftar), TB (tabel: kepala, baris, lebar relatif),
@@ -23,7 +23,7 @@ const TB = (kepala, baris, lebar) => ({ t: "tb", kepala, baris, lebar: lebar || 
 const KOTAK = (jenis, judul, ...isi) => ({ t: "kotak", jenis, judul, isi });
 const STAT = (ket, ...a) => ({ t: "stat", a, ket });
 
-const ISI = [
+const ISI_STAF = [
   /* ============================ 1 ============================ */
   H1("Mengenal Sarana Prasarana"),
   P("Sarana Prasarana adalah aplikasi web sekolah untuk mencatat **semua barang milik sekolah per ruang**: berapa jumlahnya, bagaimana kondisinya, dari dana apa dibeli, dan berapa harganya. Hasilnya adalah **Buku Induk** yang rapi, **label QR** di setiap barang, dan stok **bahan habis pakai** yang selalu terbaru."),
@@ -43,6 +43,7 @@ const ISI = [
     ["**Bahan**", "Stok bahan habis pakai; mencatat bahan masuk dan keluar."],
     ["**Buku Induk**", "Daftar inventaris resmi; unduh Excel berkop dan bertanda tangan."],
     ["**Label QR**", "Mencetak label stiker untuk ditempel pada barang."],
+    ["**Katalog Buku**, **Pinjam & Kembali**, **Penerimaan Buku**", "Perpustakaan (bagian 12)."],
     ["**Profil Dokumen**", "Kop, identitas sekolah, dan penanda tangan yang dipakai semua unduhan."],
   ], [1.4, 4.6]),
   P("Tombol **Unduh**, **Unduh template**, dan **Unggah data** ada di menu Ruang, Sarana & Alat, Bahan, dan Buku Induk (bagian 9)."),
@@ -71,17 +72,20 @@ const ISI = [
   H2("Tiga peran"),
   TB(["Peran", "Siapa", "Boleh"], [
     ["**Staf Sarpras (admin)**", "Guru/staf berjabatan **Staf Sarana Prasarana** atau **Wakasek Sarana Prasarana** di Data Induk, atau pemegang PIN admin Sarpras", "Semua ruang, termasuk **seluruh ruang kelas**; menambah dan mengubah ruang; menghapus barang; mengunggah data ruang"],
-    ["**Penanggung jawab ruang**", "Guru yang dipasang sebagai penanggung jawab ruang tertentu", "Mencatat dan mengubah sarana, alat, dan bahan **di ruangnya sendiri**"],
-    ["**Guru lain**", "Guru lain yang punya PIN pribadi", "Melihat isi semua ruang dan mengunduh"],
+    ["**Penanggung jawab ruang**", "Guru yang dipasang sebagai penanggung jawab ruang tertentu", "Hanya **melihat dan mengisi ruangnya sendiri**. Punya panduan sendiri: Panduan Penanggung Jawab Ruang"],
+    ["**Penanggung jawab Perpustakaan**", "Penanggung jawab ruang Perpustakaan", "Hanya menu buku. Punya panduan sendiri: Panduan Perpustakaan"],
+    ["**Penanggung jawab Pojok Literasi**", "Penanggung jawab ruang Pojok Literasi", "Hanya buku di Pojok Literasi. Punya panduan sendiri: Panduan Pojok Literasi"],
+    ["**Guru lain**", "Guru lain yang punya PIN pribadi", "Melihat dan mengunduh; tidak mengubah"],
   ], [1.6, 2.4, 2.6]),
   TB(["Ruang", "Penanggung jawab"], [
-    ["Lab Komputer", "Yeni Isnaeni"], ["Lab IPA", "Yanti Ratnasih, S.Pd."], ["Perpustakaan", "Candra Wibawa, S.Pd."], ["Ruang UKS", "Imas Kurniasih, S.Pd.I."],
+    ["Lab Komputer", "Yeni Isnaeni"], ["Lab IPA", "Yanti Ratnasih, S.Pd."], ["Perpustakaan", "Candra Wibawa, S.Pd."], ["Pojok Literasi", "Puspa Adiyuka Nurzanah, S.Pd."], ["Ruang UKS", "Imas Kurniasih, S.Pd.I."],
     ["Semua ruang kelas, Gudang A, Gudang B, dan ruang lain yang belum punya penanggung jawab", "Staf Sarpras"],
   ], [3, 3]),
   KOTAK("awas", "Batasan diperiksa di server",
     "Penanggung jawab tidak bisa mencatat barang di ruang orang lain, dan tidak bisa memindahkan barang ke ruang yang bukan tanggung jawabnya. Pemindahan antarruang dilakukan oleh Staf Sarpras.",
     "Jaga PIN Anda. Jangan memberikannya kepada siswa atau orang luar."),
-  P("**Menu yang pertama terbuka.** Staf Sarpras langsung masuk ke **Ringkasan**. Penanggung jawab ruang dan guru lain langsung masuk ke **Ruang**, dengan ruangnya sendiri bertanda **Ruang saya** berwarna emas."),
+  P("**Menu yang pertama terbuka.** Staf Sarpras langsung masuk ke **Ringkasan**, guru lain ke **Ruang**, penanggung jawab ruang ke halaman ruangnya, dan pengelola buku ke menu bukunya."),
+  KOTAK("info", "Barang di ruang buku", "Inventaris non-buku di Perpustakaan dan Pojok Literasi (meja, rak, dan sebagainya) dicatat Staf Sarpras, karena penanggung jawabnya hanya melihat menu buku."),
 
   /* ============================ 3 ============================ */
   H1("Memulai: Langkah Pertama Staf Sarpras"),
@@ -131,7 +135,7 @@ const ISI = [
   /* ============================ 6 ============================ */
   H1("Sarana & Alat"),
   H2("Daftar dan saringan"),
-  P("Menampilkan seluruh barang. Cari dengan nama, kode, atau merek. Saring menurut **Golongan**, **Kategori**, **Ruang** (penanggung jawab bisa memilih **Ruang saya**), dan **Kelengkapan**. Kolom **Belum diisi** menyebut isian yang masih kosong; **Ruang** dan **Kode ARKAS** bertanda merah karena paling penting."),
+  P("Menampilkan seluruh barang. Cari dengan nama, kode, atau merek. Saring menurut **Golongan**, **Kategori**, **Ruang**, dan **Kelengkapan**. Kolom **Belum diisi** menyebut isian yang masih kosong; **Ruang** dan **Kode ARKAS** bertanda merah karena paling penting."),
   H2("Mencatat barang baru"),
   OL("Tekan **Catat barang** (atau **Catat sarana/alat** di halaman ruang).",
     "Isi **Nama barang**. Isi **Kode inventaris** bila barang sudah punya kode atau label; kosongkan agar dibuat otomatis. Pilih **Kategori** dan **Ruang**, lalu isi merek dan spesifikasi atau nomor seri bila ada.",
@@ -241,11 +245,22 @@ const ISI = [
     "Nama pejabat tidak diketik di sini. Bila **Wakasek Sarana Prasarana** dipasang di **Data Induk → Tugas Guru**, namanya otomatis menggantikan Staf Sarpras di tanda tangan kanan."),
 
   /* ============================ 12 ============================ */
+  H1("Perpustakaan"),
+  P("Staf Sarpras dan admin juga dapat membuka semua menu buku. Cara memakainya ada di **Panduan Perpustakaan**; siswa memakai **Panduan Pinjam Buku untuk Siswa**. Tombol **Panduan** di kepala halaman menampilkan panduan yang sesuai dengan orang yang masuk."),
+  TB(["Menu", "Isi"], [
+    ["**Katalog Buku**", "Semua buku di semua lokasi; tambah, ubah, pindahkan, unduh, template, dan unggah."],
+    ["**Pinjam & Kembali**", "ACC permintaan dari HP siswa, meminjamkan, menerima pengembalian, keterlambatan."],
+    ["**Penerimaan Buku**", "Pembelian dan sumbangan buku beserta sumber dananya; unduh laporan."],
+  ], [1.6, 4.4]),
+  P("Agar seseorang menjadi pengelola buku, pasang namanya sebagai penanggung jawab ruang **Perpustakaan** atau **Pojok Literasi** di menu **Ruang**."),
+
+  /* ============================ 13 ============================ */
   H1("Tanya Jawab"),
   TB(["Pertanyaan", "Jawaban"], [
     ["PIN saya ditolak.", "Pakai PIN pribadi yang sama dengan Matematika Dasar dan Asesmen. Bila lupa, minta admin Asesmen mengatur ulang PIN Anda."],
-    ["Saya penanggung jawab, tetapi tidak ada tombol Catat di sebuah ruang.", "Ruang itu bukan tanggung jawab Anda. Ruang Anda bertanda **Ruang saya**. Bila seharusnya milik Anda, minta Staf Sarpras memasang Anda sebagai penanggung jawab di menu Ruang."],
-    ["Barang perlu dipindah ke ruang lain.", "Penanggung jawab hanya bisa memindah di antara ruangnya sendiri. Minta Staf Sarpras memindahkannya."],
+    ["Penanggung jawab tidak melihat ruangnya.", "Pasang namanya sebagai penanggung jawab ruang itu di menu **Ruang**, lalu minta ia masuk ulang."],
+    ["Penanggung jawab mengeluh ruangnya kosong.", "Barang tanpa ruang tidak terlihat olehnya. Tempatkan barang lewat kotak **Tanpa ruang** di denah."],
+    ["Barang perlu dipindah ke ruang lain.", "Staf Sarpras yang memindahkan: buka barangnya, lalu pilih ruang lain."],
     ["Barang rusak berat, apakah dihapus?", "Tidak. Catat jumlahnya di kolom **Rusak berat**. Hapus hanya untuk salah catat atau tercatat dua kali."],
     ["Tahun di kode berbeda dengan tahun perolehan.", "Kode dibuat saat barang dicatat. Bila tahunnya belum diketahui saat itu, kode memakai tahun pencatatan, dan tidak berubah walaupun tahunnya diisi kemudian."],
     ["Unggahan ditolak.", "Baca daftar **baris yang perlu diperbaiki** di pratinjau atau pesan galat; nomor baris sama dengan nomor baris di Excel. Perbaiki, lalu unggah lagi. Tidak ada yang tersimpan sebelum semuanya benar."],
@@ -257,10 +272,10 @@ const ISI = [
 ];
 
 /* ================= Penomoran judul ================= */
-(function nomori() { const n = [0, 0, 0];
+function nomori() { const n = [0, 0, 0];
   ISI.forEach(b => { if (!/^h[123]$/.test(b.t)) return; const k = +b.t[1] - 1; n[k]++; for (let i = k + 1; i < 3; i++) n[i] = 0;
-    b.no = k === 0 ? `${n[0]}.` : n.slice(0, k + 1).join("."); b.id = "b" + n.slice(0, k + 1).join("-"); }); })();
-const DAFTAR = ISI.filter(b => b.t === "h1" || b.t === "h2");
+    b.no = k === 0 ? `${n[0]}.` : n.slice(0, k + 1).join("."); b.id = "b" + n.slice(0, k + 1).join("-"); });
+  DAFTAR = ISI.filter(b => b.t === "h1" || b.t === "h2"); }
 
 /* ================= HTML untuk PDF ================= */
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -421,9 +436,15 @@ async function buatDOCX(keluaran) {
   fs.writeFileSync(keluaran, await D.Packer.toBuffer(doc));
 }
 
+const PERAN = require("./panduan-peran.js")({ H1, H2, H3, P, UL, OL, TB, KOTAK, STAT });
+const SEMUA = [{ nama: "Panduan_Sarana_Prasarana", judul: "Panduan Sarana Prasarana", sub: "Staf Sarpras dan admin: inventaris semua ruang · Buku Induk · label QR",
+  untuk: "Staf Sarana Prasarana, admin, dan pimpinan", isi: ISI_STAF }, PERAN.pj, PERAN.perpus, PERAN.literasi, PERAN.siswa];
 (async () => {
-  const html = path.join(os.tmpdir(), NAMA + ".html"); fs.writeFileSync(html, buatHTML());
-  if (process.argv.includes("--html")) { fs.copyFileSync(html, path.join(AKAR, NAMA + ".html")); console.log("HTML →", NAMA + ".html"); }
-  await cetakPDF(html, path.join(AKAR, NAMA + ".pdf")); console.log("PDF  →", NAMA + ".pdf");
-  await buatDOCX(path.join(AKAR, NAMA + ".docx")); console.log("DOCX →", NAMA + ".docx");
+  for (const g of SEMUA) {
+    NAMA = g.nama; JUDUL = g.judul; SUBJUDUL = g.sub; UNTUK = g.untuk; ISI = g.isi; nomori();
+    const html = path.join(os.tmpdir(), NAMA + ".html"); fs.writeFileSync(html, buatHTML());
+    if (process.argv.includes("--html")) { fs.copyFileSync(html, path.join(AKAR, NAMA + ".html")); console.log("HTML →", NAMA + ".html"); }
+    await cetakPDF(html, path.join(AKAR, NAMA + ".pdf")); console.log("PDF  →", NAMA + ".pdf");
+    await buatDOCX(path.join(AKAR, NAMA + ".docx")); console.log("DOCX →", NAMA + ".docx");
+  }
 })().catch(e => { console.error("Gagal:", e.message); process.exit(1); });

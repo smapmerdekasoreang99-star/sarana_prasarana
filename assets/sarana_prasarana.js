@@ -173,6 +173,7 @@ async function masuk(pin) {
   $("keluar").onclick = keluar;
   document.querySelectorAll("[data-admin]").forEach((b) => (b.hidden = !admin()));
   aturTab();
+  aturPanduan(panduanSaya());
   buka(admin() ? "ringkas" : aksesBuku() && !ruangBarang().length ? "buku" : "ruang");
 }
 async function muatUlang() {
@@ -195,6 +196,23 @@ function aturTab() {
   document.querySelector('#tab [data-tab="buku"]').lastChild.textContent = bukuLiterasi() ? "Koleksi Literasi" : "Katalog Buku";
 }
 function keluar() { ssSet("sp_pin", null); location.href = location.pathname; }
+
+/* ================================================================ panduan per peran */
+const PANDUAN = {
+  staf: ["Panduan_Sarana_Prasarana", "Staf Sarpras dan admin", "Inventaris semua ruang, Buku Induk, unggah data, dan label QR."],
+  pj: ["Panduan_Penanggung_Jawab_Ruang", "Penanggung jawab ruang", "Mencatat inventaris ruang Anda: UKS, Lab IPA, Lab Komputer, dan lainnya."],
+  perpus: ["Panduan_Perpustakaan", "Perpustakaan", "Katalog buku, peminjaman, dan penerimaan buku."],
+  literasi: ["Panduan_Pojok_Literasi", "Pojok Literasi", "Mengelola novel dan bacaan literasi, termasuk peminjamannya."],
+  siswa: ["Panduan_Pinjam_Buku_Siswa", "Pinjam buku (siswa)", "Meminjam buku dari HP dengan NISN."],
+};
+function panduanSaya() {
+  if (!pjRuang()) return ["staf", ...(bukuSemua() ? ["perpus"] : [])];
+  return [...(ruangBarang().length ? ["pj"] : []), ...(bukuSemua() ? ["perpus"] : []), ...(bukuLiterasi() ? ["literasi"] : [])];
+}
+function aturPanduan(kunci) {
+  $("panduan-menu").innerHTML = kunci.map((k) => { const [berkas, judul, ket] = PANDUAN[k];
+    return `<p><b>${esc(judul)}</b><br>${esc(ket)}</p><a href="${berkas}.pdf" target="_blank" rel="noopener">Buka panduan (PDF)<small>Langsung terbuka di browser, cocok untuk HP</small></a><a href="${berkas}.docx" download>Unduh versi Word (.docx)<small>Untuk dicetak atau disunting</small></a>`; }).join("");
+}
 
 /* ================================================================ tab */
 const TAB = {};
@@ -1308,6 +1326,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try { await sibuk(() => masuk($("pin").value.trim())); }
     catch (err) { $("galat-pin").textContent = err.message; $("galat-pin").hidden = false; }
   };
+  aturPanduan(["pj", "perpus", "literasi", "staf", "siswa"]);
   const cari = new URLSearchParams(location.search), kode = cari.get("k");
   if (kode) return kartuPublik(kode);
   if (cari.has("pinjam") || cari.get("b")) return halamanSiswa(cari.get("b"));

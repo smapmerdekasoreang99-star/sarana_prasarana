@@ -186,6 +186,7 @@ function formUnduhPinjam() {
 
 /* ================================================================ halaman siswa: ?pinjam atau ?b=<kode> */
 async function halamanSiswa(kodeAwal) {
+  aturPanduan(["siswa"]);
   const el = $("layar-publik");
   el.hidden = false;
   const formNisn = (galat = "") => {
