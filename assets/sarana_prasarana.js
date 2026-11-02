@@ -175,6 +175,7 @@ async function masuk(pin) {
   aturTab();
   aturPanduan(panduanSaya());
   buka(admin() ? "ringkas" : aksesBuku() && !ruangBarang().length ? "buku" : S.pengingat.terlambat.length ? "pengingat" : "ruang");
+  bukaPindaianAlamat();
 }
 async function muatUlang() {
   [S.alat, S.bahan, S.ruang] = await Promise.all([rpc("sp_alat_daftar", { p_pin: S.pin }), rpc("sp_bahan_daftar", { p_pin: S.pin }),
@@ -1332,7 +1333,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   aturPanduan(["pj", "perpus", "literasi", "wali", "staf", "siswa"]);
   const cari = new URLSearchParams(location.search), kode = cari.get("k");
   if (kode) return kartuPublik(kode);
-  if (cari.has("pinjam") || cari.get("b")) return halamanSiswa(cari.get("b"));
+  // ?b= dari kamera bawaan HP: petugas yang sudah masuk atau menekan "Masuk dengan PIN" ke halaman petugas, selain itu halaman siswa.
+  if (cari.has("pinjam") || (cari.get("b") && !cari.has("petugas") && !ssGet("sp_pin"))) return halamanSiswa(cari.get("b"));
   const pin = ssGet("sp_pin");
   if (pin) { try { await sibuk(() => masuk(pin)); return; } catch (e) { ssSet("sp_pin", null); } }
   $("layar-masuk").hidden = false; $("pin").focus();

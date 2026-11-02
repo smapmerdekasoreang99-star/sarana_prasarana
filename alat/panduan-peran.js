@@ -40,6 +40,17 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
     OL("Pada daftar **Sedang dipinjam**, tekan **Terima kembali** pada baris pinjaman.",
       "Periksa **Jumlah yang kembali**. Bawaannya semua sisa.", "Tekan **Terima**."),
     P("Bila belum semua kembali (mis. 18 dari 20), ketik angka yang kembali. Sisanya tetap tercatat dipinjam dan tampil sebagai **sisa 2**."),
+    H2("Memakai QR atau barkode"),
+    P("Di bagian atas **Pinjam & Kembali** ada kotak **Pindai label buku**. Pilih salah satu:"),
+    UL("**Pindai dengan kamera**: di HP atau laptop berkamera. Izinkan kamera saat diminta. Setelah satu buku selesai, tekan **Pindai lagi**.",
+      "**Alat pemindai**: klik kotak pindai, lalu pindai labelnya.",
+      "**Ketik kode**: mis. B-0003.012, lalu tekan Enter.",
+      "**Kamera bawaan HP**: tekan **Masuk dengan PIN** di halaman yang terbuka, lalu ketik PIN. Cara ini meminta PIN pada tiap pindaian, jadi lebih cepat memakai tombol kamera di aplikasi."),
+    P("Sesudah dipindai, muncul buku itu beserta permintaan yang menunggu dan semua peminjamnya."),
+    UL("**Mengembalikan**: tekan **Terima kembali** pada nama peminjamnya, lalu periksa jumlahnya. Untuk satu set kelas cukup memindai satu buku, lalu isi jumlah yang kembali.",
+      "**Meminjamkan**: tekan **Pinjamkan**. Bukunya sudah terisi.",
+      "**Permintaan HP siswa**: tekan **ACC** atau **Tolak**."),
+    KOTAK("info", "Label mengenali judul, bukan peminjamnya", "Stok dihitung per jumlah, jadi nomor eksemplar pada label tidak terikat ke peminjam tertentu. Bila judul itu dipinjam beberapa orang, pilih nama yang mengembalikan."),
     H2("Mengingatkan yang terlambat"),
     P("Pengingat berjalan lewat tiga cara:"),
     UL("**Otomatis di aplikasi**: wali kelas melihat menu **Pengingat Buku** saat masuk dengan PIN-nya, dan siswa melihat tanda terlambat di HP-nya.",
@@ -58,7 +69,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       "Tekan **Cetak**. Pilih kertas **A4**, skala **100%**, tanpa kepala dan kaki halaman peramban."),
     P("Kertas: **stiker kecil A4 isi 65 (38 × 21 mm)**. Kode **B-0004.012** berarti buku B-0004, eksemplar ke-12. Nomor panggil yang kosong diganti mapel, jadi lengkapi dulu lewat **Ubah** di katalog."),
     KOTAK("saran", "Coba dulu satu lembar", "Cetak di kertas biasa, lalu tumpuk dengan kertas stiker untuk memeriksa posisinya. Merek kertas bisa sedikit berbeda."),
-    P("Saat QR dipindai kamera HP, halaman pinjam buku itu terbuka. Siswa masuk dengan NISN; guru atau petugas memakai tautan **Masuk dengan PIN**. Stok tetap dihitung per jumlah, jadi nomor eksemplar hanya identitas pada label."),
+    P("Saat QR dipindai kamera HP, halaman pinjam buku itu terbuka. Siswa masuk dengan NISN. Petugas memindai dari menu **Pinjam & Kembali**. Stok tetap dihitung per jumlah, jadi nomor eksemplar hanya identitas pada label."),
   ];
   return {
     /* ==================================================================== Wali kelas */

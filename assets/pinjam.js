@@ -37,6 +37,8 @@ TAB.pinjam = () => {
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Pinjam &amp; Kembali</h2><p class="sub">${bukuLiterasi() ? "Peminjaman buku Pojok Literasi." : "Set kelas atas nama guru, atau pribadi paling banyak 3 buku selama 7 hari."} Tidak ada denda; yang terlambat cukup diingatkan.</p></div>
       <div class="aksi"><button class="tombol" type="button" id="b-unduh-pinjam">${ikon("unduh")}Unduh</button><button class="tombol utama" type="button" id="b-pinjam-baru">${ikon("tambah")}Pinjamkan</button></div></div>
+    <div class="saring pj-pindai"><label class="f" for="pj-pindai">Pindai label buku<input id="pj-pindai" autocomplete="off" placeholder="Pindai dengan alat pemindai, atau ketik kode lalu tekan Enter"></label>
+      <button class="tombol" type="button" id="b-kamera">${ikon("qr")}Pindai dengan kamera</button></div>
     <div class="ubin" id="pj-ringkas"></div>
     ${minta.length ? `<h3>Permintaan dari HP siswa</h3><p class="sub">Periksa bukunya di meja, lalu ACC.</p>
       <div class="gulir"><table><thead><tr><th>No.</th><th>Buku</th><th class="n">Jml</th><th>Peminjam</th><th>Kelas</th><th>Jenis</th><th>Diminta</th><th></th></tr></thead><tbody>
@@ -94,7 +96,10 @@ TAB.pinjam.sesudah = () => {
   isi();
   [["pj-q", "q"], ["pj-status", "status"], ["pj-jenis", "jenis"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { S.saringPinjam[k] = e.target.value; isi(); }));
   $("isi").addEventListener("click", klikPinjam);
-  $("b-pinjam-baru").onclick = formPinjam;
+  $("b-pinjam-baru").onclick = () => formPinjam();
+  $("b-kamera").onclick = () => bukaKamera();
+  $("pj-pindai").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); prosesPindaian(e.target.value); e.target.value = ""; } });
+  if (window.matchMedia && matchMedia("(pointer: fine)").matches) $("pj-pindai").focus({ preventScroll: true });
   $("b-unduh-pinjam").onclick = formUnduhPinjam;
 };
 // #isi dipakai semua tab dan tidak ikut digambar ulang; fungsi yang sama hanya terpasang sekali, dan tab lain dilewati.
@@ -116,7 +121,7 @@ async function klikPinjam(e) {
     try { await navigator.clipboard.writeText(teks); toast("Pengingat tersalin. Tempel di WhatsApp."); } catch (err) { dialog({ judul: "Salin pengingat", isi: `<p>${esc(teks)}</p>`, kaki: `<button class="tombol" value="batal" formnovalidate>Tutup</button>` }); }
   }
 }
-function formKembali(p) {
+function formKembali(p, sesudah) {
   dialog({ atas: "Pinjaman no. " + p.nomor, judul: p.judul, isi: `
     <dl class="dl"><dt>Peminjam</dt><dd>${esc(peminjamTeks(p))}</dd><dt>Kelas</dt><dd>${esc(p.kelas || "—")}</dd><dt>Dipinjam</dt><dd>${p.jumlah} eksemplar${p.jumlah_kembali ? `, sudah kembali ${p.jumlah_kembali}` : ""}</dd><dt>Batas</dt><dd>${esc(tglSingkat(p.batas))}</dd></dl>
     <label class="f" for="k-jumlah">Jumlah yang kembali<input id="k-jumlah" type="number" min="1" max="${p.sisa}" value="${p.sisa}" required></label>
@@ -125,21 +130,21 @@ function formKembali(p) {
     onSimpan: async () => {
       const n = +$("k-jumlah").value;
       await sibuk(async () => { await rpc("sp_pinjam_kembali", { p_pin: S.pin, p_id: p.id, p_jumlah: n }); await segarPinjam(); });
-      tutupDialog(); segarkan(); toast(n === p.sisa ? "Semua sudah kembali" : `${n} diterima, sisa ${p.sisa - n}`);
+      tutupDialog(); segarkan(); toast(n === p.sisa ? "Semua sudah kembali" : `${n} diterima, sisa ${p.sisa - n}`); if (sesudah) sesudah();
     } });
 }
-function formTolakPinjam(p) {
+function formTolakPinjam(p, sesudah) {
   dialog({ atas: "Permintaan no. " + p.nomor, judul: "Tolak permintaan", isi: `<p>${esc(p.judul)} · ${esc(p.nama_siswa || "")}</p>
     <label class="f" for="t-alasan">Alasan (terlihat di HP siswa)<input id="t-alasan" maxlength="200" required placeholder="mis. Bukunya sedang diperbaiki"></label>`,
     kaki: kakiSimpan("Tolak"),
     onSimpan: async () => {
       await sibuk(async () => { await rpc("sp_pinjam_tolak", { p_pin: S.pin, p_id: p.id, p_alasan: $("t-alasan").value }); await segarPinjam(); });
-      tutupDialog(); segarkan(); toast("Permintaan ditolak");
+      tutupDialog(); segarkan(); toast("Permintaan ditolak"); if (sesudah) sesudah();
     } });
 }
 const labelBuku = (b) => `${b.kode} · ${b.judul}${b.tingkat ? " · kelas " + b.tingkat : ""}`;
 const labelSiswa = (s) => `${s.nama} · ${s.kelas} · ${s.nisn}`;
-async function formPinjam() {
+async function formPinjam(bukuAwal, sesudah) {
   if (!S.refPinjam) {
     try { S.refPinjam = await sibuk(() => rpc("sp_pinjam_referensi", { p_pin: S.pin })); } catch (e) { return toast(e.message); }
   }
@@ -172,7 +177,7 @@ async function formPinjam() {
         await segarPinjam();
         return x;
       });
-      tutupDialog(); segarkan(); toast(`Tercatat no. ${h.nomor}: ${h.jumlah} × ${h.judul}`);
+      tutupDialog(); segarkan(); toast(`Tercatat no. ${h.nomor}: ${h.jumlah} × ${h.judul}`); if (sesudah) sesudah();
     } });
   const perJenis = () => {
     const set = $("m-jenis").value === "set_kelas";
@@ -191,6 +196,7 @@ async function formPinjam() {
   $("m-jenis").onchange = perJenis;
   $("m-buku").addEventListener("input", perBuku);
   perJenis();
+  if (bukuAwal) { $("m-buku").value = labelBuku(bukuAwal); perBuku(); }
 }
 function formUnduhPinjam() {
   dialog({ judul: "Unduh buku peminjaman", isi: `<div class="isian-grid">
@@ -224,7 +230,7 @@ async function halamanSiswa(kodeAwal) {
   const formNisn = (galat = "") => {
     el.innerHTML = `<section class="kartu kartu-masuk"><img src="assets/ikon-192.png" alt="" class="ikon-besar"><h1>Pinjam Buku</h1><p class="sub">Masuk dengan NISN, sama seperti Matematika Dasar dan English Reading.</p>
       <form id="form-nisn" class="form-pin" autocomplete="off"><label class="f" for="nisn">NISN<input id="nisn" inputmode="numeric" required placeholder="Ketik NISN"></label>
-      <button class="tombol utama besar" type="submit">${ikon("masuk")}Masuk</button></form>${galat ? `<p class="galat" role="alert">${esc(galat)}</p>` : ""}<p class="kecil">Guru atau petugas? <a href="${esc(location.pathname)}">Masuk dengan PIN</a></p></section>`;
+      <button class="tombol utama besar" type="submit">${ikon("masuk")}Masuk</button></form>${galat ? `<p class="galat" role="alert">${esc(galat)}</p>` : ""}<p class="kecil">Guru atau petugas? <a href="${esc(location.pathname)}${kodeAwal ? "?petugas&b=" + encodeURIComponent(kodeAwal) : ""}">Masuk dengan PIN</a></p></section>`;
     $("nisn").focus();
     $("form-nisn").onsubmit = (e) => { e.preventDefault(); masukSiswa($("nisn").value.trim()); };
   };
