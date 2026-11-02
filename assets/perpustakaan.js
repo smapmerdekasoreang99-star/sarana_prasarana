@@ -6,8 +6,10 @@
 
 const JENIS_BUKU = { paket: "Buku paket", bacaan: "Bacaan", referensi: "Referensi", agama: "Agama", lainnya: "Lainnya" };
 const LOKASI_BUKU = { perpustakaan: "Perpustakaan", kelas: "Kelas", literasi: "Pojok Literasi", guru: "Guru", lainnya: "Tempat lain" };
+// Daftar kategori dari server (sp_buku_kategori); nilai di atas hanya cadangan bila belum terbaca.
+const kategoriAktif = () => S.katBuku.length ? S.katBuku.filter((k) => k.aktif).map((k) => [k.kode, k.nama]) : Object.entries(JENIS_BUKU);
 const STATUS_TERIMA = { dipesan: ["Dipesan", "c"], diterima: ["Sudah datang", "b"] };
-Object.assign(S, { buku: [], terima: [], bukuGalat: null, saringBuku: { q: "", tingkat: "", jenis: "", lokasi: "" }, saringTerima: { q: "", dana: "", status: "" } });
+Object.assign(S, { buku: [], terima: [], katBuku: [], bukuGalat: null, saringBuku: { q: "", tingkat: "", jenis: "", lokasi: "" }, saringTerima: { q: "", dana: "", status: "" } });
 
 const aksesBuku = () => S.akses && S.akses.buku;
 const bukuSemua = () => aksesBuku() === "semua";
@@ -28,6 +30,8 @@ async function muatPerpus() {
     [S.buku, S.terima] = await Promise.all([rpc("sp_buku_daftar", { p_pin: S.pin }), rpc("sp_penerimaan_daftar", { p_pin: S.pin })]);
     S.bukuGalat = null;
   } catch (e) { S.buku = []; S.terima = []; S.bukuGalat = e.message; }   // Inventaris barang tetap bisa dipakai.
+  S.katBuku = (await rpc("sp_buku_kategori_daftar", { p_pin: S.pin }).catch(() => null)) || [];
+  if (S.katBuku.length) { Object.keys(JENIS_BUKU).forEach((k) => delete JENIS_BUKU[k]); S.katBuku.forEach((k) => { JENIS_BUKU[k.kode] = k.nama; }); }
   await muatPinjam();
 }
 const catatanGalatBuku = () => S.bukuGalat ? `<p class="catatan awas">${ikon("awas")}<span>Data buku belum terbaca: ${esc(S.bukuGalat)}</span></p>` : "";
@@ -49,14 +53,14 @@ TAB.buku = () => {
       ? "Novel dan bacaan lain yang Anda kelola. Semuanya tetap tercatat di katalog pustakawan."
       : "Semua buku sekolah, termasuk yang disimpan di kelas, Pojok Literasi, guru, atau tempat lain."}</p></div>
       <div class="aksi"><button class="tombol" type="button" id="b-unduh-buku">${ikon("unduh")}Unduh</button>
-        ${bisaUbahBuku() ? `<button class="tombol" type="button" data-template="buku">${ikon("tabel")}Unduh template</button>
+        ${bisaUbahBuku() ? `${bukuSemua() ? `<button class="tombol" type="button" id="b-kategori">${ikon("tabel")}Kategori</button>` : ""}<button class="tombol" type="button" data-template="buku">${ikon("tabel")}Unduh template</button>
         <button class="tombol" type="button" data-unggah="buku">${ikon("unggah")}Unggah data</button>
         <button class="tombol utama" type="button" id="b-buku-baru">${ikon("tambah")}Tambah buku</button>` : ""}</div></div>
     ${catatanGalatBuku()}
     <div class="saring">
       <label class="f cari" for="bk-q">Cari${ikon("cari")}<input type="search" id="bk-q" value="${esc(s.q)}" placeholder="Judul, mapel, kode"></label>
       <label class="f" for="bk-tingkat">Kelas<select id="bk-tingkat"><option value="">Semua</option>${opsi([["10", "10"], ["11", "11"], ["12", "12"], ["-", "Lintas kelas"]], s.tingkat)}</select></label>
-      <label class="f" for="bk-jenis">Jenis<select id="bk-jenis"><option value="">Semua</option>${opsi(Object.entries(JENIS_BUKU), s.jenis)}</select></label>
+      <label class="f" for="bk-jenis">Kategori<select id="bk-jenis"><option value="">Semua</option>${opsi(Object.entries(JENIS_BUKU), s.jenis)}</select></label>
       ${bukuLiterasi() ? "" : `<label class="f" for="bk-lokasi">Lokasi<select id="bk-lokasi"><option value="">Semua</option>${opsi(Object.entries(LOKASI_BUKU), s.lokasi)}</select></label>`}
     </div>
     <div class="ubin" id="bk-ringkas"></div>
@@ -89,11 +93,39 @@ TAB.buku.sesudah = () => {
   const bukaBaris = (e) => { const tr = e.target.closest("tr[data-buku]"); if (tr) kartuBuku(+tr.dataset.buku); };
   $("bk-tabel").addEventListener("click", bukaBaris);
   $("bk-tabel").addEventListener("keydown", (e) => { if (e.key === "Enter") bukaBaris(e); });
+  if ($("b-kategori")) $("b-kategori").onclick = formKategori;
   $("b-unduh-buku").onclick = () => unduhBuku(saringBuku());
   if ($("b-buku-baru")) $("b-buku-baru").onclick = () => formBuku(null);
   pasangTombolBerkas($("isi"));
 };
 
+/* Kategori buku: pustakawan dan admin menambah, mengganti nama, menonaktifkan, atau menghapus yang belum terpakai. */
+function formKategori() {
+  const baris = (k) => `<tr data-k="${esc(k.kode)}"><td><input class="k-nama" value="${esc(k.nama)}" maxlength="60" required aria-label="Nama kategori"></td><td class="n">${bil(k.n)}</td>
+    <td style="text-align:center"><input class="k-aktif" type="checkbox"${k.aktif ? " checked" : ""} aria-label="Aktif ${esc(k.nama)}"></td>
+    <td>${!k.n && !k.bawaan ? `<button class="tombol kecil" type="button" data-khapus="${esc(k.kode)}">Hapus</button>` : ""}</td></tr>`;
+  dialog({ judul: "Kategori buku", isi: `<p class="sub">Kategori nonaktif tidak muncul di pilihan buku baru, tetapi buku lamanya tetap berkategori itu.</p>
+    <div class="gulir"><table><thead><tr><th>Nama</th><th class="n">Buku</th><th>Aktif</th><th></th></tr></thead><tbody>${S.katBuku.map(baris).join("")}</tbody></table></div>
+    <label class="f" for="k-baru">Tambah kategori baru<input id="k-baru" maxlength="60" placeholder="mis. Novel, Kamus, Komik"></label>`,
+    kaki: kakiSimpan("Simpan"),
+    onSimpan: async () => {
+      const ubahan = [...$("dlg-isi").querySelectorAll("tr[data-k]")].map((tr) => ({ kode: tr.dataset.k, nama: tr.querySelector(".k-nama").value.trim(), aktif: tr.querySelector(".k-aktif").checked }))
+        .filter((x) => { const k = S.katBuku.find((y) => y.kode === x.kode); return k && (k.nama !== x.nama || k.aktif !== x.aktif); });
+      const baru = $("k-baru").value.trim();
+      await sibuk(async () => {
+        for (const x of ubahan) await rpc("sp_buku_kategori_simpan", { p_pin: S.pin, p_k: x });
+        if (baru) await rpc("sp_buku_kategori_simpan", { p_pin: S.pin, p_k: { nama: baru } });
+        await muatPerpus();
+      });
+      tutupDialog(); segarkan(); toast("Kategori tersimpan");
+    } });
+  $("dlg-isi").onclick = async (e) => {
+    const t = e.target.closest("[data-khapus]");
+    if (!t) return;
+    try { await sibuk(async () => { await rpc("sp_buku_kategori_hapus", { p_pin: S.pin, p_kode: t.dataset.khapus }); await muatPerpus(); }); formKategori(); toast("Kategori dihapus"); }
+    catch (err) { $("dlg-galat").textContent = err.message; $("dlg-galat").hidden = false; }
+  };
+}
 const JENIS_RIW_BUKU = { baru: "Dicatat", unggah: "Diunggah dari Excel", ubah: "Diubah", pindah: "Dipindah lokasi", terima: "Penerimaan", hapus: "Dihapus" };
 function uraiRiwayatBuku(r) {
   const x = r.rincian || {};
@@ -110,7 +142,7 @@ async function kartuBuku(id) {
   const boleh = bolehBuku(b);
   dialog({ atas: b.kode, judul: b.judul, isi: `
     <dl class="dl">
-      <dt>Mapel</dt><dd>${esc(b.mapel || "—")}</dd><dt>Kelas</dt><dd>${esc(b.tingkat || "Lintas kelas")}</dd><dt>Jenis</dt><dd>${esc(JENIS_BUKU[b.jenis])}</dd>
+      <dt>Mapel</dt><dd>${esc(b.mapel || "—")}</dd><dt>Kelas</dt><dd>${esc(b.tingkat || "Lintas kelas")}</dd><dt>Kategori</dt><dd>${esc(JENIS_BUKU[b.jenis] || b.jenis)}</dd>
       <dt>Penulis</dt><dd>${esc(b.penulis || "—")}</dd><dt>Penerbit</dt><dd>${esc([b.penerbit, b.tahun_terbit].filter(Boolean).join(", ") || "—")}</dd>
       <dt>Kode barang</dt><dd>${esc(b.kode_penerbit || "—")}</dd><dt>ISBN</dt><dd>${esc(b.isbn || "—")}</dd><dt>Nomor panggil</dt><dd>${esc(b.nomor_panggil || "—")}</dd>
       ${b.keterangan ? `<dt>Keterangan</dt><dd>${esc(b.keterangan)}</dd>` : ""}
@@ -159,7 +191,7 @@ async function formBuku(b) {
       <label class="f lebar" for="f-judul">Judul<input id="f-judul" value="${v("judul")}" maxlength="200" required></label>
       <label class="f" for="f-mapel">Mapel<input id="f-mapel" value="${v("mapel")}" maxlength="80" placeholder="Kosongkan untuk bacaan umum"></label>
       <label class="f" for="f-tingkat">Kelas<select id="f-tingkat"><option value="">Lintas kelas</option>${opsi([["10", "10"], ["11", "11"], ["12", "12"]], b && b.tingkat)}</select></label>
-      <label class="f" for="f-jenis">Jenis<select id="f-jenis">${opsi(Object.entries(JENIS_BUKU), b ? b.jenis : bukuLiterasi() ? "bacaan" : "paket")}</select></label>
+      <label class="f" for="f-jenis">Kategori<select id="f-jenis">${opsi([...kategoriAktif(), ...(b && !kategoriAktif().some(([k]) => k === b.jenis) ? [[b.jenis, JENIS_BUKU[b.jenis] || b.jenis]] : [])], b ? b.jenis : bukuLiterasi() ? "bacaan" : "paket")}</select></label>
       <label class="f" for="f-penulis">Penulis<input id="f-penulis" value="${v("penulis")}" maxlength="150"></label>
       <label class="f" for="f-penerbit">Penerbit<input id="f-penerbit" value="${v("penerbit")}" maxlength="100"></label>
       <label class="f" for="f-tahun">Tahun terbit<input id="f-tahun" type="number" min="1900" max="2100" value="${v("tahun_terbit")}"></label>
@@ -207,7 +239,7 @@ async function formPindahBuku(b) {
 
 /* ---------------------------------------------------------------- unduh, template, unggah */
 const KOLOM_BUKU = [
-  { judul: "Kode Buku", lebar: 10 }, { judul: "Judul", lebar: 34 }, { judul: "Mapel", lebar: 18 }, { judul: "Kelas", lebar: 7, tengah: true }, { judul: "Jenis", lebar: 11 },
+  { judul: "Kode Buku", lebar: 10 }, { judul: "Judul", lebar: 34 }, { judul: "Mapel", lebar: 18 }, { judul: "Kelas", lebar: 7, tengah: true }, { judul: "Kategori", lebar: 14 },
   { judul: "Penulis", lebar: 20 }, { judul: "Penerbit", lebar: 18 }, { judul: "Tahun Terbit", lebar: 8, tengah: true }, { judul: "ISBN", lebar: 16 }, { judul: "Kode Barang", lebar: 14 },
   { judul: "Nomor Panggil", lebar: 14 }, { judul: "Lokasi", lebar: 14 }, { judul: "Tempat", lebar: 16 }, { judul: "Jumlah", lebar: 8, tengah: true },
   { judul: "Sumber Dana", lebar: 18 }, { judul: "Keterangan", lebar: 28 },
@@ -237,10 +269,10 @@ async function unduhBuku(daftar) {
   } catch (e) { toast(e.message); }
 }
 TEMPLATE.buku = () => ({ judul: "Daftar Buku", berkas: "Buku",
-  kolom: [{ judul: "Kode Buku", lebar: 11 }, { judul: "Judul", lebar: 34, wajib: true }, { judul: "Mapel", lebar: 18 }, { judul: "Kelas", lebar: 7 }, { judul: "Jenis", lebar: 11 },
+  kolom: [{ judul: "Kode Buku", lebar: 11 }, { judul: "Judul", lebar: 34, wajib: true }, { judul: "Mapel", lebar: 18 }, { judul: "Kelas", lebar: 7 }, { judul: "Kategori", lebar: 14 },
     { judul: "Penulis", lebar: 20 }, { judul: "Penerbit", lebar: 18 }, { judul: "Tahun Terbit", lebar: 8 }, { judul: "ISBN", lebar: 16 }, { judul: "Kode Barang", lebar: 14 },
     { judul: "Nomor Panggil", lebar: 14 }, { judul: "Lokasi", lebar: 14 }, { judul: "Tempat", lebar: 18 }, { judul: "Jumlah", lebar: 8 }, { judul: "Keterangan", lebar: 30 }],
-  daftar: [{ judul: "Kelas", untuk: "Kelas", isi: ["10", "11", "12"] }, { judul: "Jenis", untuk: "Jenis", isi: Object.values(JENIS_BUKU) },
+  daftar: [{ judul: "Kelas", untuk: "Kelas", isi: ["10", "11", "12"] }, { judul: "Kategori", untuk: "Kategori", isi: kategoriAktif().map((x) => x[1]) },
     { judul: "Lokasi", untuk: "Lokasi", isi: bukuLiterasi() ? [LOKASI_BUKU.literasi] : Object.values(LOKASI_BUKU) }],
   petunjuk: ["• Satu baris = satu buku di satu lokasi. Kolom berwarna merah wajib untuk buku baru: Judul.",
     "• Buku BARU: kosongkan Kode Buku; kode dibuat otomatis (B-0038 dan seterusnya). Bila Jumlah kosong, dicatat 1.",
@@ -255,7 +287,7 @@ TEMPLATE.buku = () => ({ judul: "Daftar Buku", berkas: "Buku",
 function bacaBuku(XLSX, wb) {
   const L = bacaLembar(XLSX, wb, /^judul$/);
   if (!L) throw new Error('Kolom "Judul" tidak ditemukan. Pakai template buku atau hasil unduhan daftar buku.');
-  const K = kolomDari(L.kep, { kode: /^kode buku$/, judul: /^judul$/, mapel: /^mapel/, kelas: /^kelas/, jenis: /^jenis/, penulis: /^penulis/, penerbit: /^penerbit/, tahun: /^tahun/,
+  const K = kolomDari(L.kep, { kode: /^kode buku$/, judul: /^judul$/, mapel: /^mapel/, kelas: /^kelas/, jenis: /^(jenis|kategori)/, penulis: /^penulis/, penerbit: /^penerbit/, tahun: /^tahun/,
     isbn: /^isbn/, barang: /^kode barang/, panggil: /^nomor panggil/, lokasi: /^lokasi/, tempat: /^tempat/, jumlah: /^jumlah/, ket: /^keterangan/ });
   const ambil = (r, k) => normal(K[k] >= 0 ? r[K[k]] : "");
   const jenisDari = (v) => Object.keys(JENIS_BUKU).find((k) => k === kecil(v) || kecil(JENIS_BUKU[k]) === kecil(v) || (k === "paket" && kecil(v) === "paket"));
@@ -278,7 +310,7 @@ function bacaBuku(XLSX, wb) {
       o.tingkat = t;
     }
     const jx = ambil(r, "jenis");
-    if (jx) { const j = jenisDari(jx); if (!j) { hasil.galat.push(`Baris ${ke}: Jenis "${jx}" tidak dikenal.`); continue; } o.jenis = j; }
+    if (jx) { const j = jenisDari(jx); if (!j) { hasil.galat.push(`Baris ${ke}: Kategori "${jx}" tidak dikenal. Tambahkan dulu lewat tombol Kategori, atau pilih dari lembar Daftar.`); continue; } o.jenis = j; }
     else if (!kode && bukuLiterasi()) o.jenis = "bacaan";
     const th = ambil(r, "tahun");
     if (th) { if (!/^\d{4}$/.test(th)) { hasil.galat.push(`Baris ${ke}: Tahun Terbit "${th}" harus 4 angka.`); continue; } o.tahun_terbit = th; }

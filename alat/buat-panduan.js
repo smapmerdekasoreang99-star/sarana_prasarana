@@ -259,6 +259,7 @@ const ISI_STAF = [
     ["**Label Buku**", "Mencetak label punggung, QR, dan barkode."],
     ["**Penerimaan Buku**", "Pembelian dan sumbangan buku beserta sumber dananya; unduh laporan."],
   ], [1.6, 4.4]),
+  P("Buku yang sudah datang otomatis tercatat di **Buku Induk** sebagai barang kategori **Buku** (BK), ruang Perpustakaan. Harga dan bukti dilengkapi di **Penerimaan Buku**, bukan di formulir barang, karena akan ditimpa saat penerimaannya diubah."),
   P("Agar seseorang menjadi pengelola buku, pasang namanya sebagai penanggung jawab ruang **Perpustakaan** atau **Pojok Literasi** di menu **Ruang**."),
 
   /* ============================ 13 ============================ */

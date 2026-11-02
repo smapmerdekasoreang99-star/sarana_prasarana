@@ -739,7 +739,8 @@ TAB.label.sesudah = () => {
   const gambar = () => {
     S.labelRuang = $("l-ruang").value;
     const per = $("l-per").value, gol = $("l-gol").value;
-    const d = S.alat.filter((a) => (!S.labelRuang || (S.labelRuang === "-" ? !a.ruang : a.ruang === S.labelRuang)) && (!gol || golongan(a) === gol));
+    // Aset buku berlabel sendiri di menu Label Buku.
+    const d = S.alat.filter((a) => a.kategori !== "BK" && (!S.labelRuang || (S.labelRuang === "-" ? !a.ruang : a.ruang === S.labelRuang)) && (!gol || golongan(a) === gol));
     const daftar = [];
     d.forEach((a) => { const n = per === "n" ? Math.min(40, a.jumlah) : 1; for (let i = 1; i <= n; i++) daftar.push([a, n > 1 ? `${i}/${n}` : ""]); });
     $("l-jml").textContent = `${daftar.length} label · ${Math.max(1, Math.ceil(daftar.length / 24))} lembar A4`;
