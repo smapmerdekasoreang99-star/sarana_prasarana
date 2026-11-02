@@ -79,6 +79,7 @@ const P = {
   tabel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
   dokumen: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/>',
   buku: '<path d="M4 19.5V5a2 2 0 0 1 2-2h13v17H6.5A2.5 2.5 0 0 0 4 22.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H19"/><path d="M8 7h7"/>',
+  rak: '<path d="M5 4v16M10 4v16"/><path d="m14.5 4.5 4.5 15.5"/>',
   masukStok: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
   keluarStok: '<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>',
 };
@@ -155,6 +156,7 @@ async function masuk(pin) {
   Object.assign(S, { pin, akses: d.akses, kategori: d.kategori, katBahan: d.kategori_bahan || [], ruang: d.ruang, dana: d.dana, guru: d.guru });
   [S.alat, S.bahan, S.profil] = await Promise.all([rpc("sp_alat_daftar", { p_pin: pin }), rpc("sp_bahan_daftar", { p_pin: pin }),
     rpc("sp_profil", { p_pin: pin }).catch(() => null)]);
+  await muatPerpus();
   ssSet("sp_pin", pin);
   $("layar-masuk").hidden = true; $("layar-app").hidden = false;
   const peran = { admin: "Staf Sarpras · semua ruang", pj: "Penanggung jawab · " + ruangSaya().map(namaRuang).join(", "), lihat: "Hanya melihat" }[S.akses.peran];
@@ -163,11 +165,13 @@ async function masuk(pin) {
   $("pengguna").hidden = false;
   $("keluar").onclick = keluar;
   document.querySelectorAll("[data-admin]").forEach((b) => (b.hidden = !admin()));
-  buka(S.akses.peran === "admin" ? "ringkas" : "ruang");
+  document.querySelectorAll("[data-buku-semua]").forEach((b) => (b.hidden = !bukuSemua()));
+  buka(S.akses.peran === "admin" ? "ringkas" : aksesBuku() ? "buku" : "ruang");
 }
 async function muatUlang() {
   [S.alat, S.bahan, S.ruang] = await Promise.all([rpc("sp_alat_daftar", { p_pin: S.pin }), rpc("sp_bahan_daftar", { p_pin: S.pin }),
     rpc("sp_masuk", { p_pin: S.pin }).then((d) => d.ruang)]);
+  await muatPerpus();
 }
 function keluar() { ssSet("sp_pin", null); location.href = location.pathname; }
 
@@ -725,7 +729,7 @@ function penandaTangan() {
 }
 
 /* Satu lembar tabel berkop. kolom: [{ judul, lebar, angka?, rupiah? }]; baris: array nilai; jumlah: { label, kolom: {indeks: nilai} } */
-async function lembarBerkop(wb, { nama, judul, sub, kolom, baris, jumlah, ttd = true }) {
+async function lembarBerkop(wb, { nama, judul, sub, kolom, baris, jumlah, ttd = true, blok }) {
   const K = window.KopDokumen;
   if (!K) throw new Error("Berkas assets/kop-dokumen.js belum termuat. Muat ulang halaman.");
   const ws = wb.addWorksheet(nama.slice(0, 31), { pageSetup: { paperSize: 9, orientation: kolom.length > 7 ? "landscape" : "portrait",
@@ -774,7 +778,7 @@ async function lembarBerkop(wb, { nama, judul, sub, kolom, baris, jumlah, ttd = 
   ws.views = [{ state: "frozen", ySplit: rKepala }];
   if (baris.length) ws.autoFilter = { from: { row: rKepala, column: 1 }, to: { row: rKepala + baris.length, column: kolomAkhir } };
   r = K.kakiExcel(ws, r + 1, { profil: profilKop(), kolomAkhir });
-  if (ttd) K.ttdExcel(ws, r + 2, { kolomAkhir, ruang: 3, blok: penandaTangan() });
+  if (ttd) K.ttdExcel(ws, r + 2, { kolomAkhir, ruang: 3, blok: blok || penandaTangan() });
   return ws;
 }
 async function simpanBuku(wb, nama) {
@@ -1233,7 +1237,9 @@ TAB.profil = () => {
     ["Laman", p.laman], ["Kepala sekolah", p.kepala_sekolah], ["NIP kepala sekolah", p.nip_kepala], ["Berkas logo", p.logo_url], ["Catatan kaki", p.catatan_kaki]];
   const ttd = [["Kepala Sekolah", p.kepala_sekolah, "Profil Dokumen", "Kiri: Mengetahui"],
     ["Wakasek Sarana Prasarana", p.wakasek_sarpras, "Tugas Guru", p.wakasek_sarpras ? "Kanan" : "Belum ada; dipakai Staf Sarpras"],
-    ["Staf Sarana Prasarana", p.staf_sarpras, "Tugas Guru", p.wakasek_sarpras ? "Tidak dipakai" : "Kanan"]];
+    ["Staf Sarana Prasarana", p.staf_sarpras, "Tugas Guru", p.wakasek_sarpras ? "Tidak dipakai" : "Kanan"],
+    ["Penanggung Jawab Perpustakaan", (ruangOf("PERPUS") || {}).pj_nama, "Ruang Perpustakaan", "Kanan, dokumen buku"],
+    ["Penanggung Jawab Literasi", (ruangOf("LIT") || {}).pj_nama, "Ruang Pojok Literasi", "Kanan, daftar buku literasi"]];
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Profil Dokumen</h2><p class="sub">Identitas sekolah, tata letak kop, dan penanda tangan yang dipakai semua unduhan Excel di aplikasi ini. Sama dengan Data Induk, Kehadiran Guru, Absensi Ekskul, dan Induk Pembiayaan.</p></div>
       <div class="aksi"><a class="tombol" href="https://smapmerdekasoreang99-star.github.io/data_induk/" target="_blank" rel="noopener">${ikon("ubah")}Ubah di Data Induk</a>

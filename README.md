@@ -30,6 +30,18 @@ Alamat (setelah repositori `sarana_prasarana` dibuat di akun sekolah): https://s
 
 Tahap berikutnya: lapor kerusakan & peminjaman, stok opname & penghapusan aset.
 
+## Perpustakaan (Tahap A, 2 Nov 2026)
+
+Bagian dari aplikasi ini; berkasnya `assets/perpustakaan.js`. Rancangan: RENCANA_PERPUSTAKAAN.md di repo utama.
+
+| Menu | Isi |
+|---|---|
+| Katalog Buku | Stok per jumlah per lokasi (Perpustakaan, Kelas, Pojok Literasi, Guru, Tempat lain); tambah, ubah, pindahkan; Unduh (berkop, bisa diunggah ulang), Unduh template (tanpa kop), Unggah data |
+| Penerimaan Buku | Pembelian dan sumbangan dengan sumber dana + tahap; dipesan → sudah datang menambah stok Perpustakaan; Unduh laporan mengikuti kolom Format Penerimaan Buku |
+
+Akses buku: penanggung jawab ruang PERPUS dan admin = semua buku; penanggung jawab ruang LIT = hanya buku di Pojok Literasi;
+guru lain hanya melihat Katalog. Belum ada: peminjaman (Tahap B), pengajuan, penghapusan, label buku, pencatatan aset (Tahap C).
+
 ## Panduan
 
 `Panduan_Sarana_Prasarana.pdf` dan `.docx` (16 halaman, 31 Okt 2026), dibuka lewat tombol **Panduan** di kepala halaman.
