@@ -42,7 +42,8 @@ Bagian dari aplikasi ini; berkasnya `assets/perpustakaan.js`. Rancangan: RENCANA
 Akses buku: penanggung jawab ruang PERPUS dan admin = semua buku; penanggung jawab ruang LIT = hanya buku di Pojok Literasi;
 guru lain hanya melihat Katalog.
 Tampilan per peran (2 Nov): pustakawan hanya menu buku + Profil Dokumen; PJ literasi hanya Koleksi Literasi; PJ ruang lain hanya ruangnya (satu ruang langsung terbuka), tanpa Ringkasan dan menu buku; admin dan guru yang hanya melihat tetap semua menu. Pembatasan ini di tampilan; hak ubah tetap diperiksa server. Inventaris barang ruang PERPUS & LIT dicatat admin. Pinjam & Kembali (Tahap B, `assets/pinjam.js`): set kelas atas nama guru + siswa pengambil, pribadi maks 3 buku 7 hari, ACC permintaan HP, kembali sebagian, unduh berkop. Halaman siswa: `?pinjam` atau `?b=<kode>` dengan NISN. Siswa, kelas, guru dari tabel Data Induk.
-Panduan per peran (PDF & Word, `alat/buat-panduan.js` + `alat/panduan-peran.js`): Sarana Prasarana (Staf/admin), Penanggung Jawab Ruang, Perpustakaan, Pojok Literasi, Pinjam Buku Siswa. Tombol Panduan menampilkan yang sesuai peran.
+Label Buku (`assets/label-buku.js`, vendor JsBarcode): A4 isi 65, punggung/QR/barkode. Pengingat Buku: wali kelas dan guru pemegang set kelas melihat yang terlambat saat masuk; pustakawan punya tombol WhatsApp. PIN dibaca dari `guru_pin` (Data Induk), disalin pemicu dari `mtd_guru`.
+Panduan per peran (PDF & Word, `alat/buat-panduan.js` + `alat/panduan-peran.js`): Sarana Prasarana (Staf/admin), Penanggung Jawab Ruang, Perpustakaan, Pojok Literasi, Wali Kelas, Pinjam Buku Siswa. Tombol Panduan menampilkan yang sesuai peran.
 Belum ada: pengajuan, penghapusan, label buku, pencatatan aset (Tahap C).
 
 ## Panduan

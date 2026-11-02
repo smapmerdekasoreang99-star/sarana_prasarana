@@ -41,13 +41,41 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       "Periksa **Jumlah yang kembali**. Bawaannya semua sisa.", "Tekan **Terima**."),
     P("Bila belum semua kembali (mis. 18 dari 20), ketik angka yang kembali. Sisanya tetap tercatat dipinjam dan tampil sebagai **sisa 2**."),
     H2("Mengingatkan yang terlambat"),
-    P("Pilih **Terlambat** di saringan **Tampilkan**. Tekan **Salin pengingat**, lalu tempel pesannya di WhatsApp. Siswa juga melihat tanda terlambat di HP-nya."),
-    KOTAK("info", "Pengingat belum otomatis", "Aplikasi belum mengirim pesan sendiri ke siswa atau wali kelas. Pengingat dikirim dengan menempelkan pesan yang sudah disalin."),
+    P("Pengingat berjalan lewat tiga cara:"),
+    UL("**Otomatis di aplikasi**: wali kelas melihat menu **Pengingat Buku** saat masuk dengan PIN-nya, dan siswa melihat tanda terlambat di HP-nya.",
+      "**Kirim ke wali kelas**: pada bagian **Terlambat per kelas**, tombol ini membuka WhatsApp dengan pesan yang sudah terisi. Anda tinggal menekan kirim.",
+      "**Salin pengingat**: pada baris pinjaman, untuk dikirim ke peminjamnya sendiri."),
+    KOTAK("info", "Nomor wali kelas", "Bila nomor HP wali kelas belum ada di Data Induk, WhatsApp meminta Anda memilih kontak. Aplikasi belum bisa mengirim WhatsApp tanpa ditekan."),
     H2("Mengunduh buku peminjaman"),
     P("Tekan **Unduh**, pilih rentang tanggal, lalu tekan **Unduh** di formulir. Hasilnya berkas Excel berkop Profil Dokumen: No. Pinjam, Nama, Kelas, Guru, Judul Buku, Jumlah, Tanggal Pinjam, Batas Kembali, Tanggal Kembali, dan Status. Permintaan yang belum di-ACC tidak ikut."),
   ];
 
+  const LABEL = [
+    H1("Label Buku"),
+    OL("Buka **Label Buku**, lalu pilih **Buku**. Rentang eksemplar langsung terisi sesuai jumlah bukunya; ubah bila perlu.",
+      "Centang jenis labelnya: **Label punggung** (nomor panggil), **Label QR**, dan **Label barkode** bila memakai alat pemindai.",
+      "Periksa pratinjau. Jumlah label dan lembar tertulis di atasnya. Paling banyak 650 label sekali cetak.",
+      "Tekan **Cetak**. Pilih kertas **A4**, skala **100%**, tanpa kepala dan kaki halaman peramban."),
+    P("Kertas: **stiker kecil A4 isi 65 (38 × 21 mm)**. Kode **B-0004.012** berarti buku B-0004, eksemplar ke-12. Nomor panggil yang kosong diganti mapel, jadi lengkapi dulu lewat **Ubah** di katalog."),
+    KOTAK("saran", "Coba dulu satu lembar", "Cetak di kertas biasa, lalu tumpuk dengan kertas stiker untuk memeriksa posisinya. Merek kertas bisa sedikit berbeda."),
+    P("Saat QR dipindai kamera HP, halaman pinjam buku itu terbuka. Siswa masuk dengan NISN; guru atau petugas memakai tautan **Masuk dengan PIN**. Stok tetap dihitung per jumlah, jadi nomor eksemplar hanya identitas pada label."),
+  ];
   return {
+    /* ==================================================================== Wali kelas */
+    wali: { nama: "Panduan_Wali_Kelas", judul: "Panduan Pengingat Buku untuk Wali Kelas",
+      sub: "Melihat pinjaman buku yang terlambat di kelas Anda", untuk: "Wali kelas dan guru", isi: [
+      H1("Pengingat Buku"),
+      P("Menu **Pengingat Buku** menampilkan pinjaman buku perpustakaan yang sudah lewat batas kembali. Daftarnya terbentuk otomatis; Anda tidak perlu mencatat apa pun."),
+      ...masukPIN("nama Anda"),
+      P("Bila ada yang terlambat, menu ini langsung terbuka saat Anda masuk, dan jumlahnya tampil pada nama menu."),
+      TB(["Bagian", "Isi"], [
+        ["**Atas nama Anda**", "Pinjaman set kelas yang dicatat atas nama Anda."],
+        ["**Siswa dan kelas Anda**", "Pinjaman siswa di kelas yang Anda walikan, termasuk set kelas untuk kelas itu."],
+      ], [1.6, 4.4]),
+      H2("Yang perlu dilakukan"),
+      OL("Ingatkan peminjamnya untuk mengembalikan buku ke perpustakaan. Tidak ada denda.", "Untuk pinjaman atas nama Anda, kembalikan bukunya ke pustakawan, boleh lewat siswa.", "Baris hilang sendiri setelah pustakawan menerima bukunya."),
+      KOTAK("info", "Pesan WhatsApp", "Pustakawan juga bisa mengirim daftar ini lewat WhatsApp. Pastikan nomor HP Anda tercatat di Data Induk."),
+    ] },
     /* ==================================================================== Penanggung jawab ruang */
     pj: { nama: "Panduan_Penanggung_Jawab_Ruang", judul: "Panduan Penanggung Jawab Ruang",
       sub: "Mencatat inventaris ruang Anda: sarana, alat, bahan, unduhan, dan label QR",
@@ -125,10 +153,11 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       TB(["Menu", "Isi"], [
         ["**Katalog Buku**", "Semua buku sekolah di mana pun disimpan, termasuk koleksi Pojok Literasi."],
         ["**Pinjam & Kembali**", "Permintaan dari HP siswa, meminjamkan, menerima pengembalian, keterlambatan."],
+        ["**Label Buku**", "Mencetak label punggung, QR, dan barkode."],
         ["**Penerimaan Buku**", "Pembelian dan sumbangan buku beserta sumber dananya."],
         ["**Profil Dokumen**", "Kop dan penanda tangan yang dipakai unduhan. Hanya untuk dilihat; diubah di Data Induk."],
       ], [1.6, 4.4]),
-      KOTAK("info", "Belum tersedia", "Label QR buku, pengajuan buku, penghapusan buku, dan pencatatan buku sebagai aset Sarpras masih dalam pengerjaan. Inventaris non-buku di ruang Perpustakaan (meja, rak, dan sebagainya) dicatat oleh Staf Sarpras."),
+      KOTAK("info", "Belum tersedia", "Pengajuan buku, penghapusan buku, dan pencatatan buku sebagai aset Sarpras masih dalam pengerjaan. Inventaris non-buku di ruang Perpustakaan (meja, rak, dan sebagainya) dicatat oleh Staf Sarpras."),
       H1("Katalog Buku"),
       H2("Mencari dan menyaring"),
       P("Cari dengan judul, mapel, penerbit, kode buku, atau kode barang. Saring menurut **Kelas**, **Jenis**, dan **Lokasi**. Kotak di atas tabel menunjukkan jumlah judul, eksemplar, dan eksemplar di luar perpustakaan."),
@@ -156,6 +185,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       H1("Pinjam & Kembali"),
       ...pinjamBersama("Perpustakaan"),
       P("Bila buku juga ada di Pojok Literasi, muncul pilihan **Ambil dari**: Perpustakaan atau Pojok Literasi."),
+      ...LABEL,
       H1("Penerimaan Buku"),
       P("Mencatat buku yang dibeli atau diterima, dengan susunan yang sama seperti Format Penerimaan Buku. Data awal: 39 baris Laporan Penerimaan Buku 2026-2027."),
       H2("Mencatat penerimaan"),
@@ -190,6 +220,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       TB(["Menu", "Isi"], [
         ["**Koleksi Literasi**", "Daftar buku di Pojok Literasi; menambah, mengubah, mengunduh, dan mengunggah."],
         ["**Pinjam & Kembali**", "Peminjaman buku Pojok Literasi."],
+        ["**Label Buku**", "Mencetak label buku koleksi Anda."],
       ], [1.6, 4.4]),
       KOTAK("info", "Koleksi masih kosong?", "Saat pertama dipakai, koleksi Pojok Literasi bisa masih kosong. Tambahkan bukunya sendiri, atau minta Penanggung Jawab Perpustakaan memindahkan buku yang sudah ada di katalog."),
       H1("Koleksi Literasi"),
@@ -208,6 +239,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       H1("Pinjam & Kembali"),
       P("Anda melayani pinjaman buku Pojok Literasi. Pinjaman buku Perpustakaan dilayani pustakawan."),
       ...pinjamBersama("Pojok Literasi"),
+      ...LABEL,
       H1("Tanya Jawab"),
       TB(["Pertanyaan", "Jawaban"], [
         ["Saya tidak bisa mengubah sebuah buku.", "Buku itu tidak tersimpan di Pojok Literasi. Hubungi pustakawan."],

@@ -43,7 +43,8 @@ const ISI_STAF = [
     ["**Bahan**", "Stok bahan habis pakai; mencatat bahan masuk dan keluar."],
     ["**Buku Induk**", "Daftar inventaris resmi; unduh Excel berkop dan bertanda tangan."],
     ["**Label QR**", "Mencetak label stiker untuk ditempel pada barang."],
-    ["**Katalog Buku**, **Pinjam & Kembali**, **Penerimaan Buku**", "Perpustakaan (bagian 12)."],
+    ["**Katalog Buku**, **Pinjam & Kembali**, **Label Buku**, **Penerimaan Buku**", "Perpustakaan (bagian 12)."],
+    ["**Pengingat Buku**", "Muncul untuk wali kelas dan guru yang punya pinjaman terlambat."],
     ["**Profil Dokumen**", "Kop, identitas sekolah, dan penanda tangan yang dipakai semua unduhan."],
   ], [1.4, 4.6]),
   P("Tombol **Unduh**, **Unduh template**, dan **Unggah data** ada di menu Ruang, Sarana & Alat, Bahan, dan Buku Induk (bagian 9)."),
@@ -250,6 +251,7 @@ const ISI_STAF = [
   TB(["Menu", "Isi"], [
     ["**Katalog Buku**", "Semua buku di semua lokasi; tambah, ubah, pindahkan, unduh, template, dan unggah."],
     ["**Pinjam & Kembali**", "ACC permintaan dari HP siswa, meminjamkan, menerima pengembalian, keterlambatan."],
+    ["**Label Buku**", "Mencetak label punggung, QR, dan barkode."],
     ["**Penerimaan Buku**", "Pembelian dan sumbangan buku beserta sumber dananya; unduh laporan."],
   ], [1.6, 4.4]),
   P("Agar seseorang menjadi pengelola buku, pasang namanya sebagai penanggung jawab ruang **Perpustakaan** atau **Pojok Literasi** di menu **Ruang**."),
@@ -257,7 +259,7 @@ const ISI_STAF = [
   /* ============================ 13 ============================ */
   H1("Tanya Jawab"),
   TB(["Pertanyaan", "Jawaban"], [
-    ["PIN saya ditolak.", "Pakai PIN pribadi yang sama dengan Matematika Dasar dan Asesmen. Bila lupa, minta admin Asesmen mengatur ulang PIN Anda."],
+    ["PIN saya ditolak.", "Pakai PIN pribadi yang sama dengan Matematika Dasar dan Asesmen. Bila lupa, minta admin Asesmen mengatur ulang; PIN baru langsung berlaku di sini."],
     ["Penanggung jawab tidak melihat ruangnya.", "Pasang namanya sebagai penanggung jawab ruang itu di menu **Ruang**, lalu minta ia masuk ulang."],
     ["Penanggung jawab mengeluh ruangnya kosong.", "Barang tanpa ruang tidak terlihat olehnya. Tempatkan barang lewat kotak **Tanpa ruang** di denah."],
     ["Barang perlu dipindah ke ruang lain.", "Staf Sarpras yang memindahkan: buka barangnya, lalu pilih ruang lain."],
@@ -438,7 +440,7 @@ async function buatDOCX(keluaran) {
 
 const PERAN = require("./panduan-peran.js")({ H1, H2, H3, P, UL, OL, TB, KOTAK, STAT });
 const SEMUA = [{ nama: "Panduan_Sarana_Prasarana", judul: "Panduan Sarana Prasarana", sub: "Staf Sarpras dan admin: inventaris semua ruang · Buku Induk · label QR",
-  untuk: "Staf Sarana Prasarana, admin, dan pimpinan", isi: ISI_STAF }, PERAN.pj, PERAN.perpus, PERAN.literasi, PERAN.siswa];
+  untuk: "Staf Sarana Prasarana, admin, dan pimpinan", isi: ISI_STAF }, PERAN.pj, PERAN.perpus, PERAN.literasi, PERAN.siswa, PERAN.wali];
 (async () => {
   for (const g of SEMUA) {
     NAMA = g.nama; JUDUL = g.judul; SUBJUDUL = g.sub; UNTUK = g.untuk; ISI = g.isi; nomori();

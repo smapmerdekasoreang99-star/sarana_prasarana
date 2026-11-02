@@ -6,7 +6,7 @@
 
 const STATUS_PINJAM = { menunggu: ["Menunggu ACC", "c"], dipinjam: ["Dipinjam", "i"], kembali: ["Kembali", "b"], ditolak: ["Ditolak", "k"] };
 const JENIS_PINJAM = { set_kelas: "Set kelas", pribadi: "Pribadi" };
-Object.assign(S, { pinjam: [], refPinjam: null, saringPinjam: { q: "", status: "berjalan", jenis: "" } });
+Object.assign(S, { pinjam: [], refPinjam: null, waliKelas: [], pengingat: { kelas: [], terlambat: [] }, saringPinjam: { q: "", status: "berjalan", jenis: "" } });
 
 const tglSingkat = (s) => s ? new Date(String(s).length === 10 ? s + "T00:00:00" : s).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) : "";
 const isoHari = (tambah = 0) => { const d = new Date(); d.setDate(d.getDate() + tambah); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
@@ -14,8 +14,20 @@ const pilPinjam = (p) => p.terlambat > 0 ? `<span class="pil k">Terlambat ${p.te
 const peminjamTeks = (p) => p.jenis === "set_kelas" ? [p.nama_guru, p.nama_siswa ? "diambil " + p.nama_siswa : ""].filter(Boolean).join(" · ") : p.nama_siswa || "";
 
 async function muatPinjam() {
+  S.pengingat = (await rpc("sp_pinjam_pengingat", { p_pin: S.pin }).catch(() => null)) || { kelas: [], terlambat: [] };
   if (!aksesBuku()) { S.pinjam = []; return; }
-  S.pinjam = await rpc("sp_pinjam_daftar", { p_pin: S.pin, p_dari: null }).catch(() => []);
+  const [p, w] = await Promise.all([rpc("sp_pinjam_daftar", { p_pin: S.pin, p_dari: null }).catch(() => []), rpc("sp_pinjam_wali", { p_pin: S.pin }).catch(() => [])]);
+  S.pinjam = p || []; S.waliKelas = w || [];
+}
+// WhatsApp terbuka dengan pesan terisi; pengirim tinggal menekan kirim. Tanpa nomor, pengirim memilih kontak sendiri.
+function tautanWA(hp, teks) {
+  const d = String(hp || "").replace(/\D/g, "").replace(/^0/, "62");
+  return `https://wa.me/${d}?text=${encodeURIComponent(teks)}`;
+}
+function pesanWali(kelas, wali, daftar) {
+  return `Yth. ${wali ? wali + ", " : ""}wali kelas ${kelas}. Pengingat Perpustakaan SMA Plus Merdeka, pinjaman buku yang terlambat dikembalikan:\n`
+    + daftar.map((p, i) => `${i + 1}. ${p.jenis === "set_kelas" ? p.nama_guru + (p.nama_siswa ? " (diambil " + p.nama_siswa + ")" : "") : p.nama_siswa}: ${p.judul}, ${p.sisa} eksemplar, batas ${tglSingkat(p.batas)}`).join("\n")
+    + "\nMohon dibantu mengingatkan. Terima kasih.";
 }
 async function segarPinjam() { await muatPerpus(); }
 
@@ -31,6 +43,7 @@ TAB.pinjam = () => {
       ${minta.map((p) => `<tr><td class="kode">${p.nomor}</td><td class="nama-sel"><b>${esc(p.judul)}</b><p class="kecil">${esc(p.kode)}</p></td><td class="n">${p.jumlah}</td><td>${esc(p.jenis === "set_kelas" ? `${p.nama_siswa} untuk ${p.nama_guru}` : p.nama_siswa)}</td><td>${esc(p.kelas || "")}</td><td>${JENIS_PINJAM[p.jenis]}</td><td class="kecil">${esc(tgl(p.waktu_minta))}</td>
         <td style="white-space:nowrap"><button class="tombol utama kecil" type="button" data-acc="${p.id}">${ikon("centang")}ACC</button> <button class="tombol kecil" type="button" data-tolak="${p.id}">Tolak</button></td></tr>`).join("")}
       </tbody></table></div>` : ""}
+    ${htmlTelatPerKelas()}
     <div class="saring">
       <label class="f cari" for="pj-q">Cari${ikon("cari")}<input type="search" id="pj-q" value="${esc(s.q)}" placeholder="Nama, kelas, judul, nomor"></label>
       <label class="f" for="pj-status">Tampilkan<select id="pj-status">${opsi([["berjalan", "Sedang dipinjam"], ["terlambat", "Terlambat"], ["kembali", "Sudah kembali"], ["semua", "Semua (60 hari)"]], s.status)}</select></label>
@@ -38,6 +51,25 @@ TAB.pinjam = () => {
     </div>
     <div id="pj-tabel"></div>
   </section>`;
+};
+function htmlTelatPerKelas() {
+  const telat = S.pinjam.filter((p) => p.terlambat > 0);
+  if (!telat.length) return "";
+  const kelas = [...new Set(telat.map((p) => p.kelas || ""))].sort((a, b) => a.localeCompare(b, "id", { numeric: true }));
+  return `<h3>Terlambat per kelas</h3><p class="sub">Wali kelas otomatis melihat daftar ini saat masuk dengan PIN-nya. Tombol di bawah membuka WhatsApp dengan pesan yang sudah terisi.</p>
+    <div class="gulir"><table><thead><tr><th>Kelas</th><th>Wali kelas</th><th class="n">Pinjaman</th><th></th></tr></thead><tbody>${kelas.map((k) => {
+      const d = telat.filter((p) => (p.kelas || "") === k), w = S.waliKelas.find((x) => x.kelas === k) || {};
+      return `<tr><td>${esc(k || "—")}</td><td>${esc(w.nama || "—")}${w.nama && !w.no_hp ? `<p class="kecil">Nomor HP belum ada di Data Induk; pilih kontaknya di WhatsApp.</p>` : ""}</td><td class="n">${d.length}</td>
+        <td style="white-space:nowrap"><a class="tombol kecil" target="_blank" rel="noopener" href="${esc(tautanWA(w.no_hp, pesanWali(k, w.nama, d)))}">Kirim ke wali kelas</a></td></tr>`; }).join("")}</tbody></table></div>`;
+}
+/* Menu Pengingat Buku: tampil otomatis untuk wali kelas dan guru yang punya pinjaman set kelas terlambat. */
+TAB.pengingat = () => {
+  const P = S.pengingat, saya = S.akses.id, kelas = P.terlambat.filter((p) => p.guru !== saya), milik = P.terlambat.filter((p) => p.guru === saya);
+  const tabel = (d) => `<div class="gulir"><table><thead><tr><th>No.</th><th>Peminjam</th><th>Kelas</th><th>Judul buku</th><th class="n">Belum kembali</th><th>Batas</th><th>Terlambat</th></tr></thead><tbody>
+    ${d.map((p) => `<tr><td class="kode">${p.nomor}</td><td class="nama-sel"><b>${esc(p.jenis === "set_kelas" ? p.nama_guru : p.nama_siswa)}</b>${p.jenis === "set_kelas" && p.nama_siswa ? `<p class="kecil">diambil ${esc(p.nama_siswa)}</p>` : ""}</td><td>${esc(p.kelas || "")}</td><td>${esc(p.judul)}</td><td class="n">${p.sisa}</td><td class="kecil">${esc(tglSingkat(p.batas))}</td><td><span class="pil k">${p.terlambat} hari</span></td></tr>`).join("")}</tbody></table></div>`;
+  return `<section class="kartu"><div class="kepala-bagian"><div><h2>Pengingat Buku</h2><p class="sub">${(P.kelas || []).length ? `Wali kelas ${esc(P.kelas.join(", "))}. ` : ""}Pinjaman buku yang lewat batas kembali. Daftar ini diperbarui otomatis; baris hilang setelah pustakawan menerima bukunya.</p></div></div>
+    ${P.terlambat.length ? "" : `<div class="kosong">${ikon("centang")}<span>Tidak ada buku yang terlambat.</span></div>`}
+    ${milik.length ? `<h3>Atas nama Anda</h3>${tabel(milik)}` : ""}${kelas.length ? `<h3>Siswa dan kelas Anda</h3>${tabel(kelas)}<p class="kecil">Mohon ingatkan peminjamnya untuk mengembalikan buku ke perpustakaan. Tidak ada denda.</p>` : ""}</section>`;
 };
 function saringPinjam() {
   const { q, status, jenis } = S.saringPinjam, qq = kecil(q);
@@ -192,7 +224,7 @@ async function halamanSiswa(kodeAwal) {
   const formNisn = (galat = "") => {
     el.innerHTML = `<section class="kartu kartu-masuk"><img src="assets/ikon-192.png" alt="" class="ikon-besar"><h1>Pinjam Buku</h1><p class="sub">Masuk dengan NISN, sama seperti Matematika Dasar dan English Reading.</p>
       <form id="form-nisn" class="form-pin" autocomplete="off"><label class="f" for="nisn">NISN<input id="nisn" inputmode="numeric" required placeholder="Ketik NISN"></label>
-      <button class="tombol utama besar" type="submit">${ikon("masuk")}Masuk</button></form>${galat ? `<p class="galat" role="alert">${esc(galat)}</p>` : ""}</section>`;
+      <button class="tombol utama besar" type="submit">${ikon("masuk")}Masuk</button></form>${galat ? `<p class="galat" role="alert">${esc(galat)}</p>` : ""}<p class="kecil">Guru atau petugas? <a href="${esc(location.pathname)}">Masuk dengan PIN</a></p></section>`;
     $("nisn").focus();
     $("form-nisn").onsubmit = (e) => { e.preventDefault(); masukSiswa($("nisn").value.trim()); };
   };

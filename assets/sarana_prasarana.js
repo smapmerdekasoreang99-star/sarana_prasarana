@@ -174,7 +174,7 @@ async function masuk(pin) {
   document.querySelectorAll("[data-admin]").forEach((b) => (b.hidden = !admin()));
   aturTab();
   aturPanduan(panduanSaya());
-  buka(admin() ? "ringkas" : aksesBuku() && !ruangBarang().length ? "buku" : "ruang");
+  buka(admin() ? "ringkas" : aksesBuku() && !ruangBarang().length ? "buku" : S.pengingat.terlambat.length ? "pengingat" : "ruang");
 }
 async function muatUlang() {
   [S.alat, S.bahan, S.ruang] = await Promise.all([rpc("sp_alat_daftar", { p_pin: S.pin }), rpc("sp_bahan_daftar", { p_pin: S.pin }),
@@ -191,23 +191,26 @@ function batasiKeRuangSaya() {
 function aturTab() {
   const pj = pjRuang(), barang = !pj || ruangBarang().length > 0;
   const boleh = { ringkas: !pj, ruang: barang, alat: barang, bahan: barang, induk: barang, label: barang,
-    buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), terima: bukuSemua(), profil: barang || bukuSemua() };
+    buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), labelbuku: !!aksesBuku(), terima: bukuSemua(), pengingat: (S.akses.wali || []).length > 0 || S.pengingat.terlambat.length > 0, profil: barang || bukuSemua() };
   document.querySelectorAll("#tab button[data-tab]").forEach((b) => { b.hidden = !boleh[b.dataset.tab]; });
   document.querySelector('#tab [data-tab="buku"]').lastChild.textContent = bukuLiterasi() ? "Koleksi Literasi" : "Katalog Buku";
+  document.querySelector('#tab [data-tab="pengingat"]').lastChild.textContent = "Pengingat Buku" + (S.pengingat.terlambat.length ? ` (${S.pengingat.terlambat.length})` : "");
 }
 function keluar() { ssSet("sp_pin", null); location.href = location.pathname; }
 
 /* ================================================================ panduan per peran */
 const PANDUAN = {
   staf: ["Panduan_Sarana_Prasarana", "Staf Sarpras dan admin", "Inventaris semua ruang, Buku Induk, unggah data, dan label QR."],
+  wali: ["Panduan_Wali_Kelas", "Wali kelas dan guru", "Membaca pengingat buku yang terlambat."],
   pj: ["Panduan_Penanggung_Jawab_Ruang", "Penanggung jawab ruang", "Mencatat inventaris ruang Anda: UKS, Lab IPA, Lab Komputer, dan lainnya."],
   perpus: ["Panduan_Perpustakaan", "Perpustakaan", "Katalog buku, peminjaman, dan penerimaan buku."],
   literasi: ["Panduan_Pojok_Literasi", "Pojok Literasi", "Mengelola novel dan bacaan literasi, termasuk peminjamannya."],
   siswa: ["Panduan_Pinjam_Buku_Siswa", "Pinjam buku (siswa)", "Meminjam buku dari HP dengan NISN."],
 };
 function panduanSaya() {
-  if (!pjRuang()) return ["staf", ...(bukuSemua() ? ["perpus"] : [])];
-  return [...(ruangBarang().length ? ["pj"] : []), ...(bukuSemua() ? ["perpus"] : []), ...(bukuLiterasi() ? ["literasi"] : [])];
+  const wali = (S.akses.wali || []).length || S.pengingat.terlambat.length ? ["wali"] : [];
+  if (!pjRuang()) return ["staf", ...(bukuSemua() ? ["perpus"] : []), ...wali];
+  return [...(ruangBarang().length ? ["pj"] : []), ...(bukuSemua() ? ["perpus"] : []), ...(bukuLiterasi() ? ["literasi"] : []), ...wali];
 }
 function aturPanduan(kunci) {
   $("panduan-menu").innerHTML = kunci.map((k) => { const [berkas, judul, ket] = PANDUAN[k];
@@ -1326,7 +1329,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try { await sibuk(() => masuk($("pin").value.trim())); }
     catch (err) { $("galat-pin").textContent = err.message; $("galat-pin").hidden = false; }
   };
-  aturPanduan(["pj", "perpus", "literasi", "staf", "siswa"]);
+  aturPanduan(["pj", "perpus", "literasi", "wali", "staf", "siswa"]);
   const cari = new URLSearchParams(location.search), kode = cari.get("k");
   if (kode) return kartuPublik(kode);
   if (cari.has("pinjam") || cari.get("b")) return halamanSiswa(cari.get("b"));
