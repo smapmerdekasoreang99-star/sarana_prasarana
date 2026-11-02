@@ -159,7 +159,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       sub: "Katalog buku, peminjaman, penerimaan buku, dan unduhan berkop",
       untuk: "Penanggung Jawab Perpustakaan", isi: [
       H1("Masuk dan Menu"),
-      P("Perpustakaan adalah bagian dari aplikasi Sarana Prasarana. Dengan PIN Penanggung Jawab Perpustakaan, aplikasi menampilkan menu **buku** dan **barang di ruang Perpustakaan**."),
+      P("Perpustakaan adalah bagian dari aplikasi Sarana Prasarana. Dengan PIN Penanggung Jawab Perpustakaan, tampil dua tanggung jawab Anda: **buku** sebagai pustakawan, dan **barang di ruang Perpustakaan** sebagai pengguna ruang. Barang dikumpulkan dalam satu menu **Ruang Perpustakaan**."),
       ...masukPIN("Penanggung jawab · Perpustakaan"),
       H2("Menu Anda"),
       TB(["Menu", "Isi"], [
@@ -167,7 +167,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         ["**Pinjam & Kembali**", "Permintaan dari HP siswa, meminjamkan, menerima pengembalian, keterlambatan."],
         ["**Label Buku**", "Mencetak label punggung, QR, dan barkode."],
         ["**Penerimaan Buku**", "Pembelian dan sumbangan buku beserta sumber dananya."],
-        ["**Ruang**, **Sarana & Alat**, **Bahan**, **Buku Induk**, **Label QR**", "Barang di ruang Perpustakaan, seperti rak dan meja: sumber dana, spesifikasi, dan kondisinya. Caranya ada di **Panduan Penanggung Jawab Ruang**."],
+        ["**Ruang Perpustakaan**", "Satu menu dengan tab **Ruang**, **Sarana & Alat**, **Bahan**, **Buku Induk**, dan **Label QR**: barang seperti rak dan meja, beserta sumber dana, spesifikasi, dan kondisinya. Caranya ada di **Panduan Penanggung Jawab Ruang**."],
         ["**Profil Dokumen**", "Kop dan penanda tangan yang dipakai unduhan. Hanya untuk dilihat; diubah di Data Induk."],
       ], [1.6, 4.4]),
       KOTAK("info", "Belum tersedia", "Pengajuan buku, penghapusan buku, dan pencatatan buku sebagai aset Sarpras masih dalam pengerjaan."),

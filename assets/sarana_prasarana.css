@@ -342,3 +342,7 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
 .kamera { position: relative; background: #111; border-radius: var(--r2); overflow: hidden; aspect-ratio: 4 / 3; max-height: 50vh; margin: 0 auto var(--j3); }
 .kamera video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .kamera-bingkai { position: absolute; inset: 18%; border: 3px solid rgba(255,255,255,.85); border-radius: 12px; pointer-events: none; }
+/* Tab di dalam menu Ruang Perpustakaan */
+.tab.subtab { margin-top: var(--j1); padding: 3px; box-shadow: none; background: var(--kertas-3); }
+.tab.subtab button { flex: 0 1 auto; font-size: var(--h-xs); }
+.tab.subtab button[aria-selected="true"] { background: var(--kertas-2); color: var(--gelap); box-shadow: var(--bayang-1); }

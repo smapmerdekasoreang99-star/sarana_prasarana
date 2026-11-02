@@ -189,11 +189,15 @@ function batasiKeRuangSaya() {
   S.bahan = S.bahan.filter((b) => ruangBarang().includes(b.ruang));
 }
 // Tiap peran hanya melihat menu bagiannya; admin dan yang hanya melihat tetap melihat semua menu.
+// Pustakawan memegang dua tanggung jawab: buku (menu utama) dan ruang Perpustakaan (satu menu dengan tab).
+const SUB_RUANG = [["ruang", "Ruang"], ["alat", "Sarana & Alat"], ["bahan", "Bahan"], ["induk", "Buku Induk"], ["label", "Label QR"]];
+const grupRuang = () => pjRuang() && bukuSemua() && ruangBarang().length > 0;
 function aturTab() {
-  const pj = pjRuang(), barang = !pj || ruangBarang().length > 0;
-  const boleh = { ringkas: !pj, ruang: barang, alat: barang, bahan: barang, induk: barang, label: barang,
+  const pj = pjRuang(), barang = !pj || ruangBarang().length > 0, sendiri = barang && !grupRuang();
+  const boleh = { ringkas: !pj, ruang: sendiri, alat: sendiri, bahan: sendiri, induk: sendiri, label: sendiri, grupruang: grupRuang(),
     buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), labelbuku: !!aksesBuku(), terima: bukuSemua(), pengingat: (S.akses.wali || []).length > 0 || S.pengingat.terlambat.length > 0, profil: barang || bukuSemua() };
   document.querySelectorAll("#tab button[data-tab]").forEach((b) => { b.hidden = !boleh[b.dataset.tab]; });
+  document.querySelector('#tab [data-tab="grupruang"]').lastChild.textContent = ruangBarang().length === 1 ? "Ruang " + namaRuang(ruangBarang()[0]) : "Ruang Saya";
   document.querySelector('#tab [data-tab="buku"]').lastChild.textContent = bukuLiterasi() ? "Koleksi Literasi" : "Katalog Buku";
   document.querySelector('#tab [data-tab="pengingat"]').lastChild.textContent = "Pengingat Buku" + (S.pengingat.terlambat.length ? ` (${S.pengingat.terlambat.length})` : "");
 }
@@ -221,10 +225,15 @@ function aturPanduan(kunci) {
 /* ================================================================ tab */
 const TAB = {};
 function buka(tab, tetap) {
+  if (tab === "grupruang") tab = S.subRuang || "ruang";
   if (!TAB[tab]) tab = "ringkas";
   if (tab !== S.tab && !tetap) S.ruangBuka = null;
   S.tab = tab;
-  document.querySelectorAll("#tab button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
+  const diGrup = grupRuang() && SUB_RUANG.some(([k]) => k === tab);
+  if (diGrup) S.subRuang = tab;
+  document.querySelectorAll("#tab button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === (diGrup ? "grupruang" : tab)));
+  $("subtab").hidden = !diGrup;
+  $("subtab").innerHTML = diGrup ? SUB_RUANG.map(([k, n]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${k === tab}">${ikon(k === "induk" ? "buku" : k === "label" ? "qr" : k)}${esc(n)}</button>`).join("") : "";
   $("isi").innerHTML = TAB[tab]();
   if (TAB[tab].sesudah) TAB[tab].sesudah();
 }
@@ -1324,7 +1333,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   aturTinggi();
   if (window.ResizeObserver) new ResizeObserver(aturTinggi).observe(atas); else window.addEventListener("resize", aturTinggi);
   document.addEventListener("click", (e) => { const d = document.querySelector(".panduan"); if (d && d.open && !d.contains(e.target)) d.open = false; });
-  $("tab").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) buka(b.dataset.tab); });
+  ["tab", "subtab"].forEach((id) => $(id).addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) buka(b.dataset.tab); }));
   $("form-pin").onsubmit = async (e) => {
     e.preventDefault(); $("galat-pin").hidden = true;
     try { await sibuk(() => masuk($("pin").value.trim())); }
