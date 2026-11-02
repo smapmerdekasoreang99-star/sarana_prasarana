@@ -36,6 +36,7 @@ const ISI_STAF = [
   ], [1, 1.6, 2.4, 2]),
   P("Golongan sarana atau alat ditentukan oleh **kategori** barang: kategori **Mebel** dan **Pelengkap ruangan** termasuk sarana, kategori lainnya termasuk alat."),
   H2("Menu aplikasi"),
+  P("Menu dikelompokkan. Tekan kelompoknya, lalu pilih tab di baris kedua: **Inventaris** (Ruang, Sarana & Alat, Bahan, Buku Induk, Label QR), **Buku** (Katalog Buku, Pinjam & Kembali, Label Buku, Penerimaan Buku, Pengingat Buku), dan **Pengajuan & Penghapusan**. Panduan ini menyebut nama tabnya."),
   TB(["Menu", "Isi"], [
     ["**Ringkasan**", "Jumlah barang dan unit, unit rusak, bahan menipis, isian yang masih kosong."],
     ["**Ruang**", "Denah kotak semua ruang. Pilih satu kotak untuk melihat sarana, alat, dan bahan di dalamnya."],

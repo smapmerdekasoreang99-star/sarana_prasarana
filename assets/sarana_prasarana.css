@@ -51,7 +51,7 @@ svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-widt
 
 /* ---------- Tab ---------- */
 .tab-wadah { position: sticky; top: var(--tinggi-atas, 64px); z-index: var(--lapis-nav); background: linear-gradient(var(--kertas) 70%, rgba(250,247,240,0)); padding: var(--j3) var(--j4) var(--j2); }
-.tab { max-width: var(--lebar); margin: 0 auto; display: flex; gap: var(--j1); padding: 5px; background: var(--kertas-2); border: 1px solid var(--garis); border-radius: var(--r3); box-shadow: var(--bayang-2); overflow-x: auto; scrollbar-width: none; }
+.tab { max-width: var(--lebar); margin: 0 auto; display: flex; gap: var(--j1); padding: 5px; background: var(--kertas-2); border: 1px solid var(--garis); border-radius: var(--r3); box-shadow: var(--bayang-2); flex-wrap: wrap; }
 .tab::-webkit-scrollbar { display: none; }
 .tab button { flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: var(--j2); background: transparent; border: 0; color: var(--tinta-2); font: 600 var(--h-s) var(--f-isi); min-height: 42px; padding: 0 var(--j4); border-radius: var(--r2); cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
 .tab button:hover { background: var(--kertas-3); color: var(--gelap); }
@@ -319,7 +319,8 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
   .pengguna { gap: var(--j2); }
   .panduan > summary, .tombol-atas { min-height: 36px; padding: 0 10px; }
   .pengguna .nama { display: none; }
-  .tab button { flex: 0 0 auto; }
+  .tab { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .tab button, .tab.subtab button { flex: 0 0 auto; }
   .kartu { padding: var(--j4); }
   .dl { grid-template-columns: 1fr; gap: 2px; } .dl dd { margin-bottom: var(--j2); }
   .riwayat li { grid-template-columns: 1fr; gap: 0; }

@@ -189,24 +189,40 @@ function batasiKeRuangSaya() {
   S.bahan = S.bahan.filter((b) => ruangBarang().includes(b.ruang));
 }
 // Tiap peran hanya melihat menu bagiannya; admin dan guru yang hanya melihat tetap melihat semua menu.
-// Pustakawan memegang dua tanggung jawab: buku (menu utama) dan ruang Perpustakaan (satu menu dengan tab).
-const SUB_RUANG = [["ruang", "Ruang"], ["alat", "Sarana & Alat"], ["bahan", "Bahan"], ["induk", "Buku Induk"], ["label", "Label QR"]];
-const grupRuang = () => pjRuang() && bukuSemua() && ruangBarang().length > 0;
+// Bila menunya lebih dari BATAS_MENU, menu sejenis jadi satu kelompok dengan tab di baris kedua.
+const KELOMPOK = { grupruang: ["ruang", "alat", "bahan", "induk", "label"], grupbuku: ["buku", "pinjam", "labelbuku", "terima", "pengingat"], grupusulan: ["pengajuan", "hapusan"] };
+const BATAS_MENU = 5;
+const tombolMenu = (k) => document.querySelector(`#tab [data-tab="${k}"]`);
+const namaKelompok = (k) => ({
+  grupruang: !pjRuang() ? "Inventaris" : ruangBarang().length === 1 ? "Ruang " + namaRuang(ruangBarang()[0]) : "Ruang Saya",
+  grupbuku: bukuLiterasi() ? "Buku Literasi" : "Buku", grupusulan: "Pengajuan & Penghapusan" }[k]);
 // Pimpinan yang tidak memegang ruang: Wakasek Kurikulum hanya persetujuan; Kepala Sekolah ditambah pantauan.
 const pimpinanSaja = () => S.akses.peran === "lihat" && pimpinan();
 const MENU_PIMPINAN = () => ["pengajuan", "hapusan", "pengingat", ...(punyaJabatan("kepala_sekolah") ? ["ringkas", "induk"] : [])];
 function aturTab() {
-  const pj = pjRuang(), barang = !pj || ruangBarang().length > 0, sendiri = barang && !grupRuang();
-  const boleh = { ringkas: !pj, ruang: sendiri, alat: sendiri, bahan: sendiri, induk: sendiri, label: sendiri, grupruang: grupRuang(),
+  const pj = pjRuang(), barang = !pj || ruangBarang().length > 0;
+  const boleh = { ringkas: !pj, ruang: barang, alat: barang, bahan: barang, induk: barang, label: barang,
     buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), labelbuku: !!aksesBuku(), terima: bukuSemua(), pengajuan: !pj || !!aksesBuku() || pimpinan(), hapusan: admin() || !!aksesBuku() || (pj && ruangBarang().length > 0) || pimpinan(), pengingat: (S.akses.wali || []).length > 0 || S.pengingat.terlambat.length > 0, profil: barang || bukuSemua() };
   if (pimpinanSaja()) Object.keys(boleh).forEach((k) => { if (!MENU_PIMPINAN().includes(k)) boleh[k] = false; });
   document.querySelectorAll("#tab button[data-tab]").forEach((b) => { b.hidden = !boleh[b.dataset.tab]; });
   const adaTugas = (s) => s ? ` (${s})` : "";
   document.querySelector('#tab [data-tab="pengajuan"]').lastChild.textContent = "Pengajuan Buku" + adaTugas(S.pengajuan.filter(aksiAju).length);
   document.querySelector('#tab [data-tab="hapusan"]').lastChild.textContent = "Penghapusan" + adaTugas(S.penghapusan.filter(aksiHps).length);
-  document.querySelector('#tab [data-tab="grupruang"]').lastChild.textContent = ruangBarang().length === 1 ? "Ruang " + namaRuang(ruangBarang()[0]) : "Ruang Saya";
   document.querySelector('#tab [data-tab="buku"]').lastChild.textContent = bukuLiterasi() ? "Koleksi Literasi" : "Katalog Buku";
   document.querySelector('#tab [data-tab="pengingat"]').lastChild.textContent = "Pengingat Buku" + (S.pengingat.terlambat.length ? ` (${S.pengingat.terlambat.length})` : "");
+  // Pengingat tidak ikut dihitung, supaya susunan menu tidak berubah hanya karena ada yang terlambat.
+  const banyak = Object.keys(boleh).filter((k) => boleh[k] && k !== "pengingat").length > BATAS_MENU;
+  S.grupMenu = {};
+  Object.entries(KELOMPOK).forEach(([g, sub]) => {
+    const isi = sub.filter((k) => boleh[k]), aktif = banyak && isi.length > 1;
+    tombolMenu(g).hidden = !aktif;
+    if (!aktif) return;
+    isi.forEach((k) => { S.grupMenu[k] = g; tombolMenu(k).hidden = true; });
+    const tugas = isi.reduce((n, k) => n + +(tombolMenu(k).textContent.match(/\((\d+)\)$/) || [0, 0])[1], 0);
+    tombolMenu(g).lastChild.textContent = namaKelompok(g) + adaTugas(tugas);
+  });
+  // Pustakawan: buku lebih dulu, ruangnya di akhir sebelum Profil Dokumen.
+  tombolMenu(pj && bukuSemua() ? "profil" : "ruang").before(tombolMenu("grupruang"));
 }
 function keluar() { ssSet("sp_pin", null); location.href = location.pathname; }
 
@@ -234,15 +250,16 @@ function aturPanduan(kunci) {
 /* ================================================================ tab */
 const TAB = {};
 function buka(tab, tetap) {
-  if (tab === "grupruang") tab = S.subRuang || "ruang";
+  const grupMenu = S.grupMenu || {};
+  if (KELOMPOK[tab]) tab = (S.subMenu || {})[tab] || KELOMPOK[tab].find((k) => grupMenu[k] === tab);
   if (!TAB[tab]) tab = "ringkas";
   if (tab !== S.tab && !tetap) S.ruangBuka = null;
   S.tab = tab;
-  const diGrup = grupRuang() && SUB_RUANG.some(([k]) => k === tab);
-  if (diGrup) S.subRuang = tab;
-  document.querySelectorAll("#tab button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === (diGrup ? "grupruang" : tab)));
+  const diGrup = grupMenu[tab];
+  if (diGrup) (S.subMenu = S.subMenu || {})[diGrup] = tab;
+  document.querySelectorAll("#tab button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === (diGrup || tab)));
   $("subtab").hidden = !diGrup;
-  $("subtab").innerHTML = diGrup ? SUB_RUANG.map(([k, n]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${k === tab}">${ikon(k === "induk" ? "buku" : k === "label" ? "qr" : k)}${esc(n)}</button>`).join("") : "";
+  $("subtab").innerHTML = diGrup ? KELOMPOK[diGrup].filter((k) => grupMenu[k] === diGrup).map((k) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${k === tab}">${tombolMenu(k).innerHTML}</button>`).join("") : "";
   $("isi").innerHTML = TAB[tab]();
   if (TAB[tab].sesudah) TAB[tab].sesudah();
 }

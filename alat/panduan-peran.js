@@ -94,7 +94,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       H1("Pengingat Buku"),
       P("Menu **Pengingat Buku** menampilkan pinjaman buku perpustakaan yang sudah lewat batas kembali. Daftarnya terbentuk otomatis; Anda tidak perlu mencatat apa pun."),
       ...masukPIN("nama Anda"),
-      P("Bila ada yang terlambat, menu ini langsung terbuka saat Anda masuk, dan jumlahnya tampil pada nama menu."),
+      P("Pengingat Buku berada di dalam menu **Buku**, pada tab baris kedua. Bila ada yang terlambat, tab ini langsung terbuka saat Anda masuk, dan jumlahnya tampil pada nama menu."),
       TB(["Bagian", "Isi"], [
         ["**Atas nama Anda**", "Pinjaman set kelas yang dicatat atas nama Anda."],
         ["**Siswa dan kelas Anda**", "Pinjaman siswa di kelas yang Anda walikan, termasuk set kelas untuk kelas itu."],
@@ -111,6 +111,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       P("Panduan ini khusus untuk guru atau staf yang menjadi **penanggung jawab ruang**. Aplikasi hanya menampilkan **ruang Anda sendiri**, sehingga Anda bisa langsung fokus mengisi inventarisnya."),
       ...masukPIN("Penanggung jawab · nama ruang"),
       H2("Menu Anda"),
+      P("**Ruang**, **Sarana & Alat**, **Bahan**, **Buku Induk**, dan **Label QR** berada dalam satu menu bernama ruang Anda, mis. **Ruang Lab IPA**. Tekan menunya, lalu pilih tab di baris kedua."),
       TB(["Menu", "Isi"], [
         ["**Ruang**", "Halaman ruang Anda, langsung terbuka. Bila Anda memegang lebih dari satu ruang, pilih kotak ruangnya."],
         ["**Sarana & Alat**", "Daftar barang di ruang Anda; mencatat dan mengubah."],
@@ -181,6 +182,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       P("Perpustakaan adalah bagian dari aplikasi Sarana Prasarana. Dengan PIN Penanggung Jawab Perpustakaan, tampil dua tanggung jawab Anda: **buku** sebagai pustakawan, dan **barang di ruang Perpustakaan** sebagai pengguna ruang. Barang dikumpulkan dalam satu menu **Ruang Perpustakaan**."),
       ...masukPIN("Penanggung jawab · Perpustakaan"),
       H2("Menu Anda"),
+      P("Menu dikelompokkan. Tekan kelompoknya, lalu pilih tab di baris kedua: **Buku** berisi Katalog Buku, Pinjam & Kembali, Label Buku, Penerimaan Buku, dan Pengingat Buku; **Pengajuan & Penghapusan** berisi Pengajuan Buku dan Penghapusan. Angka pada nama menu menunjukkan yang menunggu."),
       TB(["Menu", "Isi"], [
         ["**Katalog Buku**", "Semua buku sekolah di mana pun disimpan, termasuk koleksi Pojok Literasi."],
         ["**Pinjam & Kembali**", "Permintaan dari HP siswa, meminjamkan, menerima pengembalian, keterlambatan."],

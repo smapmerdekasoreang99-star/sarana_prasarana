@@ -18,7 +18,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1D2A3A">
 <link rel="stylesheet" href="assets/dasar.css?v=1">
-<link rel="stylesheet" href="assets/sarana_prasarana.css?v=12">
+<link rel="stylesheet" href="assets/sarana_prasarana.css?v=13">
 <script src="config.js?v=2"></script>
 </head>
 <body>
@@ -63,22 +63,24 @@
   <nav class="tab-wadah" aria-label="Bagian aplikasi">
     <div class="tab" id="tab" role="tablist">
       <button role="tab" data-tab="ringkas" aria-selected="true"><span data-ikon="ringkas"></span>Ringkasan</button>
+      <button role="tab" data-tab="grupruang" aria-selected="false" hidden><span data-ikon="ruang"></span>Inventaris</button>
       <button role="tab" data-tab="ruang" aria-selected="false"><span data-ikon="ruang"></span>Ruang</button>
       <button role="tab" data-tab="alat" aria-selected="false"><span data-ikon="alat"></span>Sarana &amp; Alat</button>
       <button role="tab" data-tab="bahan" aria-selected="false"><span data-ikon="bahan"></span>Bahan</button>
       <button role="tab" data-tab="induk" aria-selected="false"><span data-ikon="buku"></span>Buku Induk</button>
       <button role="tab" data-tab="label" aria-selected="false"><span data-ikon="qr"></span>Label QR</button>
+      <button role="tab" data-tab="grupbuku" aria-selected="false" hidden><span data-ikon="rak"></span>Buku</button>
       <button role="tab" data-tab="buku" aria-selected="false"><span data-ikon="rak"></span>Katalog Buku</button>
       <button role="tab" data-tab="pinjam" aria-selected="false"><span data-ikon="keluarStok"></span>Pinjam &amp; Kembali</button>
       <button role="tab" data-tab="labelbuku" aria-selected="false"><span data-ikon="qr"></span>Label Buku</button>
       <button role="tab" data-tab="terima" aria-selected="false"><span data-ikon="masukStok"></span>Penerimaan Buku</button>
+      <button role="tab" data-tab="grupusulan" aria-selected="false" hidden><span data-ikon="dokumen"></span>Pengajuan &amp; Penghapusan</button>
       <button role="tab" data-tab="pengajuan" aria-selected="false"><span data-ikon="dokumen"></span>Pengajuan Buku</button>
       <button role="tab" data-tab="hapusan" aria-selected="false"><span data-ikon="hapus"></span>Penghapusan</button>
       <button role="tab" data-tab="pengingat" aria-selected="false"><span data-ikon="awas"></span>Pengingat Buku</button>
-      <button role="tab" data-tab="grupruang" aria-selected="false" hidden><span data-ikon="ruang"></span>Ruang Saya</button>
       <button role="tab" data-tab="profil" aria-selected="false"><span data-ikon="dokumen"></span>Profil Dokumen</button>
     </div>
-    <div class="tab subtab" id="subtab" role="tablist" aria-label="Bagian ruang" hidden></div>
+    <div class="tab subtab" id="subtab" role="tablist" aria-label="Isi menu" hidden></div>
   </nav>
   <main class="isi" id="isi"></main>
 </div>
@@ -100,7 +102,7 @@
 <script src="assets/vendor/qrcode-1.0.0.min.js"></script>
 <script src="assets/kop-dokumen.js?v=1"></script>
 <script src="assets/kepala-excel.js?v=1"></script>
-<script src="assets/sarana_prasarana.js?v=17"></script>
+<script src="assets/sarana_prasarana.js?v=18"></script>
 <script src="assets/perpustakaan.js?v=8"></script>
 <script src="assets/pinjam.js?v=6"></script>
 <script src="assets/pindai.js?v=2"></script>
