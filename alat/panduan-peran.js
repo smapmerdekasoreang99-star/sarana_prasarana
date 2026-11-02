@@ -79,6 +79,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       H1("Persetujuan"),
       ...masukPIN("nama Anda"),
       P("Bila ada yang menunggu Anda, jumlahnya tampil pada nama menu, mis. **Pengajuan Buku (2)**, dan menu itu langsung terbuka saat Anda masuk."),
+      P("Menu yang tampil hanya yang Anda perlukan: **Pengajuan Buku** dan **Penghapusan**. Kepala Sekolah juga melihat **Ringkasan** dan **Buku Induk** untuk memantau inventaris. **Pengingat Buku** tampil bila ada pinjaman terlambat atau Anda wali kelas."),
       TB(["Yang diproses", "Wakasek Kurikulum", "Kepala Sekolah"], [
         ["**Pengajuan buku**", "Setujui atau Tolak", "Mengetahui"],
         ["**Penghapusan buku**", "Setujui atau Tolak", "Mengetahui"],
@@ -199,12 +200,12 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       H2("Mengubah dan memindahkan"),
       P("Klik baris buku untuk melihat rincian, **pengadaan** (tanggal, jumlah, harga, sumber dana, penerbit, bukti), lokasi simpan, dan riwayatnya. Kolom **Sumber dana** juga tampil di tabel."),
       UL("**Ubah**: memperbaiki data buku. Jumlah dan lokasi tidak diubah di sini.",
-        "**Pindahkan**: pilih lokasi asal, lokasi tujuan, tempat, dan jumlah, mis. 9 Al-Qur'an dari Perpustakaan ke Ruang Kelas 01."),
-      TB(["Tujuan", "Pilihan tempat diambil dari"], [
-        ["**Kelas**", "Ruang kelas yang diisi Staf Sarpras, dengan rombel tahun ini di dalam kurung. Buku tercatat di ruang, jadi tidak perlu dipindah saat rombel berganti. Selama ruangnya belum diisi, catat di **Ruang Kelas (belum dirinci)**."],
+        "**Pindahkan**: pilih lokasi asal, tujuan, dan jumlah, mis. 9 Al-Qur'an dari Perpustakaan ke Ruang Kelas 01."),
+      TB(["Kelompok tujuan", "Isinya"], [
+        ["**Perpustakaan dan Pojok Literasi**", "Nomor rak diketik setelah memilih, boleh dikosongkan."],
+        ["**Ruang kelas**", "Ruang kelas yang diisi Staf Sarpras, dengan rombel tahun ini di dalam kurung. Buku tercatat di ruang, jadi tidak perlu dipindah saat rombel berganti. Selama ruangnya belum diisi, catat di **Ruang Kelas (belum dirinci)**."],
         ["**Guru**", "Daftar guru dari Data Induk."],
-        ["**Tempat lain**", "Daftar ruang yang diisi Staf Sarpras. Bila ruangnya belum ada, minta Staf Sarpras menambahkannya."],
-        ["**Perpustakaan**, **Pojok Literasi**", "Nomor rak diketik, boleh dikosongkan."],
+        ["**Ruang lain**", "Daftar ruang yang diisi Staf Sarpras. Bila ruangnya belum ada, minta Staf Sarpras menambahkannya."],
       ], [1.8, 4.2]),
       P("Buku yang sedang dipinjam tidak bisa dipindahkan atau dikurangi jumlahnya sampai pengembaliannya diterima."),
       H2("Mengatur kategori"),

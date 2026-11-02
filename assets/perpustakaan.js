@@ -220,23 +220,34 @@ async function formBuku(b) {
     if ($("f-lokasi")) $("f-lokasi").onchange = (e) => gambarTempat("f-tempat-wadah", "f-tempat", e.target.value);
   }
 }
+// Semua tujuan dalam satu daftar, supaya Pojok Literasi dan ruang lain langsung terlihat.
+function tujuanPindah() {
+  const isi = (jenis) => (pilihanTempat(jenis).opsi || []).map(([tempat, nama]) => ({ jenis, tempat, nama }));
+  const rak = (jenis) => ({ jenis, tempat: "", nama: LOKASI_BUKU[jenis], rak: true });
+  return [["Perpustakaan dan Pojok Literasi", [rak("perpustakaan"), rak("literasi")]], ["Ruang kelas", isi("kelas")], ["Ruang lain", isi("lainnya")], ["Guru", isi("guru")]].filter(([, d]) => d.length);
+}
 async function formPindahBuku(b) {
   if (!(await muatRefTempat())) return;
+  const grup = tujuanPindah(), T = grup.flatMap(([, d]) => d), tujuan = () => T[+$("p-ke").value];
   dialog({ atas: b.kode, judul: "Pindahkan " + b.judul, isi: `<div class="isian-grid">
       <label class="f lebar" for="p-dari">Dari<select id="p-dari">${b.lokasi.map((l, i) => `<option value="${i}">${esc(namaLokasi(l))} (${l.jumlah} eks)</option>`).join("")}</select></label>
-      <label class="f" for="p-ke">Ke<select id="p-ke">${opsi(Object.entries(LOKASI_BUKU), "kelas")}</select></label>
-      <div id="p-tempat-wadah"></div>
+      <label class="f lebar" for="p-ke">Pindahkan ke<select id="p-ke" required><option value="">Pilih tujuan…</option>${grup.map(([n, d]) => `<optgroup label="${esc(n)}">${d.map((t) => `<option value="${T.indexOf(t)}">${esc(t.nama)}</option>`).join("")}</optgroup>`).join("")}</select></label>
+      <div id="p-tempat-wadah" class="lebar"></div>
       <label class="f" for="p-jumlah">Jumlah eksemplar<input id="p-jumlah" type="number" min="1" value="1" required></label>
-    </div><p class="kecil">Di mana pun disimpan, buku tetap tercatat di katalog perpustakaan.</p>`,
+    </div><p class="kecil">Di mana pun disimpan, buku tetap tercatat di katalog perpustakaan. Ruang belum ada di daftar? Minta Staf Sarpras menambahkannya di menu Ruang.</p>`,
     kaki: kakiSimpan("Pindahkan"),
     onSimpan: async () => {
-      const d = b.lokasi[+$("p-dari").value], n = +$("p-jumlah").value;
-      const h = await sibuk(() => rpc("sp_buku_pindah", { p_pin: S.pin, p_id: b.id, p_dari: { jenis: d.jenis, tempat: d.tempat }, p_ke: { jenis: $("p-ke").value, tempat: $("p-tempat").value }, p_jumlah: n }));
+      const d = b.lokasi[+$("p-dari").value], n = +$("p-jumlah").value, k = tujuan();
+      const h = await sibuk(() => rpc("sp_buku_pindah", { p_pin: S.pin, p_id: b.id, p_dari: { jenis: d.jenis, tempat: d.tempat }, p_ke: { jenis: k.jenis, tempat: k.rak ? $("p-tempat").value : k.tempat }, p_jumlah: n }));
       gantiBukuDiS(h);
       tutupDialog(); segarkan(); toast(`${n} eksemplar dipindahkan`);
     } });
-  gambarTempat("p-tempat-wadah", "p-tempat", $("p-ke").value);
-  $("p-ke").onchange = (e) => gambarTempat("p-tempat-wadah", "p-tempat", e.target.value);
+  $("p-ke").onchange = () => {
+    if ($("p-ke").value === "") { $("p-tempat-wadah").innerHTML = ""; return; }
+    const k = tujuan(), ket = k.jenis === "kelas" ? pilihanTempat("kelas").ket : "";
+    if (k.rak) gambarTempat("p-tempat-wadah", "p-tempat", k.jenis);
+    else $("p-tempat-wadah").innerHTML = ket ? `<p class="kecil">${esc(ket)}</p>` : "";
+  };
 }
 
 /* ---------------------------------------------------------------- unduh, template, unggah */
