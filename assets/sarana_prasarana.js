@@ -93,7 +93,13 @@ const S = { pin: null, akses: null, kategori: [], katBahan: [], ruang: [], dana:
 const admin = () => S.akses && S.akses.peran === "admin";
 const bisaUbah = () => S.akses && S.akses.peran !== "lihat";
 const ruangSaya = () => (S.akses && S.akses.ruang) || [];
-const bolehRuang = (r) => admin() || (S.akses.peran === "pj" && !!r && ruangSaya().includes(r));
+// Ruang buku (PERPUS, LIT) dikelola lewat menu buku; penanggung jawab ruang lain hanya melihat ruangnya sendiri.
+const ruangBarang = () => ruangSaya().filter((k) => k !== "PERPUS" && k !== "LIT");
+const pjRuang = () => S.akses && S.akses.peran === "pj";
+const ruangTampil = () => pjRuang() ? S.ruang.filter((r) => ruangBarang().includes(r.kode)) : S.ruang;
+const ruangSatu = () => pjRuang() && ruangBarang().length === 1 ? ruangBarang()[0] : null;
+const opsiTanpaRuang = (v) => pjRuang() ? "" : opsi([["-", "Belum ada ruang"]], v);
+const bolehRuang = (r) => admin() || (pjRuang() && !!r && ruangBarang().includes(r));
 const katOf = (k) => S.kategori.find((x) => x.kode === k) || {};
 const namaKat = (k) => katOf(k).nama || k;
 const golongan = (a) => katOf(a.kategori).golongan || "alat";
@@ -157,6 +163,7 @@ async function masuk(pin) {
   [S.alat, S.bahan, S.profil] = await Promise.all([rpc("sp_alat_daftar", { p_pin: pin }), rpc("sp_bahan_daftar", { p_pin: pin }),
     rpc("sp_profil", { p_pin: pin }).catch(() => null)]);
   await muatPerpus();
+  batasiKeRuangSaya();
   ssSet("sp_pin", pin);
   $("layar-masuk").hidden = true; $("layar-app").hidden = false;
   const peran = { admin: "Staf Sarpras · semua ruang", pj: "Penanggung jawab · " + ruangSaya().map(namaRuang).join(", "), lihat: "Hanya melihat" }[S.akses.peran];
@@ -165,13 +172,27 @@ async function masuk(pin) {
   $("pengguna").hidden = false;
   $("keluar").onclick = keluar;
   document.querySelectorAll("[data-admin]").forEach((b) => (b.hidden = !admin()));
-  document.querySelectorAll("[data-buku-semua]").forEach((b) => (b.hidden = !bukuSemua()));
-  buka(S.akses.peran === "admin" ? "ringkas" : aksesBuku() ? "buku" : "ruang");
+  aturTab();
+  buka(admin() ? "ringkas" : aksesBuku() && !ruangBarang().length ? "buku" : "ruang");
 }
 async function muatUlang() {
   [S.alat, S.bahan, S.ruang] = await Promise.all([rpc("sp_alat_daftar", { p_pin: S.pin }), rpc("sp_bahan_daftar", { p_pin: S.pin }),
     rpc("sp_masuk", { p_pin: S.pin }).then((d) => d.ruang)]);
   await muatPerpus();
+  batasiKeRuangSaya();
+}
+function batasiKeRuangSaya() {
+  if (!pjRuang()) return;
+  S.alat = S.alat.filter((a) => ruangBarang().includes(a.ruang));
+  S.bahan = S.bahan.filter((b) => ruangBarang().includes(b.ruang));
+}
+// Tiap peran hanya melihat menu bagiannya; admin dan yang hanya melihat tetap melihat semua menu.
+function aturTab() {
+  const pj = pjRuang(), barang = !pj || ruangBarang().length > 0;
+  const boleh = { ringkas: !pj, ruang: barang, alat: barang, bahan: barang, induk: barang, label: barang,
+    buku: !pj || !!aksesBuku(), terima: bukuSemua(), profil: barang || bukuSemua() };
+  document.querySelectorAll("#tab button[data-tab]").forEach((b) => { b.hidden = !boleh[b.dataset.tab]; });
+  document.querySelector('#tab [data-tab="buku"]').lastChild.textContent = bukuLiterasi() ? "Koleksi Literasi" : "Katalog Buku";
 }
 function keluar() { ssSet("sp_pin", null); location.href = location.pathname; }
 
@@ -223,10 +244,10 @@ function hitungRuang(kode) {
     rusak: A.reduce((s, a) => s + a.rusak_ringan + a.rusak_berat, 0), tipis: B.filter((b) => statusBahan(b)[1] !== "b").length,
     belum: A.filter((a) => kurang(a).length).length };
 }
-TAB.ruang = () => S.ruangBuka ? halamanRuang(S.ruangBuka) : denah();
+TAB.ruang = () => { if (!S.ruangBuka && ruangSatu()) S.ruangBuka = ruangSatu(); return S.ruangBuka ? halamanRuang(S.ruangBuka) : denah(); };
 function denah() {
   const urut = ["lab", "layanan", "kantor", "kelas", "lainnya"];
-  const aktif = S.ruang.filter((r) => r.aktif);
+  const aktif = ruangTampil().filter((r) => r.aktif);
   const tanpa = { sarana: S.alat.filter((a) => !a.ruang && golongan(a) === "sarana").length, alat: S.alat.filter((a) => !a.ruang && golongan(a) === "alat").length, bahan: S.bahan.filter((b) => !b.ruang).length };
   const kotak = (r) => {
     const h = hitungRuang(r.kode), saya = ruangSaya().includes(r.kode);
@@ -243,10 +264,10 @@ function denah() {
     return `<section class="kelompok-ruang"><h3>${ikon(j)} ${JENIS_RUANG[j][0]} <small>${rs.length} ruang</small></h3>
       <div class="denah">${rs.map(kotak).join("")}${j === "kelas" && admin() ? `<button class="ruang-kotak ruang-tambah" type="button" data-tambah="kelas">${ikon("tambah")}<span>Tambah ruang kelas</span></button>` : ""}</div></section>`;
   }).join("");
-  const tidakAktif = S.ruang.filter((r) => !r.aktif);
+  const tidakAktif = ruangTampil().filter((r) => !r.aktif);
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Denah ruang</h2><p class="sub">Pilih ruang untuk melihat sarana, alat, dan bahan di dalamnya. ${S.akses.peran === "pj" ? "Ruang Anda bertanda emas." : ""}</p></div>
-      <div class="aksi">${tombolBerkas("ruang", "b-unduh-ruang")}${admin() ? `<button class="tombol utama" type="button" id="b-ruang-baru">${ikon("tambah")}Tambah ruang</button>` : ""}</div></div>
+      <div class="aksi">${pjRuang() ? "" : tombolBerkas("ruang", "b-unduh-ruang")}${admin() ? `<button class="tombol utama" type="button" id="b-ruang-baru">${ikon("tambah")}Tambah ruang</button>` : ""}</div></div>
     <div class="legenda">${urut.map((j) => `<span style="${warnaRuang(j)}"><i></i>${JENIS_RUANG[j][0]}</span>`).join("")}</div>
   </section>
   ${kelompok}
@@ -307,6 +328,7 @@ TAB.ruang.sesudah = () => {
   if ($("b-unduh-ruang")) { $("b-unduh-ruang").onclick = unduhRuang; pasangTombolBerkas(isi); }
   if (!S.ruangBuka) return;
   $("b-kembali").onclick = () => { S.ruangBuka = null; segarkan(); };
+  if (ruangSatu()) $("b-kembali").hidden = true;
   isi.querySelectorAll("[data-seg]").forEach((b) => b.onclick = () => { S.segmen = b.dataset.seg; segarkan(); });
   const ruangIni = S.ruangBuka === "-" ? "" : S.ruangBuka;
   if ($("b-tambah-di")) $("b-tambah-di").onclick = () => S.segmen === "bahan" ? formBahan(null, ruangIni)
@@ -372,7 +394,7 @@ TAB.alat = () => {
       <label class="f cari" for="s-q">Cari${ikon("cari")}<input type="search" id="s-q" value="${esc(s.q)}" placeholder="Nama, kode, atau merek"></label>
       <label class="f" for="s-gol">Golongan<select id="s-gol"><option value="">Sarana &amp; alat</option>${opsi([["sarana", "Sarana"], ["alat", "Alat"]], s.gol)}</select></label>
       <label class="f" for="s-kat">Kategori<select id="s-kat"><option value="">Semua</option>${opsi(S.kategori.map((k) => [k.kode, k.nama]), s.kat)}</select></label>
-      <label class="f" for="s-ruang">Ruang<select id="s-ruang"><option value="">Semua</option>${S.akses.peran === "pj" ? opsi([["@saya", "Ruang saya"]], s.ruang) : ""}${opsi(S.ruang.map((r) => [r.kode, r.nama]), s.ruang)}${opsi([["-", "Belum ada ruang"]], s.ruang)}</select></label>
+      <label class="f" for="s-ruang">Ruang<select id="s-ruang"><option value="">Semua</option>${opsi(ruangTampil().map((r) => [r.kode, r.nama]), s.ruang)}${opsiTanpaRuang(s.ruang)}</select></label>
       <label class="f" for="s-lengkap">Kelengkapan<select id="s-lengkap"><option value="">Semua</option>${opsi([["ya", "Sudah lengkap"], ["tidak", "Perlu dilengkapi"]], s.lengkap)}</select></label>
     </div>
     <p class="kecil" id="jml"></p>
@@ -397,7 +419,7 @@ TAB.bahan = () => {
     <div class="saring">
       <label class="f cari" for="sb-q">Cari${ikon("cari")}<input type="search" id="sb-q" value="${esc(s.q)}" placeholder="Nama bahan"></label>
       <label class="f" for="sb-kat">Kategori<select id="sb-kat"><option value="">Semua</option>${opsi(S.katBahan.map((k) => [k, k]), s.kat)}</select></label>
-      <label class="f" for="sb-ruang">Ruang<select id="sb-ruang"><option value="">Semua</option>${S.akses.peran === "pj" ? opsi([["@saya", "Ruang saya"]], s.ruang) : ""}${opsi(S.ruang.map((r) => [r.kode, r.nama]), s.ruang)}${opsi([["-", "Belum ada ruang"]], s.ruang)}</select></label>
+      <label class="f" for="sb-ruang">Ruang<select id="sb-ruang"><option value="">Semua</option>${opsi(ruangTampil().map((r) => [r.kode, r.nama]), s.ruang)}${opsiTanpaRuang(s.ruang)}</select></label>
       <label class="f" for="sb-status">Status<select id="sb-status"><option value="">Semua</option>${opsi([["k", "Habis"], ["c", "Menipis"], ["b", "Cukup"]], s.status)}</select></label>
     </div>
     <div id="wadah-bahan"></div>
@@ -655,7 +677,7 @@ TAB.label = () => `<section class="kartu">
   <div class="kepala-bagian"><div><h2>Label QR</h2><p class="sub">Cetak di kertas stiker A4 isi 24 (3 × 8, ukuran 70 × 37 mm), lalu tempel pada barang. Saat dipindai kamera HP, kartu barang terbuka tanpa PIN dan tanpa harga.</p></div>
     <div class="aksi"><button class="tombol utama" id="b-cetak" type="button">${ikon("cetak")}Cetak</button></div></div>
   <div class="saring">
-    <label class="f" for="l-ruang">Ruang<select id="l-ruang"><option value="">Semua ruang</option>${opsi(S.ruang.map((r) => [r.kode, r.nama]), S.labelRuang)}${opsi([["-", "Belum ada ruang"]], S.labelRuang)}</select></label>
+    <label class="f" for="l-ruang">Ruang<select id="l-ruang"><option value="">Semua ruang</option>${opsi(ruangTampil().map((r) => [r.kode, r.nama]), S.labelRuang)}${opsiTanpaRuang(S.labelRuang)}</select></label>
     <label class="f" for="l-gol">Golongan<select id="l-gol"><option value="">Sarana &amp; alat</option><option value="sarana">Sarana</option><option value="alat">Alat</option></select></label>
     <label class="f" for="l-per">Banyak label<select id="l-per"><option value="1">Satu per jenis barang</option><option value="n">Satu per unit (maks. 40 per jenis)</option></select></label>
   </div>
@@ -806,7 +828,7 @@ async function unduhBukuInduk(daftar, keterangan) {
       const ExcelJS = await muatExcelJS();
       const wb = new ExcelJS.Workbook(); wb.creator = "Sarana Prasarana";
       const unit = daftar.reduce((s, a) => s + a.jumlah, 0), nilai = daftar.reduce((s, a) => s + (a.harga_satuan == null ? 0 : Number(a.harga_satuan) * a.jumlah), 0);
-      await lembarBerkop(wb, { nama: "Buku Induk", judul: "Buku Induk Sarana dan Prasarana", sub: `${keterangan || "Semua ruang"}  ·  ${daftar.length} jenis barang  ·  ${bil(unit)} unit  ·  keadaan ${tglPanjang()}`,
+      await lembarBerkop(wb, { nama: "Buku Induk", judul: "Buku Induk Sarana dan Prasarana", sub: `${keterangan || (pjRuang() ? ruangTampil().map((r) => r.nama).join(", ") : "Semua ruang")}  ·  ${daftar.length} jenis barang  ·  ${bil(unit)} unit  ·  keadaan ${tglPanjang()}`,
         kolom: KOLOM_INDUK, baris: daftar.map(barisInduk), jumlah: { label: "JUMLAH", kolom: { 8: unit, 18: nilai } } });
       await simpanBuku(wb, "Buku_Induk_Sarpras");
     });
@@ -1187,7 +1209,7 @@ TAB.induk = () => {
       <div class="aksi">${tombolBerkas("alat", "b-unduh-induk")}</div></div>
     <div class="saring">
       <label class="f cari" for="i-q">Cari${ikon("cari")}<input type="search" id="i-q" value="${esc(s.q)}" placeholder="Nama, kode, merek"></label>
-      <label class="f" for="i-ruang">Ruang<select id="i-ruang"><option value="">Semua ruang</option>${opsi(S.ruang.map((r) => [r.kode, r.nama]), s.ruang)}${opsi([["-", "Belum ada ruang"]], s.ruang)}</select></label>
+      <label class="f" for="i-ruang">Ruang<select id="i-ruang"><option value="">Semua ruang</option>${opsi(ruangTampil().map((r) => [r.kode, r.nama]), s.ruang)}${opsiTanpaRuang(s.ruang)}</select></label>
       <label class="f" for="i-gol">Golongan<select id="i-gol"><option value="">Sarana &amp; alat</option>${opsi([["sarana", "Sarana"], ["alat", "Alat"]], s.gol)}</select></label>
       <label class="f" for="i-dana">Sumber dana<select id="i-dana"><option value="">Semua</option>${opsi(S.dana.map((d) => [d, d]), s.dana)}${opsi([["-", "Belum diisi"]], s.dana)}</select></label>
       <label class="f" for="i-tahun">Tahun<select id="i-tahun"><option value="">Semua</option>${opsi(tahun.map((t) => [t, t]), s.tahun)}</select></label>

@@ -40,7 +40,8 @@ Bagian dari aplikasi ini; berkasnya `assets/perpustakaan.js`. Rancangan: RENCANA
 | Penerimaan Buku | Pembelian dan sumbangan dengan sumber dana + tahap; dipesan → sudah datang menambah stok Perpustakaan; Unduh laporan mengikuti kolom Format Penerimaan Buku |
 
 Akses buku: penanggung jawab ruang PERPUS dan admin = semua buku; penanggung jawab ruang LIT = hanya buku di Pojok Literasi;
-guru lain hanya melihat Katalog. Belum ada: peminjaman (Tahap B), pengajuan, penghapusan, label buku, pencatatan aset (Tahap C).
+guru lain hanya melihat Katalog.
+Tampilan per peran (2 Nov): pustakawan hanya menu buku + Profil Dokumen; PJ literasi hanya Koleksi Literasi; PJ ruang lain hanya ruangnya (satu ruang langsung terbuka), tanpa Ringkasan dan menu buku; admin dan guru yang hanya melihat tetap semua menu. Pembatasan ini di tampilan; hak ubah tetap diperiksa server. Inventaris barang ruang PERPUS & LIT dicatat admin. Belum ada: peminjaman (Tahap B), pengajuan, penghapusan, label buku, pencatatan aset (Tahap C).
 
 ## Panduan
 
