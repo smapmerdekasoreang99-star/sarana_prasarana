@@ -25,6 +25,7 @@ async function muatPerpus() {
     [S.buku, S.terima] = await Promise.all([rpc("sp_buku_daftar", { p_pin: S.pin }), rpc("sp_penerimaan_daftar", { p_pin: S.pin })]);
     S.bukuGalat = null;
   } catch (e) { S.buku = []; S.terima = []; S.bukuGalat = e.message; }   // Inventaris barang tetap bisa dipakai.
+  await muatPinjam();
 }
 const catatanGalatBuku = () => S.bukuGalat ? `<p class="catatan awas">${ikon("awas")}<span>Data buku belum terbaca: ${esc(S.bukuGalat)}</span></p>` : "";
 
@@ -73,9 +74,9 @@ TAB.buku.sesudah = () => {
     $("bk-ringkas").innerHTML = `<div class="i"><span class="lambang">${ikon("buku")}</span><span><b>${bil(d.length)}</b><span class="t">judul</span></span></div>
       <div class="b"><span class="lambang">${ikon("kotak")}</span><span><b>${bil(eks)}</b><span class="t">eksemplar</span></span></div>
       ${bukuLiterasi() ? "" : `<div class="${luar ? "c" : "b"}"><span class="lambang">${ikon("ruang")}</span><span><b>${bil(luar)}</b><span class="t">eksemplar di luar perpustakaan</span></span></div>`}`;
-    $("bk-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table><thead><tr><th>Kode</th><th>Judul</th><th>Mapel</th><th>Kelas</th><th>Penerbit</th><th>Kode barang</th><th class="n">Eks</th><th>Lokasi</th></tr></thead><tbody>
+    $("bk-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table><thead><tr><th>Kode</th><th>Judul</th><th>Mapel</th><th>Kelas</th><th>Penerbit</th><th>Kode barang</th><th class="n">Eks</th><th class="n">Dipinjam</th><th>Lokasi</th></tr></thead><tbody>
       ${d.map((b) => `<tr class="klik" tabindex="0" data-buku="${b.id}"><td class="kode">${esc(b.kode)}</td><td class="nama-sel"><b>${esc(b.judul)}</b>${b.penulis ? `<p class="kecil">${esc(b.penulis)}</p>` : ""}</td>
-        <td>${esc(b.mapel || "")}</td><td>${esc(b.tingkat || "")}</td><td>${esc(b.penerbit || "")}</td><td class="kode">${esc(b.kode_penerbit || "")}</td><td class="n">${bil(b.jumlah)}</td>
+        <td>${esc(b.mapel || "")}</td><td>${esc(b.tingkat || "")}</td><td>${esc(b.penerbit || "")}</td><td class="kode">${esc(b.kode_penerbit || "")}</td><td class="n">${bil(b.jumlah)}</td><td class="n">${b.dipinjam ? bil(b.dipinjam) : ""}</td>
         <td class="kecil">${b.lokasi.map((l) => `${esc(namaLokasi(l))} (${l.jumlah})`).join("<br>")}</td></tr>`).join("")}
       </tbody></table></div>`
       : `<div class="kosong">${ikon("buku")}<span>${bukuTampil().length ? "Tidak ada buku yang cocok dengan saringan." : "Belum ada buku di sini. Tambahkan lewat tombol Tambah buku atau Unggah data."}</span></div>`;

@@ -190,7 +190,7 @@ function batasiKeRuangSaya() {
 function aturTab() {
   const pj = pjRuang(), barang = !pj || ruangBarang().length > 0;
   const boleh = { ringkas: !pj, ruang: barang, alat: barang, bahan: barang, induk: barang, label: barang,
-    buku: !pj || !!aksesBuku(), terima: bukuSemua(), profil: barang || bukuSemua() };
+    buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), terima: bukuSemua(), profil: barang || bukuSemua() };
   document.querySelectorAll("#tab button[data-tab]").forEach((b) => { b.hidden = !boleh[b.dataset.tab]; });
   document.querySelector('#tab [data-tab="buku"]').lastChild.textContent = bukuLiterasi() ? "Koleksi Literasi" : "Katalog Buku";
 }
@@ -1308,8 +1308,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     try { await sibuk(() => masuk($("pin").value.trim())); }
     catch (err) { $("galat-pin").textContent = err.message; $("galat-pin").hidden = false; }
   };
-  const kode = new URLSearchParams(location.search).get("k");
+  const cari = new URLSearchParams(location.search), kode = cari.get("k");
   if (kode) return kartuPublik(kode);
+  if (cari.has("pinjam") || cari.get("b")) return halamanSiswa(cari.get("b"));
   const pin = ssGet("sp_pin");
   if (pin) { try { await sibuk(() => masuk(pin)); return; } catch (e) { ssSet("sp_pin", null); } }
   $("layar-masuk").hidden = false; $("pin").focus();
