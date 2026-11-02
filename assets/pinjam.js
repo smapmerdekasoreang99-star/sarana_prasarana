@@ -39,6 +39,7 @@ TAB.pinjam = () => {
       <div class="aksi"><button class="tombol" type="button" id="b-unduh-pinjam">${ikon("unduh")}Unduh</button><button class="tombol utama" type="button" id="b-pinjam-baru">${ikon("tambah")}Pinjamkan</button></div></div>
     <div class="saring pj-pindai"><label class="f" for="pj-pindai">Pindai label buku<input id="pj-pindai" autocomplete="off" placeholder="Pindai dengan alat pemindai, atau ketik kode lalu tekan Enter"></label>
       <button class="tombol" type="button" id="b-kamera">${ikon("qr")}Pindai dengan kamera</button></div>
+    <p class="kecil">Kamera bisa membaca <b>QR</b> di semua HP. <b>Barkode</b> lewat kamera hanya di browser tertentu, seperti Chrome di Android; di iPhone, pakai QR. Alat pemindai bisa membaca barkode.</p>
     <div class="ubin" id="pj-ringkas"></div>
     ${minta.length ? `<h3>Permintaan dari HP siswa</h3><p class="sub">Periksa bukunya di meja, lalu ACC.</p>
       <div class="gulir"><table><thead><tr><th>No.</th><th>Buku</th><th class="n">Jml</th><th>Peminjam</th><th>Kelas</th><th>Jenis</th><th>Diminta</th><th></th></tr></thead><tbody>

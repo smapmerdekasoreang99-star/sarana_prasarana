@@ -46,6 +46,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       "**Alat pemindai**: klik kotak pindai, lalu pindai labelnya.",
       "**Ketik kode**: mis. B-0003.012, lalu tekan Enter.",
       "**Kamera bawaan HP**: tekan **Masuk dengan PIN** di halaman yang terbuka, lalu ketik PIN. Cara ini meminta PIN pada tiap pindaian, jadi lebih cepat memakai tombol kamera di aplikasi."),
+    KOTAK("info", "QR atau barkode?", "Kamera bisa membaca **QR** di semua HP. **Barkode** lewat kamera hanya di browser tertentu, seperti Chrome di Android; di iPhone, pakai QR. Alat pemindai bisa membaca barkode. Jendela kamera memberi tahu bila browser Anda hanya bisa membaca QR."),
     P("Sesudah dipindai, muncul buku itu beserta permintaan yang menunggu dan semua peminjamnya."),
     UL("**Mengembalikan**: tekan **Terima kembali** pada nama peminjamnya, lalu periksa jumlahnya. Untuk satu set kelas cukup memindai satu buku, lalu isi jumlah yang kembali.",
       "**Meminjamkan**: tekan **Pinjamkan**. Bukunya sudah terisi.",
@@ -64,7 +65,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
   const LABEL = [
     H1("Label Buku"),
     OL("Buka **Label Buku**, lalu pilih **Buku**. Rentang eksemplar langsung terisi sesuai jumlah bukunya; ubah bila perlu.",
-      "Centang jenis labelnya: **Label punggung** (nomor panggil), **Label QR**, dan **Label barkode** bila memakai alat pemindai.",
+      "Centang jenis labelnya: **Label punggung** (nomor panggil), **Label QR**, dan **Label barkode** bila memakai alat pemindai. Bila belum punya alat pemindai, cukup pilih QR.",
       "Periksa pratinjau. Jumlah label dan lembar tertulis di atasnya. Paling banyak 650 label sekali cetak.",
       "Tekan **Cetak**. Pilih kertas **A4**, skala **100%**, tanpa kepala dan kaki halaman peramban."),
     P("Kertas: **stiker kecil A4 isi 65 (38 × 21 mm)**. Kode **B-0004.012** berarti buku B-0004, eksemplar ke-12. Nomor panggil yang kosong diganti mapel, jadi lengkapi dulu lewat **Ubah** di katalog."),

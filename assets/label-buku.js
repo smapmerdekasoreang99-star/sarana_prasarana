@@ -23,6 +23,7 @@ TAB.labelbuku = () => {
       <label><input type="checkbox" id="lb-qr"${s.qr ? " checked" : ""}> Label QR</label>
       <label><input type="checkbox" id="lb-barkode"${s.barkode ? " checked" : ""}> Label barkode (untuk alat pemindai)</label>
     </div>
+    <p class="kecil"><b>QR</b> terbaca kamera semua HP. <b>Barkode</b> perlu alat pemindai, atau kamera di browser tertentu seperti Chrome di Android. Bila belum punya alat pemindai, cukup pilih QR.</p>
     <p class="kecil" id="lb-jml"></p>
     <div class="lembar-wadah"><div class="lembar-kecil" id="lb-lembar"></div></div>
     <p class="kecil">Coba cetak satu lembar di kertas biasa, lalu tumpuk dengan kertas stiker untuk memeriksa posisinya. Saat mencetak pilih A4, skala 100%, tanpa kepala dan kaki halaman.</p>

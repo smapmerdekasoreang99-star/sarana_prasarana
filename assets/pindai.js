@@ -55,9 +55,14 @@ function matikanKamera() {
   aliranKamera = null;
 }
 const bacaQR = (citra) => { const h = window.jsQR && window.jsQR(citra.data, citra.width, citra.height, { inversionAttempts: "dontInvert" }); return h ? h.data : null; };
+// Barkode lewat kamera hanya di browser yang menyediakannya (mis. Chrome di Android); QR selalu bisa.
+async function bisaBacaBarkode() {
+  if (!("BarcodeDetector" in window)) return false;
+  try { return (await window.BarcodeDetector.getSupportedFormats()).includes("code_128"); } catch (e) { return false; }
+}
 async function bukaKamera() {
   dialog({ judul: "Pindai label buku", isi: `<div class="kamera"><video id="k-video" playsinline muted></video><span class="kamera-bingkai"></span></div>
-      <p class="kecil" id="k-pesan">Arahkan kamera ke QR pada label buku.</p>
+      <p class="kecil" id="k-pesan">Arahkan kamera ke QR pada label buku.</p><p class="catatan" id="k-ket" hidden></p>
       <label class="f" for="k-ketik">Atau ketik kodenya<input id="k-ketik" placeholder="mis. B-0003.012" autocomplete="off"></label>`,
     kaki: `<button class="tombol" value="batal" formnovalidate>Tutup</button><button class="tombol utama" value="simpan">Cari</button>`,
     onSimpan: async () => { const v = $("k-ketik").value; if (!kodeDariPindaian(v)) throw new Error("Kode tidak dikenali. Contoh: B-0003.012"); matikanKamera(); kartuPindai(v); } });
@@ -65,11 +70,14 @@ async function bukaKamera() {
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("tidak didukung");
     await muatSkrip("assets/vendor/jsQR-1.4.0.min.js");
+    const adaBarkode = await bisaBacaBarkode();
+    if (adaBarkode && $("k-pesan")) $("k-pesan").textContent = "Arahkan kamera ke QR atau barkode pada label buku.";
+    else if ($("k-ket")) { $("k-ket").innerHTML = `${ikon("info")}<span>Browser ini hanya bisa membaca <b>QR</b> lewat kamera. Untuk barkode, pakai alat pemindai atau ketik kodenya.</span>`; $("k-ket").hidden = false; }
     aliranKamera = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
     const v = $("k-video"); if (!v) return matikanKamera();
     v.srcObject = aliranKamera; await v.play();
     const kanvas = document.createElement("canvas"), g = kanvas.getContext("2d", { willReadFrequently: true });
-    const barkode = "BarcodeDetector" in window ? new window.BarcodeDetector({ formats: ["code_128"] }) : null;
+    const barkode = adaBarkode ? new window.BarcodeDetector({ formats: ["code_128"] }) : null;
     let bingkai = 0;
     const baca = async () => {
       if (!aliranKamera) return;
