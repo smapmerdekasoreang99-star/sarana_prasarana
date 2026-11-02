@@ -182,7 +182,13 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       H2("Mengubah dan memindahkan"),
       P("Klik baris buku untuk melihat rincian, **pengadaan** (tanggal, jumlah, harga, sumber dana, penerbit, bukti), lokasi simpan, dan riwayatnya. Kolom **Sumber dana** juga tampil di tabel."),
       UL("**Ubah**: memperbaiki data buku. Jumlah dan lokasi tidak diubah di sini.",
-        "**Pindahkan**: pilih lokasi asal, lokasi tujuan, tempat, dan jumlah, mis. 9 Al-Qur'an dari Perpustakaan ke Kelas XI-2."),
+        "**Pindahkan**: pilih lokasi asal, lokasi tujuan, tempat, dan jumlah, mis. 9 Al-Qur'an dari Perpustakaan ke Ruang Kelas 01."),
+      TB(["Tujuan", "Pilihan tempat diambil dari"], [
+        ["**Kelas**", "Ruang kelas yang diisi Staf Sarpras, dengan rombel tahun ini di dalam kurung. Buku tercatat di ruang, jadi tidak perlu dipindah saat rombel berganti. Selama ruangnya belum diisi, catat di **Ruang Kelas (belum dirinci)**."],
+        ["**Guru**", "Daftar guru dari Data Induk."],
+        ["**Tempat lain**", "Daftar ruang yang diisi Staf Sarpras. Bila ruangnya belum ada, minta Staf Sarpras menambahkannya."],
+        ["**Perpustakaan**, **Pojok Literasi**", "Nomor rak diketik, boleh dikosongkan."],
+      ], [1.8, 4.2]),
       P("Buku yang sedang dipinjam tidak bisa dipindahkan atau dikurangi jumlahnya sampai pengembaliannya diterima."),
       H2("Unduh, template, dan unggah"),
       TB(["Tombol", "Hasil"], [

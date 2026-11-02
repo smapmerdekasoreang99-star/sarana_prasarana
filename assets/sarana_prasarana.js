@@ -285,7 +285,7 @@ function denah() {
     return `<button class="ruang-kotak${saya ? " saya" : ""}" type="button" data-ruang="${esc(r.kode)}" style="${warnaRuang(r.jenis)}" aria-label="${esc(r.nama)}, ${h.sarana.length} sarana, ${h.alat.length} alat, ${h.bahan.length} bahan">
       <span class="atas-kotak"><span class="lambang">${ikon(JENIS_RUANG[r.jenis] ? r.jenis : "lainnya")}</span>
         <span class="judul-kotak"><b>${esc(r.nama)}</b><span class="pj">${ikon("orang")}${esc(r.pj_nama)}</span></span></span>
-      <span class="tanda">${saya ? '<span class="pil saya">Ruang saya</span>' : ""}${h.rusak ? `<span class="pil k">${h.rusak} rusak</span>` : ""}${h.tipis ? `<span class="pil c">${h.tipis} bahan menipis</span>` : ""}${h.belum ? `<span class="pil n">${h.belum} belum lengkap</span>` : ""}</span>
+      <span class="tanda">${r.rombel ? `<span class="pil i">${esc(r.rombel)}</span>` : ""}${saya ? '<span class="pil saya">Ruang saya</span>' : ""}${h.rusak ? `<span class="pil k">${h.rusak} rusak</span>` : ""}${h.tipis ? `<span class="pil c">${h.tipis} bahan menipis</span>` : ""}${h.belum ? `<span class="pil n">${h.belum} belum lengkap</span>` : ""}</span>
       <span class="hitung3"><span><b>${h.sarana.length}</b><small>Sarana</small></span><span><b>${h.alat.length}</b><small>Alat</small></span><span><b>${h.bahan.length}</b><small>Bahan</small></span></span>
     </button>`;
   };
@@ -298,7 +298,7 @@ function denah() {
   const tidakAktif = ruangTampil().filter((r) => !r.aktif);
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Denah ruang</h2><p class="sub">Pilih ruang untuk melihat sarana, alat, dan bahan di dalamnya. ${S.akses.peran === "pj" ? "Ruang Anda bertanda emas." : ""}</p></div>
-      <div class="aksi">${pjRuang() ? "" : tombolBerkas("ruang", "b-unduh-ruang")}${admin() ? `<button class="tombol utama" type="button" id="b-ruang-baru">${ikon("tambah")}Tambah ruang</button>` : ""}</div></div>
+      <div class="aksi">${pjRuang() ? "" : tombolBerkas("ruang", "b-unduh-ruang")}${admin() ? `<button class="tombol" type="button" id="b-pasang-rombel">${ikon("kelas")}Pasangkan rombel</button><button class="tombol utama" type="button" id="b-ruang-baru">${ikon("tambah")}Tambah ruang</button>` : ""}</div></div>
     <div class="legenda">${urut.map((j) => `<span style="${warnaRuang(j)}"><i></i>${JENIS_RUANG[j][0]}</span>`).join("")}</div>
   </section>
   ${kelompok}
@@ -356,6 +356,7 @@ TAB.ruang.sesudah = () => {
   isi.querySelectorAll("[data-tambah]").forEach((b) => b.onclick = () => formRuang(null, b.dataset.tambah));
   isi.querySelectorAll("[data-ubah-ruang]").forEach((a) => a.onclick = (e) => { e.preventDefault(); formRuang(ruangOf(a.dataset.ubahRuang)); });
   if ($("b-ruang-baru")) $("b-ruang-baru").onclick = () => formRuang(null);
+  if ($("b-pasang-rombel")) $("b-pasang-rombel").onclick = formPasangRombel;
   if ($("b-unduh-ruang")) { $("b-unduh-ruang").onclick = unduhRuang; pasangTombolBerkas(isi); }
   if (!S.ruangBuka) return;
   $("b-kembali").onclick = () => { S.ruangBuka = null; segarkan(); };
@@ -687,8 +688,8 @@ function formGerak(b, jenis) {
 function formRuang(r, jenisAwal) {
   const baru = !r; r = r || { aktif: true, jenis: jenisAwal || "kelas" };
   dialog({ atas: baru ? "" : r.kode, judul: baru ? "Tambah ruang" : "Ubah " + r.nama, isi: `<div class="isian-grid">
-      <label class="f" for="r-kode">Kode ruang<input id="r-kode" value="${esc(r.kode || "")}" ${baru ? "" : "readonly"} maxlength="12" placeholder="mis. RK-X1" required></label>
-      <label class="f" for="r-nama">Nama ruang<input id="r-nama" value="${esc(r.nama || "")}" maxlength="80" required placeholder="mis. Kelas X-1"></label>
+      <label class="f" for="r-kode">Kode ruang<input id="r-kode" value="${esc(r.kode || "")}" ${baru ? "" : "readonly"} maxlength="12" placeholder="mis. RK-01" required></label>
+      <label class="f" for="r-nama">Nama ruang<input id="r-nama" value="${esc(r.nama || "")}" maxlength="80" required placeholder="mis. Ruang Kelas 01"></label>
       <label class="f" for="r-jenis">Jenis<select id="r-jenis">${opsi(Object.entries(JENIS_RUANG).map(([k, [n]]) => [k, n]), r.jenis)}</select></label>
       <label class="f" for="r-pj" id="l-pj">Penanggung jawab<select id="r-pj"><option value="">Staf Sarpras</option>${opsi((S.guru || []).map((g) => [g.id, g.nama]), r.pj)}</select></label>
       <label class="f" for="r-aktif">Status<select id="r-aktif">${opsi([["1", "Dipakai"], ["0", "Tidak dipakai"]], r.aktif ? "1" : "0")}</select></label>
@@ -701,6 +702,25 @@ function formRuang(r, jenisAwal) {
     } });
   const atur = () => { $("l-pj").hidden = $("r-jenis").value === "kelas"; };
   $("r-jenis").addEventListener("change", atur); atur();
+}
+
+/* Ruang kelas tetap, rombel berganti tiap tahun: pasangannya diatur per tahun ajaran. */
+async function formPasangRombel() {
+  let d;
+  try { d = await sibuk(() => rpc("sp_ruang_rombel_daftar", { p_pin: S.pin })); } catch (e) { return toast(e.message); }
+  const ruangKelas = S.ruang.filter((r) => r.aktif && r.jenis === "kelas" && r.kode !== "RK");
+  dialog({ atas: "Tahun ajaran " + d.tahun_ajaran, judul: "Pasangkan ruang kelas dengan rombel", isi: `
+    <p class="sub">Barang dan buku dicatat di ruang, jadi tidak perlu dipindah saat rombel berganti. Atur pasangan ini setiap tahun ajaran baru.</p>
+    ${ruangKelas.length ? "" : `<p class="catatan awas">${ikon("awas")}<span>Belum ada ruang kelas. Tambahkan dulu ruangnya dengan nama yang tetap, mis. Ruang Kelas 01, jenis Ruang kelas.</span></p>`}
+    <div class="gulir" style="max-height:420px"><table><thead><tr><th>Rombel</th><th>Ruang kelas</th></tr></thead><tbody>${d.rombel.map((x) => `<tr><td><b>${esc(x.kode)}</b></td><td><select class="p-rombel" data-rombel="${esc(x.id)}" aria-label="Ruang rombel ${esc(x.kode)}"><option value="">Belum dipasangkan</option>${opsi(ruangKelas.map((r) => [r.kode, r.nama]), x.ruang)}</select></td></tr>`).join("")}</tbody></table></div>`,
+    kaki: kakiSimpan("Simpan"),
+    onSimpan: async () => {
+      const pasangan = [...document.querySelectorAll(".p-rombel")].map((s) => ({ rombel: s.dataset.rombel, ruang: s.value }));
+      const dipakai = pasangan.map((x) => x.ruang).filter(Boolean), kembar = dipakai.find((k, i) => dipakai.indexOf(k) !== i);
+      if (kembar) throw new Error(`${namaRuang(kembar)} dipasangkan dengan lebih dari satu rombel.`);
+      S.ruang = await sibuk(() => rpc("sp_ruang_rombel_simpan", { p_pin: S.pin, p_pasangan: pasangan }));
+      tutupDialog(); segarkan(); toast("Pasangan ruang dan rombel tersimpan");
+    } });
 }
 
 /* ---------------------------------------------------------------- label QR */
@@ -962,7 +982,7 @@ const TEMPLATE = {
     daftar: [{ judul: "Jenis", untuk: "Jenis", isi: Object.values(JENIS_RUANG).map((x) => x[0]) },
       { judul: "Penanggung Jawab", untuk: "Penanggung Jawab", isi: ["Staf Sarpras", ...(S.guru || []).map((g) => g.nama)] },
       { judul: "Status", untuk: "Status", isi: ["Dipakai", "Tidak dipakai"] }],
-    petunjuk: ["• Template sudah berisi semua ruang. Tambahkan baris untuk ruang baru, mis. Kode RK-X1, Nama Kelas X-1, Jenis Ruang kelas.",
+    petunjuk: ["• Template sudah berisi semua ruang. Tambahkan baris untuk ruang baru, mis. Kode RK-01, Nama Ruang Kelas 01, Jenis Ruang kelas. Pakai nama ruang yang tetap, bukan nama rombel; rombelnya dipasangkan lewat tombol Pasangkan rombel.",
       "• Kode 1–12 huruf/angka/tanda minus dan tidak bisa diubah. Baris dengan Kode yang sudah ada mengubah ruang itu.",
       "• Ruang kelas selalu di bawah Staf Sarpras; kolom Penanggung Jawab untuk ruang kelas diabaikan.",
       "• Hanya Staf Sarpras yang bisa mengunggah data ruang."] }),

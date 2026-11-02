@@ -15,7 +15,9 @@ const bukuLiterasi = () => aksesBuku() === "literasi";
 const bisaUbahBuku = () => !!aksesBuku();
 const adaDiLiterasi = (b) => b.lokasi.some((l) => l.jenis === "literasi");
 const bolehBuku = (b) => bukuSemua() || (bukuLiterasi() && adaDiLiterasi(b));
-const namaLokasi = (l) => LOKASI_BUKU[l.jenis] + (l.tempat ? " · " + l.tempat : "");
+// Ruang kelas tetap; rombelnya ditampilkan mengikuti pasangan tahun ajaran ini.
+const rombelRuang = (nama) => { const r = S.ruang.find((x) => x.nama === nama && x.jenis === "kelas"); return r && r.rombel; };
+const namaLokasi = (l) => LOKASI_BUKU[l.jenis] + (l.tempat ? " · " + l.tempat + (l.jenis === "kelas" && rombelRuang(l.tempat) ? ` (${rombelRuang(l.tempat)})` : "") : "");
 const bukuTampil = () => bukuLiterasi() ? S.buku.filter(adaDiLiterasi) : S.buku;
 const danaTeks = (p) => p.sumber_dana ? p.sumber_dana + (p.tahap ? " tahap " + p.tahap : "") : "";
 const penerimaanBuku = (id) => S.terima.flatMap((p) => p.baris.filter((r) => r.buku === id).map((r) => ({ p, r })));
@@ -129,7 +131,29 @@ function gantiBukuDiS(h) {
   const i = S.buku.findIndex((x) => x.id === h.id);
   if (i >= 0) S.buku[i] = h; else S.buku.push(h);
 }
-function formBuku(b) {
+/* Pilihan Tempat mengikuti daftar yang sudah ada: ruang dari Sarpras, guru dari Data Induk. Rak perpustakaan tetap diketik.
+   Kelas memakai ruang (tetap), bukan rombel (berganti tiap tahun); rombel hanya ditampilkan sebagai keterangan. */
+function pilihanTempat(jenis) {
+  const R = S.refPinjam || { siswa: [], guru: [] }, ruang = S.ruang.filter((r) => r.aktif);
+  if (jenis === "kelas") {
+    const kelas = ruang.filter((r) => r.jenis === "kelas" && r.kode !== "RK").map((r) => [r.nama, r.nama + (r.rombel ? " (" + r.rombel + ")" : "")]);
+    if (kelas.length) return { label: "Ruang kelas", opsi: kelas };
+    return { label: "Ruang kelas", opsi: ruang.filter((r) => r.kode === "RK").map((r) => [r.nama, r.nama]), ket: "Ruang tiap kelas belum diisi Staf Sarpras. Untuk sementara catat di sini; pindahkan bila ruangnya sudah ada." };
+  }
+  if (jenis === "guru") return { label: "Guru", opsi: R.guru.map((g) => [g.nama, g.nama]) };
+  if (jenis === "lainnya") return { label: "Ruang", opsi: ruang.filter((r) => r.jenis !== "kelas" && r.kode !== "PERPUS" && r.kode !== "LIT").map((r) => [r.nama, r.nama]), ket: "Ruang belum ada? Minta Staf Sarpras menambahkannya di menu Ruang." };
+  return { label: "Rak", teks: jenis === "perpustakaan" ? "mis. F-02, boleh dikosongkan" : "Boleh dikosongkan" };
+}
+function gambarTempat(wadah, id, jenis) {
+  const c = pilihanTempat(jenis);
+  $(wadah).innerHTML = `<label class="f" for="${id}">${esc(c.label)}${c.opsi ? `<select id="${id}" required><option value="">Pilih…</option>${opsi(c.opsi, "")}</select>` : `<input id="${id}" maxlength="80" placeholder="${esc(c.teks)}">`}</label>${c.ket ? `<p class="kecil">${esc(c.ket)}</p>` : ""}`;
+}
+async function muatRefTempat() {
+  if (S.refPinjam || !bukuSemua()) return true;
+  try { S.refPinjam = await sibuk(() => rpc("sp_pinjam_referensi", { p_pin: S.pin })); return true; } catch (e) { toast(e.message); return false; }
+}
+async function formBuku(b) {
+  if (!b && !(await muatRefTempat())) return;
   const baru = !b, v = (k) => esc(b && b[k] != null ? b[k] : "");
   dialog({ judul: baru ? (bukuLiterasi() ? "Tambah buku Pojok Literasi" : "Tambah buku") : "Ubah " + b.judul, isi: `<div class="isian-grid">
       <label class="f lebar" for="f-judul">Judul<input id="f-judul" value="${v("judul")}" maxlength="200" required></label>
@@ -144,7 +168,7 @@ function formBuku(b) {
       <label class="f" for="f-panggil">Nomor panggil<input id="f-panggil" value="${v("nomor_panggil")}" maxlength="40" placeholder="mis. 540 SUD k"></label>
       ${baru ? `<label class="f" for="f-jumlah">Jumlah eksemplar<input id="f-jumlah" type="number" min="1" value="1" required></label>
       ${bukuLiterasi() ? "" : `<label class="f" for="f-lokasi">Lokasi<select id="f-lokasi">${opsi(Object.entries(LOKASI_BUKU), "perpustakaan")}</select></label>`}
-      <label class="f" for="f-tempat">Tempat<input id="f-tempat" maxlength="80" placeholder="Rak, kelas, nama guru, atau nama tempat"></label>` : ""}
+      <div id="f-tempat-wadah"></div>` : ""}
       <label class="f lebar" for="f-ket">Keterangan<input id="f-ket" value="${v("keterangan")}" maxlength="300"></label>
     </div>${baru ? "" : `<p class="kecil">Jumlah dan lokasi diubah lewat Pindahkan atau Unggah data, supaya setiap perubahan tercatat.</p>`}`,
     kaki: kakiSimpan(baru ? "Tambah" : "Simpan"),
@@ -157,13 +181,17 @@ function formBuku(b) {
       gantiBukuDiS(h);
       tutupDialog(); segarkan(); toast(baru ? `Buku tersimpan dengan kode ${h.kode}` : "Perubahan tersimpan");
     } });
+  if (baru) {
+    gambarTempat("f-tempat-wadah", "f-tempat", bukuLiterasi() ? "literasi" : "perpustakaan");
+    if ($("f-lokasi")) $("f-lokasi").onchange = (e) => gambarTempat("f-tempat-wadah", "f-tempat", e.target.value);
+  }
 }
-function formPindahBuku(b) {
-  const saran = { kelas: "mis. XI-2", guru: "Nama guru", perpustakaan: "Rak, mis. F-02", literasi: "Boleh dikosongkan", lainnya: "mis. Mushola" };
+async function formPindahBuku(b) {
+  if (!(await muatRefTempat())) return;
   dialog({ atas: b.kode, judul: "Pindahkan " + b.judul, isi: `<div class="isian-grid">
       <label class="f lebar" for="p-dari">Dari<select id="p-dari">${b.lokasi.map((l, i) => `<option value="${i}">${esc(namaLokasi(l))} (${l.jumlah} eks)</option>`).join("")}</select></label>
       <label class="f" for="p-ke">Ke<select id="p-ke">${opsi(Object.entries(LOKASI_BUKU), "kelas")}</select></label>
-      <label class="f" for="p-tempat">Tempat<input id="p-tempat" maxlength="80" placeholder="${saran.kelas}"></label>
+      <div id="p-tempat-wadah"></div>
       <label class="f" for="p-jumlah">Jumlah eksemplar<input id="p-jumlah" type="number" min="1" value="1" required></label>
     </div><p class="kecil">Di mana pun disimpan, buku tetap tercatat di katalog perpustakaan.</p>`,
     kaki: kakiSimpan("Pindahkan"),
@@ -173,7 +201,8 @@ function formPindahBuku(b) {
       gantiBukuDiS(h);
       tutupDialog(); segarkan(); toast(`${n} eksemplar dipindahkan`);
     } });
-  $("p-ke").onchange = (e) => { $("p-tempat").placeholder = saran[e.target.value]; };
+  gambarTempat("p-tempat-wadah", "p-tempat", $("p-ke").value);
+  $("p-ke").onchange = (e) => gambarTempat("p-tempat-wadah", "p-tempat", e.target.value);
 }
 
 /* ---------------------------------------------------------------- unduh, template, unggah */

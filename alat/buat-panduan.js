@@ -92,7 +92,7 @@ const ISI_STAF = [
   H1("Memulai: Langkah Pertama Staf Sarpras"),
   P("Lakukan sekali saja, berurutan, saat aplikasi mulai dipakai."),
   OL("**Unggah BUKU INDUK.xlsx.** Buka **Buku Induk → Unggah data**, pilih berkas BUKU INDUK.xlsx lama. Periksa pratinjau, lalu tekan **Simpan**. Kantong plastik dan lap otomatis masuk ke Bahan (bagian 9).",
-    "**Tambah ruang kelas.** Buka **Ruang → Unduh template**. Di Excel, tambahkan satu baris per ruang kelas (mis. Kode **RK-X1**, Nama **Kelas X-1**, Jenis **Ruang kelas**). Simpan, lalu **Unggah data**.",
+    "**Tambah ruang kelas.** Buka **Ruang → Unduh template**. Di Excel, tambahkan satu baris per ruang kelas (mis. Kode **RK-01**, Nama **Ruang Kelas 01**, Jenis **Ruang kelas**; pakai nama yang tetap, bukan nama rombel). Simpan, lalu **Unggah data**.",
     "**Tempatkan barang.** Buka kotak **Ruang Kelas (belum dirinci)** dan **Tanpa ruang** di denah. Buka tiap barang dan pilih ruangnya yang benar.",
     "**Lengkapi data.** Di **Buku Induk**, tekan **Unduh**. Isi kolom yang masih kosong di Excel (jumlah, tahun, harga, kode ARKAS, nomor bukti), lalu unggah kembali berkas yang sama.",
     "**Cetak dan tempel label QR** per ruang (bagian 10)."),
@@ -127,11 +127,16 @@ const ISI_STAF = [
   P("Barang baru yang dicatat dari halaman ini langsung terisi ruangnya. Tombol **Label ruang ini** membuka Label QR khusus ruang tersebut. Kembali ke denah dengan **Semua ruang**."),
   H2("Menambah dan mengubah ruang (Staf Sarpras)"),
   OL("Tekan **Tambah ruang** (atau kotak **Tambah ruang kelas**), atau **Ubah ruang** di halaman satu ruang.",
-    "Isi **Kode** (1–12 huruf/angka/tanda minus, mis. RK-X1), **Nama ruang**, **Jenis**, **Penanggung jawab**, dan **Status**.",
+    "Isi **Kode** (1–12 huruf/angka/tanda minus, mis. RK-01), **Nama ruang**, **Jenis**, **Penanggung jawab**, dan **Status**.",
     "Tekan **Simpan**."),
   KOTAK("info", "Aturan ruang",
     "Kode ruang **tidak bisa diubah** setelah dibuat. Ruang kelas **selalu** di bawah Staf Sarpras, jadi isian penanggung jawabnya tersembunyi. Ruang yang sudah tidak dipakai diberi status **Tidak dipakai**, bukan dihapus, supaya riwayat barangnya tetap utuh.",
     "Untuk menambah banyak ruang sekaligus, pakai **Unduh template** lalu **Unggah data** (bagian 9)."),
+
+  H2("Memasangkan ruang kelas dengan rombel"),
+  P("Ruang kelas adalah tempat yang tetap, sedangkan rombel berganti tiap tahun. Barang dan buku dicatat di **ruang**, jadi tidak perlu dipindah saat rombel berganti."),
+  OL("Di denah **Ruang**, tekan **Pasangkan rombel**.", "Pilih ruang kelas untuk tiap rombel tahun ajaran aktif. Satu ruang hanya untuk satu rombel.", "Tekan **Simpan**. Rombel tampil pada kotak ruang di denah."),
+  KOTAK("saran", "Setiap tahun ajaran baru", "Setelah tahun ajaran baru diaktifkan di Data Induk, buka lagi **Pasangkan rombel** dan pilih ruangnya. Pasangan tahun sebelumnya tetap tersimpan."),
 
   /* ============================ 6 ============================ */
   H1("Sarana & Alat"),
