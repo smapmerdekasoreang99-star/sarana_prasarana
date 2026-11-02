@@ -4,6 +4,7 @@
 "use strict";
 Object.assign(S, { labelBuku: { id: "", dari: 1, sampai: 0, punggung: true, qr: true, barkode: false } });
 const BATAS_LABEL = 650;   // 10 lembar sekali cetak, supaya browser tidak kewalahan
+const LOGO_LABEL = `<img class="lb-logo" src="assets/logo-bw.jpg" alt="">`;
 const kodeEksemplar = (b, n) => `${b.kode}.${String(n).padStart(3, "0")}`;
 
 TAB.labelbuku = () => {
@@ -42,9 +43,9 @@ TAB.labelbuku.sesudah = async () => {
     let h = "";
     for (let n = dari; n <= sampai; n++) {
       const kode = kodeEksemplar(b, n);
-      if (s.punggung) h += `<div class="lb lb-pg"><small>PERPUS</small><b>${(b.nomor_panggil ? b.nomor_panggil.split(/\s+/).map(esc) : [atas]).join("<br>")}</b><small>${esc(kode)}</small></div>`;
-      if (s.qr) h += `<div class="lb lb-qr"><div class="qr" data-kode="${esc(kode)}"></div><div class="t"><small>Perpustakaan SMA Plus Merdeka</small><span class="k">${esc(kode)}</span><span class="j">${judul}</span></div></div>`;
-      if (s.barkode) h += `<div class="lb lb-bc"><small>${judul}</small><svg data-kode="${esc(kode)}"></svg></div>`;
+      if (s.punggung) h += `<div class="lb lb-pg">${LOGO_LABEL}<b>${(b.nomor_panggil ? b.nomor_panggil.split(/\s+/).map(esc) : [atas]).join("<br>")}</b><small>${esc(kode)}</small></div>`;
+      if (s.qr) h += `<div class="lb lb-qr"><div class="qr" data-kode="${esc(kode)}"></div><div class="t">${LOGO_LABEL}<small>Perpustakaan SMA Plus Merdeka</small><span class="k">${esc(kode)}</span><span class="j">${judul}</span></div></div>`;
+      if (s.barkode) h += `<div class="lb lb-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${judul}</small></div><svg data-kode="${esc(kode)}"></svg></div>`;
     }
     $("lb-lembar").innerHTML = h;
     const dasar = location.origin + location.pathname + "?b=";

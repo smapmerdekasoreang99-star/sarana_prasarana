@@ -290,6 +290,12 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
 .lb-bc { flex-direction: column; justify-content: center; gap: .5mm; align-items: stretch; text-align: center; }
 .lb-bc svg { width: 100%; height: 14mm; }
 .lb-bc small { white-space: nowrap; overflow: hidden; }
+.lb-logo { height: 4.6mm; width: auto; flex: none; display: block; }
+.lb-pg .lb-logo { margin-bottom: .4mm; }
+.lb-qr .t .lb-logo { align-self: flex-start; }
+.lb-bc-atas { display: flex; align-items: center; justify-content: center; gap: 1mm; min-width: 0; }
+.lb-bc .lb-logo { height: 3.6mm; }
+.lb-bc svg { height: 12.5mm; }
 .cetak { display: none; }
 @media print {
   @page { size: A4; margin: 10mm 0 0 0; }
