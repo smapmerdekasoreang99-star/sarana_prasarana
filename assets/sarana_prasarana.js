@@ -93,8 +93,8 @@ const S = { pin: null, akses: null, kategori: [], katBahan: [], ruang: [], dana:
 const admin = () => S.akses && S.akses.peran === "admin";
 const bisaUbah = () => S.akses && S.akses.peran !== "lihat";
 const ruangSaya = () => (S.akses && S.akses.ruang) || [];
-// Ruang buku (PERPUS, LIT) dikelola lewat menu buku; penanggung jawab ruang lain hanya melihat ruangnya sendiri.
-const ruangBarang = () => ruangSaya().filter((k) => k !== "PERPUS" && k !== "LIT");
+// Pojok Literasi hanya menu buku. Penanggung jawab ruang lain, termasuk pustakawan untuk ruang Perpustakaan, melihat barang di ruangnya sendiri.
+const ruangBarang = () => ruangSaya().filter((k) => k !== "LIT");
 const pjRuang = () => S.akses && S.akses.peran === "pj";
 const ruangTampil = () => pjRuang() ? S.ruang.filter((r) => ruangBarang().includes(r.kode)) : S.ruang;
 const ruangSatu = () => pjRuang() && ruangBarang().length === 1 ? ruangBarang()[0] : null;
@@ -174,7 +174,7 @@ async function masuk(pin) {
   document.querySelectorAll("[data-admin]").forEach((b) => (b.hidden = !admin()));
   aturTab();
   aturPanduan(panduanSaya());
-  buka(admin() ? "ringkas" : aksesBuku() && !ruangBarang().length ? "buku" : S.pengingat.terlambat.length ? "pengingat" : "ruang");
+  buka(admin() ? "ringkas" : aksesBuku() ? "buku" : S.pengingat.terlambat.length ? "pengingat" : "ruang");
   bukaPindaianAlamat();
 }
 async function muatUlang() {
@@ -211,7 +211,7 @@ const PANDUAN = {
 function panduanSaya() {
   const wali = (S.akses.wali || []).length || S.pengingat.terlambat.length ? ["wali"] : [];
   if (!pjRuang()) return ["staf", ...(bukuSemua() ? ["perpus"] : []), ...wali];
-  return [...(ruangBarang().length ? ["pj"] : []), ...(bukuSemua() ? ["perpus"] : []), ...(bukuLiterasi() ? ["literasi"] : []), ...wali];
+  return [...(bukuSemua() ? ["perpus"] : []), ...(bukuLiterasi() ? ["literasi"] : []), ...(ruangBarang().length ? ["pj"] : []), ...wali];
 }
 function aturPanduan(kunci) {
   $("panduan-menu").innerHTML = kunci.map((k) => { const [berkas, judul, ket] = PANDUAN[k];

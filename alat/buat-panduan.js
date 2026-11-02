@@ -74,7 +74,7 @@ const ISI_STAF = [
   TB(["Peran", "Siapa", "Boleh"], [
     ["**Staf Sarpras (admin)**", "Guru/staf berjabatan **Staf Sarana Prasarana** atau **Wakasek Sarana Prasarana** di Data Induk, atau pemegang PIN admin Sarpras", "Semua ruang, termasuk **seluruh ruang kelas**; menambah dan mengubah ruang; menghapus barang; mengunggah data ruang"],
     ["**Penanggung jawab ruang**", "Guru yang dipasang sebagai penanggung jawab ruang tertentu", "Hanya **melihat dan mengisi ruangnya sendiri**. Punya panduan sendiri: Panduan Penanggung Jawab Ruang"],
-    ["**Penanggung jawab Perpustakaan**", "Penanggung jawab ruang Perpustakaan", "Hanya menu buku. Punya panduan sendiri: Panduan Perpustakaan"],
+    ["**Penanggung jawab Perpustakaan**", "Penanggung jawab ruang Perpustakaan", "Menu buku, pengadaan buku, dan barang di ruang Perpustakaan. Punya panduan sendiri: Panduan Perpustakaan"],
     ["**Penanggung jawab Pojok Literasi**", "Penanggung jawab ruang Pojok Literasi", "Hanya buku di Pojok Literasi. Punya panduan sendiri: Panduan Pojok Literasi"],
     ["**Guru lain**", "Guru lain yang punya PIN pribadi", "Melihat dan mengunduh; tidak mengubah"],
   ], [1.6, 2.4, 2.6]),
@@ -86,7 +86,7 @@ const ISI_STAF = [
     "Penanggung jawab tidak bisa mencatat barang di ruang orang lain, dan tidak bisa memindahkan barang ke ruang yang bukan tanggung jawabnya. Pemindahan antarruang dilakukan oleh Staf Sarpras.",
     "Jaga PIN Anda. Jangan memberikannya kepada siswa atau orang luar."),
   P("**Menu yang pertama terbuka.** Staf Sarpras langsung masuk ke **Ringkasan**, guru lain ke **Ruang**, penanggung jawab ruang ke halaman ruangnya, dan pengelola buku ke menu bukunya."),
-  KOTAK("info", "Barang di ruang buku", "Inventaris non-buku di Perpustakaan dan Pojok Literasi (meja, rak, dan sebagainya) dicatat Staf Sarpras, karena penanggung jawabnya hanya melihat menu buku."),
+  KOTAK("info", "Barang di ruang buku", "Barang di ruang Perpustakaan dicatat penanggung jawabnya. Barang di Pojok Literasi (meja, rak, dan sebagainya) dicatat Staf Sarpras, karena penanggung jawabnya hanya melihat menu buku. **Rak buku perpus** dan barang lain yang belum berruang perlu ditempatkan dulu oleh Staf Sarpras."),
 
   /* ============================ 3 ============================ */
   H1("Memulai: Langkah Pertama Staf Sarpras"),

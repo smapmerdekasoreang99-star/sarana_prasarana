@@ -18,6 +18,7 @@ const bolehBuku = (b) => bukuSemua() || (bukuLiterasi() && adaDiLiterasi(b));
 const namaLokasi = (l) => LOKASI_BUKU[l.jenis] + (l.tempat ? " · " + l.tempat : "");
 const bukuTampil = () => bukuLiterasi() ? S.buku.filter(adaDiLiterasi) : S.buku;
 const danaTeks = (p) => p.sumber_dana ? p.sumber_dana + (p.tahap ? " tahap " + p.tahap : "") : "";
+const penerimaanBuku = (id) => S.terima.flatMap((p) => p.baris.filter((r) => r.buku === id).map((r) => ({ p, r })));
 const tglBuku = (s) => s ? new Date(s + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }) : "";
 
 async function muatPerpus() {
@@ -74,9 +75,9 @@ TAB.buku.sesudah = () => {
     $("bk-ringkas").innerHTML = `<div class="i"><span class="lambang">${ikon("buku")}</span><span><b>${bil(d.length)}</b><span class="t">judul</span></span></div>
       <div class="b"><span class="lambang">${ikon("kotak")}</span><span><b>${bil(eks)}</b><span class="t">eksemplar</span></span></div>
       ${bukuLiterasi() ? "" : `<div class="${luar ? "c" : "b"}"><span class="lambang">${ikon("ruang")}</span><span><b>${bil(luar)}</b><span class="t">eksemplar di luar perpustakaan</span></span></div>`}`;
-    $("bk-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table><thead><tr><th>Kode</th><th>Judul</th><th>Mapel</th><th>Kelas</th><th>Penerbit</th><th>Kode barang</th><th class="n">Eks</th><th class="n">Dipinjam</th><th>Lokasi</th></tr></thead><tbody>
+    $("bk-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table><thead><tr><th>Kode</th><th>Judul</th><th>Mapel</th><th>Kelas</th><th>Penerbit</th><th>Kode barang</th><th class="n">Eks</th><th class="n">Dipinjam</th><th>Sumber dana</th><th>Lokasi</th></tr></thead><tbody>
       ${d.map((b) => `<tr class="klik" tabindex="0" data-buku="${b.id}"><td class="kode">${esc(b.kode)}</td><td class="nama-sel"><b>${esc(b.judul)}</b>${b.penulis ? `<p class="kecil">${esc(b.penulis)}</p>` : ""}</td>
-        <td>${esc(b.mapel || "")}</td><td>${esc(b.tingkat || "")}</td><td>${esc(b.penerbit || "")}</td><td class="kode">${esc(b.kode_penerbit || "")}</td><td class="n">${bil(b.jumlah)}</td><td class="n">${b.dipinjam ? bil(b.dipinjam) : ""}</td>
+        <td>${esc(b.mapel || "")}</td><td>${esc(b.tingkat || "")}</td><td>${esc(b.penerbit || "")}</td><td class="kode">${esc(b.kode_penerbit || "")}</td><td class="n">${bil(b.jumlah)}</td><td class="n">${b.dipinjam ? bil(b.dipinjam) : ""}</td><td class="kecil">${esc(sumberBuku(b.id))}</td>
         <td class="kecil">${b.lokasi.map((l) => `${esc(namaLokasi(l))} (${l.jumlah})`).join("<br>")}</td></tr>`).join("")}
       </tbody></table></div>`
       : `<div class="kosong">${ikon("buku")}<span>${bukuTampil().length ? "Tidak ada buku yang cocok dengan saringan." : "Belum ada buku di sini. Tambahkan lewat tombol Tambah buku atau Unggah data."}</span></div>`;
@@ -112,12 +113,15 @@ async function kartuBuku(id) {
       <dt>Kode barang</dt><dd>${esc(b.kode_penerbit || "—")}</dd><dt>ISBN</dt><dd>${esc(b.isbn || "—")}</dd><dt>Nomor panggil</dt><dd>${esc(b.nomor_panggil || "—")}</dd>
       ${b.keterangan ? `<dt>Keterangan</dt><dd>${esc(b.keterangan)}</dd>` : ""}
     </dl>
+    ${(() => { const d = penerimaanBuku(b.id); return d.length ? `<h3>Pengadaan</h3><div class="gulir"><table><thead><tr><th>Tanggal</th><th class="n">Jumlah</th><th class="n">Harga satuan</th><th>Sumber dana</th><th>Toko / penerbit</th><th>No. bukti</th></tr></thead><tbody>
+      ${d.map(({ p, r }) => `<tr class="klik" tabindex="0" data-terima="${p.id}"><td>${esc(tglBuku(p.tanggal))}</td><td class="n">${bil(r.jumlah)}</td><td class="n">${r.harga_satuan == null ? '<span class="pil c">belum</span>' : rp(r.harga_satuan)}</td><td>${esc(danaTeks(p) || "—")}</td><td>${esc(r.penerbit || p.penyedia || "")}</td><td>${esc(p.no_bukti || "")}</td></tr>`).join("")}</tbody></table></div>` : ""; })()}
     <h3>Lokasi simpan · ${bil(b.jumlah)} eksemplar</h3>
     <div class="gulir"><table><tbody>${b.lokasi.map((l) => `<tr><td>${esc(namaLokasi(l))}</td><td class="n">${bil(l.jumlah)}</td></tr>`).join("") || `<tr><td class="kecil">Belum ada eksemplar.</td></tr>`}</tbody></table></div>
     ${riw.length ? `<h3>Riwayat</h3><div class="gulir" style="max-height:200px"><table><tbody>${riw.slice(0, 30).map((r) => `<tr><td class="kecil">${esc(tgl(r.waktu))}</td><td>${esc(JENIS_RIW_BUKU[r.jenis] || r.jenis)}</td><td class="kecil">${esc(uraiRiwayatBuku(r))}</td><td class="kecil">${esc(r.oleh || "")}</td></tr>`).join("")}</tbody></table></div>` : ""}`,
     kaki: `<button class="tombol" value="batal" formnovalidate>Tutup</button>
       ${bukuSemua() && b.lokasi.length ? `<button class="tombol" type="button" id="bk-pindah">${ikon("ruang")}Pindahkan</button>` : ""}
       ${boleh ? `<button class="tombol utama" type="button" id="bk-ubah">${ikon("ubah")}Ubah</button>` : ""}` });
+  $("dlg-isi").onclick = (e) => { const tr = e.target.closest("tr[data-terima]"); if (tr) kartuTerima(+tr.dataset.terima); };
   if ($("bk-pindah")) $("bk-pindah").onclick = () => formPindahBuku(b);
   if ($("bk-ubah")) $("bk-ubah").onclick = () => formBuku(b);
 }
@@ -299,9 +303,9 @@ TAB.terima.sesudah = () => {
     $("t-ringkas").innerHTML = `<div class="i"><span class="lambang">${ikon("tabel")}</span><span><b>${bil(d.length)}</b><span class="t">baris penerimaan</span></span></div>
       <div class="b"><span class="lambang">${ikon("kotak")}</span><span><b>${bil(eks)}</b><span class="t">eksemplar</span></span></div>
       <div class="${pesan ? "c" : "b"}"><span class="lambang">${ikon("masukStok")}</span><span><b>${bil(pesan)}</b><span class="t">pesanan belum datang</span></span></div>`;
-    $("t-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table><thead><tr><th>Tanggal</th><th>Kode barang</th><th>Nama barang</th><th>Kelas</th><th class="n">Jumlah</th><th>Penerbit</th><th>Sumber dana</th><th>Status</th></tr></thead><tbody>
+    $("t-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table><thead><tr><th>Tanggal</th><th>Kode barang</th><th>Nama barang</th><th>Kelas</th><th class="n">Jumlah</th><th class="n">Harga satuan</th><th>Penerbit</th><th>Sumber dana</th><th>Status</th></tr></thead><tbody>
       ${d.map(({ p, r }) => `<tr class="klik" tabindex="0" data-terima="${p.id}"><td>${esc(tglBuku(p.tanggal))}</td><td class="kode">${esc(r.kode_penerbit || "")}</td><td class="nama-sel"><b>${esc(r.nama)}</b></td><td>${esc(r.tingkat || "")}</td>
-        <td class="n">${bil(r.jumlah)}</td><td>${esc(r.penerbit || p.penyedia || "")}</td><td>${esc(danaTeks(p))}</td><td><span class="pil ${STATUS_TERIMA[p.status][1]}">${STATUS_TERIMA[p.status][0]}</span></td></tr>`).join("")}
+        <td class="n">${bil(r.jumlah)}</td><td class="n">${r.harga_satuan == null ? "" : bil(r.harga_satuan)}</td><td>${esc(r.penerbit || p.penyedia || "")}</td><td>${esc(danaTeks(p))}</td><td><span class="pil ${STATUS_TERIMA[p.status][1]}">${STATUS_TERIMA[p.status][0]}</span></td></tr>`).join("")}
       </tbody></table></div>`
       : `<div class="kosong">${ikon("kotak")}<span>${S.terima.length ? "Tidak ada penerimaan yang cocok dengan saringan." : "Belum ada penerimaan buku."}</span></div>`;
   };
@@ -328,11 +332,39 @@ function kartuTerima(id) {
     <div class="gulir"><table><thead><tr><th>Nama barang</th><th>Kode barang</th><th>Kelas</th><th class="n">Jumlah</th><th class="n">Harga satuan</th></tr></thead><tbody>
       ${p.baris.map((r) => `<tr><td>${esc(r.nama)}${r.kode_buku ? `<p class="kecil">${esc(r.kode_buku)}</p>` : ""}</td><td class="kode">${esc(r.kode_penerbit || "")}</td><td>${esc(r.tingkat || "")}</td><td class="n">${bil(r.jumlah)}</td><td class="n">${r.harga_satuan == null ? "" : bil(r.harga_satuan)}</td></tr>`).join("")}
     </tbody><tfoot><tr><td colspan="3">Jumlah</td><td class="n">${bil(eks)}</td><td></td></tr></tfoot></table></div>`,
-    kaki: `<button class="tombol" value="batal" formnovalidate>Tutup</button>${bukuSemua() && p.status === "dipesan" ? `<button class="tombol utama" value="simpan">${ikon("centang")}Tandai sudah datang</button>` : ""}`,
+    kaki: `<button class="tombol" value="batal" formnovalidate>Tutup</button>${bukuSemua() ? `<button class="tombol" type="button" id="t-ubah">${ikon("ubah")}Ubah</button>` : ""}${bukuSemua() && p.status === "dipesan" ? `<button class="tombol utama" value="simpan">${ikon("centang")}Tandai sudah datang</button>` : ""}`,
     onSimpan: async () => {
       await sibuk(async () => { await rpc("sp_penerimaan_terima", { p_pin: S.pin, p_id: p.id }); await muatPerpus(); });
       tutupDialog(); segarkan(); toast(`${bil(eks)} eksemplar masuk ke stok Perpustakaan`);
     } });
+  if ($("t-ubah")) $("t-ubah").onclick = () => formUbahTerima(p);
+}
+// Melengkapi catatan: sumber dana, bukti, harga. Jumlah tidak diubah di sini karena sudah menjadi stok.
+function formUbahTerima(p) {
+  const v = (x) => esc(x == null ? "" : x), bos0 = BOS(p.sumber_dana);
+  dialog({ atas: p.nomor, judul: "Lengkapi penerimaan", isi: `<div class="isian-grid">
+      <label class="f" for="u-tanggal">Tanggal<input id="u-tanggal" type="date" required value="${v(p.tanggal)}"></label>
+      <label class="f" for="u-sumber">Sumber dana<select id="u-sumber"><option value="">Belum diisi</option>${opsi(S.dana.map((d) => [d, d]), p.sumber_dana)}</select></label>
+      <label class="f u-bos" for="u-tahap"${bos0 ? "" : " hidden"}>Tahap<select id="u-tahap"><option value="">—</option>${opsi([["1", "1"], ["2", "2"], ["3", "3"]], p.tahap)}</select></label>
+      <label class="f u-bos" for="u-arkas"${bos0 ? "" : " hidden"}>Kode rekening ARKAS<input id="u-arkas" maxlength="40" value="${v(p.kode_arkas)}" placeholder="mis. 5.1.02.01.02.0001"></label>
+      <label class="f" for="u-bukti">No. bukti BKU<input id="u-bukti" maxlength="60" value="${v(p.no_bukti)}"></label>
+      <label class="f" for="u-penyedia">Toko / penerbit / penyumbang<input id="u-penyedia" maxlength="120" value="${v(p.penyedia)}"></label>
+      <label class="f lebar" for="u-ket">Keterangan<input id="u-ket" maxlength="300" value="${v(p.keterangan)}"></label>
+    </div>
+    <div class="gulir"><table><thead><tr><th>Nama barang</th><th class="n">Jumlah</th><th>Harga satuan (Rp)</th></tr></thead><tbody>${p.baris.map((r) => `<tr><td>${esc(r.nama)}${r.tingkat ? ` · kelas ${esc(r.tingkat)}` : ""}</td><td class="n">${bil(r.jumlah)}</td><td><input class="u-harga" data-id="${r.id}" type="number" min="0" step="500" value="${v(r.harga_satuan)}" aria-label="Harga ${esc(r.nama)}" style="width:130px"></td></tr>`).join("")}</tbody></table></div>
+    <p class="kecil">Jumlah buku tidak diubah di sini karena sudah menjadi stok.${p.diubah_oleh ? ` Terakhir diubah ${esc(p.diubah_oleh)}, ${esc(tgl(p.diubah))}.` : ""}</p>`,
+    kaki: kakiSimpan("Simpan"),
+    onSimpan: async () => {
+      const dana = $("u-sumber").value, arkas = $("u-arkas").value.trim();
+      if (BOS(dana) && arkas && !/^[0-9]+(\.[0-9]+)*$/.test(arkas)) throw new Error("Kode rekening ARKAS berupa angka bertitik, mis. 5.1.02.01.02.0001.");
+      await sibuk(async () => {
+        await rpc("sp_penerimaan_ubah", { p_pin: S.pin, p_id: p.id, p_p: { tanggal: $("u-tanggal").value, sumber_dana: dana, tahap: $("u-tahap").value, kode_arkas: arkas, no_bukti: $("u-bukti").value, penyedia: $("u-penyedia").value, keterangan: $("u-ket").value,
+          baris: [...document.querySelectorAll(".u-harga")].map((x) => ({ id: +x.dataset.id, harga_satuan: x.value })) } });
+        await muatPerpus();
+      });
+      tutupDialog(); segarkan(); toast("Penerimaan tersimpan");
+    } });
+  $("u-sumber").onchange = (e) => document.querySelectorAll(".u-bos").forEach((x) => { x.hidden = !BOS(e.target.value); });
 }
 function barisFormTerima() {
   return `<tr><td><input class="t-nama" list="t-judul" maxlength="200" aria-label="Nama buku" style="min-width:190px"></td><td><input class="t-kode" maxlength="40" aria-label="Kode barang"></td>
