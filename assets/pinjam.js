@@ -255,8 +255,11 @@ async function halamanSiswa(kodeAwal) {
     el.innerHTML = `<section class="kartu"><div class="kepala-bagian"><div><h2>${esc(d.nama)}</h2><p class="sub">Kelas ${esc(d.kelas)}</p></div><div class="aksi"><button class="tombol" type="button" id="s-keluar">${ikon("keluar")}Keluar</button></div></div>
         <div id="s-qr"></div></section>
       <section class="kartu"><h3>Pinjamanku</h3>${d.pinjaman.length ? d.pinjaman.map(lembar).join("") : `<p class="sub">Belum ada buku yang dipinjam.</p>`}</section>
+      <section class="kartu"><div class="kepala-bagian"><h3>Usulkan buku</h3><div class="aksi"><button class="tombol" type="button" id="s-usul">${ikon("tambah")}Usulkan</button></div></div><p class="sub">Bukunya belum ada di perpustakaan? Usulkan judulnya.</p><div id="s-usulan"></div></section>
       <section class="kartu"><h3>Cari buku</h3><label class="f cari" for="s-q">${ikon("cari")}<input type="search" id="s-q" placeholder="Judul, mapel, atau penulis"></label><div id="s-hasil"></div></section>`;
     $("s-keluar").onclick = () => { ssSet("sp_nisn", null); location.href = location.pathname + "?pinjam"; };
+    $("s-usul").onclick = () => formUsulSiswa(d);
+    rpc("sp_pengajuan_saya", { p_nisn: d.nisn }).then((u) => { if ($("s-usulan")) $("s-usulan").innerHTML = (u || []).map((a) => `<div class="siswa-buku"><div><b>${esc(a.judul)}</b>${a.alasan_tolak ? `<p class="kecil">Alasan: ${esc(a.alasan_tolak)}</p>` : ""}</div><span class="pil ${({ diajukan: "c", disetujui: "i", diketahui: "b", dibeli: "b", ditolak: "k" })[a.status]}">${({ diajukan: "Menunggu persetujuan", disetujui: "Disetujui", diketahui: "Akan dibeli", dibeli: "Sudah dibeli", ditolak: "Ditolak" })[a.status]}</span></div>`).join(""); }).catch(() => {});
     let jeda;
     $("s-q").addEventListener("input", (e) => { clearTimeout(jeda); jeda = setTimeout(async () => {
       const q = e.target.value.trim();
@@ -274,6 +277,10 @@ async function halamanSiswa(kodeAwal) {
     if (kodeAwal) {
       rpc("sp_buku_publik", { p_kode: kodeAwal }).then((b) => { if ($("s-qr")) $("s-qr").innerHTML = b ? `<h3>Buku yang dipindai</h3>${kartuHasil(b)}` : `<p class="catatan awas">${ikon("awas")}<span>Kode ${esc(kodeAwal)} tidak ditemukan di katalog.</span></p>`; }).catch(() => {});
     }
+  };
+  const formUsulSiswa = (d) => {
+    dialog({ judul: "Usulkan buku", isi: `<div class="isian-grid"><label class="f lebar" for="y-judul">Judul buku<input id="y-judul" maxlength="200" required></label><label class="f" for="y-penulis">Penulis<input id="y-penulis" maxlength="150"></label><label class="f" for="y-jumlah">Jumlah<input id="y-jumlah" type="number" min="1" max="40" value="1"></label><label class="f lebar" for="y-alasan">Untuk apa?<input id="y-alasan" maxlength="300" placeholder="mis. tugas resensi Bahasa Indonesia"></label></div><p class="kecil">Usulan diperiksa Wakasek Kurikulum. Kabarnya muncul di halaman ini.</p>`, kaki: kakiSimpan("Kirim"),
+      onSimpan: async () => { await sibuk(() => rpc("sp_pengajuan_siswa", { p_nisn: d.nisn, p_a: { judul: $("y-judul").value, penulis: $("y-penulis").value, jumlah: $("y-jumlah").value, alasan: $("y-alasan").value } })); tutupDialog(); toast("Usulan terkirim"); await segarSiswa(); } });
   };
   const formMinta = (d, kode, judul, ada) => {
     dialog({ atas: kode, judul, isi: `<div class="isian-grid">

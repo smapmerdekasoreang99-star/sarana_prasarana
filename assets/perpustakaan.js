@@ -33,6 +33,7 @@ async function muatPerpus() {
   S.katBuku = (await rpc("sp_buku_kategori_daftar", { p_pin: S.pin }).catch(() => null)) || [];
   if (S.katBuku.length) { Object.keys(JENIS_BUKU).forEach((k) => delete JENIS_BUKU[k]); S.katBuku.forEach((k) => { JENIS_BUKU[k.kode] = k.nama; }); }
   await muatPinjam();
+  await muatUsulan();
 }
 const catatanGalatBuku = () => S.bukuGalat ? `<p class="catatan awas">${ikon("awas")}<span>Data buku belum terbaca: ${esc(S.bukuGalat)}</span></p>` : "";
 
@@ -154,9 +155,10 @@ async function kartuBuku(id) {
     ${riw.length ? `<h3>Riwayat</h3><div class="gulir" style="max-height:200px"><table><tbody>${riw.slice(0, 30).map((r) => `<tr><td class="kecil">${esc(tgl(r.waktu))}</td><td>${esc(JENIS_RIW_BUKU[r.jenis] || r.jenis)}</td><td class="kecil">${esc(uraiRiwayatBuku(r))}</td><td class="kecil">${esc(r.oleh || "")}</td></tr>`).join("")}</tbody></table></div>` : ""}`,
     kaki: `<button class="tombol" value="batal" formnovalidate>Tutup</button>
       ${bukuSemua() && b.lokasi.length ? `<button class="tombol" type="button" id="bk-pindah">${ikon("ruang")}Pindahkan</button>` : ""}
-      ${boleh ? `<button class="tombol utama" type="button" id="bk-ubah">${ikon("ubah")}Ubah</button>` : ""}` });
+      ${boleh ? `<button class="tombol" type="button" id="bk-usul-hapus">Usulkan penghapusan</button><button class="tombol utama" type="button" id="bk-ubah">${ikon("ubah")}Ubah</button>` : ""}` });
   $("dlg-isi").onclick = (e) => { const tr = e.target.closest("tr[data-terima]"); if (tr) kartuTerima(+tr.dataset.terima); };
   if ($("bk-pindah")) $("bk-pindah").onclick = () => formPindahBuku(b);
+  if ($("bk-usul-hapus")) $("bk-usul-hapus").onclick = () => formUsulHapus({ jenis: "buku", buku: b });
   if ($("bk-ubah")) $("bk-ubah").onclick = () => formBuku(b);
 }
 function gantiBukuDiS(h) {
@@ -427,13 +429,15 @@ function formUbahTerima(p) {
     } });
   $("u-sumber").onchange = (e) => document.querySelectorAll(".u-bos").forEach((x) => { x.hidden = !BOS(e.target.value); });
 }
-function barisFormTerima() {
-  return `<tr><td><input class="t-nama" list="t-judul" maxlength="200" aria-label="Nama buku" style="min-width:190px"></td><td><input class="t-kode" maxlength="40" aria-label="Kode barang"></td>
+function barisFormTerima(a) {
+  return `<tr${a ? ` data-pengajuan="${a.id}"` : ""}><td><input class="t-nama" list="t-judul" maxlength="200" aria-label="Nama buku" style="min-width:190px" value="${a ? esc(a.judul) : ""}"></td><td><input class="t-kode" maxlength="40" aria-label="Kode barang"></td>
     <td><select class="t-kelas" aria-label="Kelas" style="min-width:70px"><option value="">—</option><option>10</option><option>11</option><option>12</option></select></td>
-    <td><input class="t-jumlah" type="number" min="1" aria-label="Jumlah" style="width:76px"></td><td><input class="t-penerbit" maxlength="100" aria-label="Penerbit"></td>
+    <td><input class="t-jumlah" type="number" min="1" aria-label="Jumlah" style="width:76px" value="${a ? a.jumlah : ""}"></td><td><input class="t-penerbit" maxlength="100" aria-label="Penerbit" value="${a ? esc(a.penerbit || "") : ""}"></td>
     <td><input class="t-harga" type="number" min="0" step="500" aria-label="Harga satuan" style="width:110px"></td></tr>`;
 }
-function formTerima() {
+function formTerima(dariAju) {
+  if (!Array.isArray(dariAju)) dariAju = [];
+  const siapBeli = S.pengajuan.filter((a) => a.status === "diketahui" && !dariAju.includes(a));
   const hari = new Date(), pad = (n) => String(n).padStart(2, "0");
   dialog({ judul: "Catat penerimaan buku", isi: `<div class="isian-grid">
       <label class="f" for="t-tanggal">Tanggal<input id="t-tanggal" type="date" required value="${hari.getFullYear()}-${pad(hari.getMonth() + 1)}-${pad(hari.getDate())}"></label>
@@ -446,13 +450,13 @@ function formTerima() {
       <label class="f lebar" for="t-ket">Keterangan<input id="t-ket" maxlength="300"></label>
     </div>
     <datalist id="t-judul">${[...new Set(S.buku.map((b) => b.judul))].map((j) => `<option value="${esc(j)}">`).join("")}</datalist>
-    <div class="gulir"><table><thead><tr><th>Nama buku</th><th>Kode barang</th><th>Kelas</th><th>Jumlah</th><th>Penerbit</th><th>Harga satuan</th></tr></thead><tbody id="t-baris">${barisFormTerima().repeat(3)}</tbody></table></div>
-    <button class="tombol" type="button" id="t-tambah">${ikon("tambah")}Tambah baris</button>
+    <div class="gulir"><table><thead><tr><th>Nama buku</th><th>Kode barang</th><th>Kelas</th><th>Jumlah</th><th>Penerbit</th><th>Harga satuan</th></tr></thead><tbody id="t-baris">${dariAju.map(barisFormTerima).join("")}${barisFormTerima().repeat(dariAju.length ? 1 : 3)}</tbody></table></div>
+    <div class="baris-aksi"><button class="tombol" type="button" id="t-tambah">${ikon("tambah")}Tambah baris</button>${siapBeli.length ? `<label class="f" for="t-aju">Ambil dari pengajuan<select id="t-aju"><option value="">Pilih…</option>${opsi(siapBeli.map((a) => [a.id, `${a.judul} (${a.jumlah} eks, ${a.nama_pengusul})`]), "")}</select></label>` : ""}</div>
     <p class="kecil">Bila kode barang atau judul dan kelasnya sudah ada di katalog, jumlahnya menambah buku itu. Bila belum ada, buku baru dibuat otomatis.</p>`,
     kaki: kakiSimpan("Simpan"),
     onSimpan: async () => {
       const baris = [...$("t-baris").rows].map((tr) => ({ nama: tr.querySelector(".t-nama").value.trim(), kode_penerbit: tr.querySelector(".t-kode").value, tingkat: tr.querySelector(".t-kelas").value,
-        jumlah: tr.querySelector(".t-jumlah").value, penerbit: tr.querySelector(".t-penerbit").value, harga_satuan: tr.querySelector(".t-harga").value })).filter((r) => r.nama);
+        jumlah: tr.querySelector(".t-jumlah").value, penerbit: tr.querySelector(".t-penerbit").value, harga_satuan: tr.querySelector(".t-harga").value, pengajuan: tr.dataset.pengajuan || "" })).filter((r) => r.nama);
       if (!baris.length) throw new Error("Isi minimal satu nama buku.");
       const kosong = baris.find((r) => !(+r.jumlah >= 1));
       if (kosong) throw new Error(`Isi jumlah untuk "${kosong.nama}".`);
@@ -468,6 +472,7 @@ function formTerima() {
     } });
   $("t-sumber").onchange = (e) => document.querySelectorAll(".t-bos").forEach((x) => { x.hidden = !BOS(e.target.value); });
   $("t-tambah").onclick = () => $("t-baris").insertAdjacentHTML("beforeend", barisFormTerima());
+  if ($("t-aju")) $("t-aju").onchange = (e) => { const a = S.pengajuan.find((x) => x.id === +e.target.value); if (!a) return; const kosong = [...$("t-baris").rows].find((tr) => !tr.querySelector(".t-nama").value.trim()); if (kosong) kosong.remove(); $("t-baris").insertAdjacentHTML("beforeend", barisFormTerima(a)); e.target.selectedOptions[0].remove(); e.target.value = ""; };
 }
 // Mengikuti kolom "Format Penerimaan Buku" yang dipakai perpustakaan selama ini. Pesanan yang belum datang tidak ikut.
 async function unduhLaporanTerima() {

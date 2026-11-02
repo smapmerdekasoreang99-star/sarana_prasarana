@@ -45,7 +45,7 @@ Tampilan per peran (2 Nov): pustakawan menu buku, pengadaan buku (bisa dilengkap
 Label Buku (`assets/label-buku.js`, vendor JsBarcode): A4 isi 65, punggung/QR/barkode. Pengingat Buku: wali kelas dan guru pemegang set kelas melihat yang terlambat saat masuk; pustakawan punya tombol WhatsApp. PIN dibaca dari `guru_pin` (Data Induk), disalin pemicu dari `mtd_guru`.
 Panduan per peran (PDF & Word, `alat/buat-panduan.js` + `alat/panduan-peran.js`): Sarana Prasarana (Staf/admin), Penanggung Jawab Ruang, Perpustakaan, Pojok Literasi, Wali Kelas, Pinjam Buku Siswa. Tombol Panduan menampilkan yang sesuai peran.
 Ruang kelas tetap, rombel berganti: tombol Pasangkan rombel di denah (admin), tabel `sp_ruang_rombel`; barang dan buku dicatat di ruang.
-Belum ada: pengajuan, penghapusan, label buku, pencatatan aset (Tahap C).
+Tahap C (`assets/usulan.js`): Pengajuan Buku, Penghapusan buku & barang dengan berita acara, Kategori barang; Label QR barang: ukuran kecil, barkode, logo.
 
 ## Panduan
 

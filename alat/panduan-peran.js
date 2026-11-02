@@ -73,6 +73,20 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
     P("Saat QR dipindai kamera HP, halaman pinjam buku itu terbuka. Siswa masuk dengan NISN. Petugas memindai dari menu **Pinjam & Kembali**. Stok tetap dihitung per jumlah, jadi nomor eksemplar hanya identitas pada label."),
   ];
   return {
+    /* ==================================================================== Pimpinan */
+    pimpinan: { nama: "Panduan_Pimpinan", judul: "Panduan Wakasek Kurikulum dan Kepala Sekolah",
+      sub: "Menyetujui dan mengetahui pengajuan serta penghapusan", untuk: "Wakasek Kurikulum dan Kepala Sekolah", isi: [
+      H1("Persetujuan"),
+      ...masukPIN("nama Anda"),
+      P("Bila ada yang menunggu Anda, jumlahnya tampil pada nama menu, mis. **Pengajuan Buku (2)**, dan menu itu langsung terbuka saat Anda masuk."),
+      TB(["Yang diproses", "Wakasek Kurikulum", "Kepala Sekolah"], [
+        ["**Pengajuan buku**", "Setujui atau Tolak", "Mengetahui"],
+        ["**Penghapusan buku**", "Setujui atau Tolak", "Mengetahui"],
+        ["**Penghapusan barang**", "Oleh Wakasek atau Staf Sarana Prasarana", "Mengetahui"],
+      ], [1.6, 2.4, 1.2]),
+      OL("Buka menu **Pengajuan Buku** atau **Penghapusan**.", "Baca usulannya, lalu tekan tombol pada barisnya.", "Bila menolak, tulis alasannya. Pengusul melihat alasan itu."),
+      P("Setelah Kepala Sekolah mengetahui penghapusan, nomor **berita acara** terbit otomatis dan pengelola bisa menyelesaikannya. Tekan **Berita acara** untuk mengunduhnya."),
+    ] },
     /* ==================================================================== Wali kelas */
     wali: { nama: "Panduan_Wali_Kelas", judul: "Panduan Pengingat Buku untuk Wali Kelas",
       sub: "Melihat pinjaman buku yang terlambat di kelas Anda", untuk: "Wali kelas dan guru", isi: [
@@ -121,7 +135,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       P("Klik baris barang, ubah isiannya, lalu tekan **Simpan**. Setiap perubahan tercatat di **Riwayat** pada formulir: siapa, kapan, dan apa yang berubah."),
       UL("**Barang rusak**: ubah angka Baik, Rusak ringan, dan Rusak berat.",
         "**Jumlah belum pasti** (bertanda **?**): setelah dihitung, isi angkanya dan centang **Jumlah sudah dihitung ulang**."),
-      KOTAK("awas", "Yang dikerjakan Staf Sarpras", "Memindahkan barang ke ruang orang lain dan menghapus barang yang salah catat dilakukan **Staf Sarpras**. Barang rusak berat tidak dihapus; catat kondisinya sebagai rusak berat."),
+      KOTAK("awas", "Yang dikerjakan Staf Sarpras", "Memindahkan barang ke ruang orang lain dan menghapus barang yang salah catat dilakukan **Staf Sarpras**. Barang rusak berat yang tidak dipakai lagi diusulkan lewat **Penghapusan Barang**."),
       H1("Bahan Habis Pakai"),
       OL("Di menu **Bahan** atau pilihan **Bahan** di halaman ruang, tekan **Tambah bahan**.",
         "Isi **Nama bahan**, **Kategori**, **Satuan**, **Stok sekarang**, dan **Batas minimum**, lalu tekan **Tambah**."),
@@ -129,6 +143,10 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         ["**Masuk**", "Bahan dibeli atau diterima"], ["**Keluar**", "Bahan dipakai atau diberikan"], ["**Hitung ulang**", "Stok dihitung langsung dan ternyata berbeda"],
       ], [1.4, 4.6]),
       P("Klik baris bahan untuk membuka **kartu stok**. Status **Menipis** muncul bila stok sama dengan atau di bawah batas minimum; segera ajukan pembelian."),
+      H1("Penghapusan Barang"),
+      P("Untuk barang rusak, hilang, atau tidak terpakai. Alurnya: **dibuat Anda** → disetujui **Wakasek atau Staf Sarana Prasarana** → diketahui **Kepala Sekolah** → terbit **berita acara** → **Anda menghapusnya**."),
+      OL("Buka barangnya lalu tekan **Usulkan penghapusan**, atau dari menu **Penghapusan**.", "Isi jumlah, alasan, dan keterangan kondisinya. Foto belum bisa dilampirkan.", "Setelah diketahui Kepala Sekolah, tekan **Hapus dari inventaris**, lalu unduh **Berita acara**."),
+      P("Unit rusak berat dikurangi lebih dulu, lalu rusak ringan, lalu yang baik. Langkah terakhir tidak bisa dibatalkan."),
       H1("Unduh, Template, dan Unggah"),
       TB(["Tombol", "Hasil"], [
         ["**Unduh**", "Excel daftar inventaris ruang Anda, memakai **kop dan penanda tangan dari Profil Dokumen**."],
@@ -140,9 +158,9 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       KOTAK("saran", "Cara cepat melengkapi data", "Tekan **Unduh** di **Buku Induk**, isi kolom yang kosong di Excel, lalu unggah berkas itu. Kop dan tanda tangan diabaikan otomatis."),
       P("Unggahan hanya berlaku untuk ruang Anda; baris untuk ruang lain ditolak."),
       H1("Label QR"),
-      OL("Buka **Label QR**, atau **Label ruang ini** dari halaman ruang.", "Pilih **Golongan** dan **Banyak label**: satu per jenis barang, atau satu per unit.",
+      OL("Buka **Label QR**, atau **Label ruang ini** dari halaman ruang.", "Pilih **Ukuran**, **Isi** (QR, barkode, atau keduanya), **Golongan**, dan **Banyak label**.",
         "Periksa pratinjau, lalu tekan **Cetak**. Pilih kertas **A4**, skala **100%**, tanpa kepala dan kaki halaman peramban."),
-      P("Kertas: **stiker A4 isi 24 (70 × 37 mm)**. Saat dipindai kamera HP, kartu barang terbuka tanpa PIN, tanpa harga dan bukti belanja."),
+      P("Kertas: **stiker A4 isi 24 (70 × 37 mm)** atau **isi 65 (38 × 21 mm)**. Kode inventaris panjang, jadi pada ukuran kecil lebih baik memakai QR. Saat dipindai kamera HP, kartu barang terbuka tanpa PIN, tanpa harga dan bukti belanja."),
       H1("Tanya Jawab"),
       TB(["Pertanyaan", "Jawaban"], [
         ["Ruang saya kosong, padahal barangnya ada.", "Barang itu mungkin belum dicatat, atau tercatat tanpa ruang. Catat barangnya, atau minta Staf Sarpras menempatkan barang yang sudah tercatat ke ruang Anda."],
@@ -170,7 +188,6 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         ["**Ruang Perpustakaan**", "Satu menu dengan tab **Ruang**, **Sarana & Alat**, **Bahan**, **Buku Induk**, dan **Label QR**: barang seperti rak dan meja, beserta sumber dana, spesifikasi, dan kondisinya. Caranya ada di **Panduan Penanggung Jawab Ruang**."],
         ["**Profil Dokumen**", "Kop dan penanda tangan yang dipakai unduhan. Hanya untuk dilihat; diubah di Data Induk."],
       ], [1.6, 4.4]),
-      KOTAK("info", "Belum tersedia", "Pengajuan buku dan penghapusan buku masih dalam pengerjaan."),
       H1("Katalog Buku"),
       H2("Mencari dan menyaring"),
       P("Cari dengan judul, mapel, penerbit, kode buku, atau kode barang. Saring menurut **Kelas**, **Jenis**, dan **Lokasi**. Kotak di atas tabel menunjukkan jumlah judul, eksemplar, dan eksemplar di luar perpustakaan."),
@@ -221,6 +238,14 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       P("Klik baris berstatus **Dipesan**, lalu tekan **Tandai sudah datang**."),
       H2("Mengunduh laporan"),
       P("Tekan **Unduh laporan**. Berkas Excel berkop berisi Tanggal, Kode Barang, Nama Barang, Kelas, Jumlah, Penerbit, dan Sumber Dana, sesuai saringan. Pesanan yang belum datang tidak ikut."),
+      H1("Pengajuan Buku"),
+      P("Guru dan siswa mengusulkan buku. Alurnya: **diajukan** → disetujui **Wakasek Kurikulum** → diketahui **Kepala Sekolah** → **siap dibeli**."),
+      OL("Untuk mengusulkan sendiri, tekan **Ajukan buku** di menu **Pengajuan Buku**.", "Setelah berstatus **Siap dibeli**, tekan **Catat penerimaan** pada barisnya. Judul dan jumlah sudah terisi.", "Lengkapi sumber dana dan harganya, lalu simpan. Status berubah menjadi **Sudah dibeli**."),
+      P("Di formulir **Catat penerimaan** ada juga pilihan **Ambil dari pengajuan** untuk menggabungkan beberapa usulan dalam satu pembelian. **Unduh** menghasilkan daftar berkop dengan tanda tangan Anda, Wakasek Kurikulum, dan Kepala Sekolah."),
+      H1("Penghapusan Buku"),
+      P("Untuk buku rusak, hilang, ganti kurikulum, atau alasan lain. Alurnya: **dibuat Anda** → disetujui **Wakasek Kurikulum** → diketahui **Kepala Sekolah** → terbit **berita acara** → **Anda menghapusnya**."),
+      OL("Buka kartu buku lalu tekan **Usulkan penghapusan**, atau dari menu **Penghapusan**.", "Pilih lokasi, jumlah, dan alasan. Tulis keterangan kondisinya. Foto belum bisa dilampirkan.", "Setelah diketahui Kepala Sekolah, tekan **Hapus dari katalog**, lalu unduh **Berita acara**."),
+      P("Sebelum langkah terakhir, stok belum berubah. Sesudahnya, stok dan asetnya berkurang, dan langkah ini tidak bisa dibatalkan. Buku yang sedang dipinjam harus diterima kembali dulu."),
       H1("Tanya Jawab"),
       TB(["Pertanyaan", "Jawaban"], [
         ["Apakah buku tulis peminjaman masih dipakai?", "Sebaiknya tetap berdampingan sampai alur di aplikasi lancar. Nomor di aplikasi melanjutkan buku tulis, mulai 1822. Pinjaman lama di buku tulis belum masuk aplikasi."],
@@ -228,7 +253,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         ["Pesan \"Buku yang tersedia hanya … eksemplar\".", "Sisa stok di lokasi itu kurang. Periksa pinjaman yang belum kembali, atau pindahkan buku dari lokasi lain."],
         ["Pesan \"Sebagian eksemplar sedang dipinjam\" saat memindah.", "Terima pengembaliannya dulu, atau pindahkan jumlah yang lebih sedikit."],
         ["Siswa tidak ditemukan di formulir.", "Data siswa dan kelas diambil dari Data Induk. Minta operator memeriksa status dan penempatan kelasnya."],
-        ["Bagaimana bila buku rusak atau hilang?", "Fitur penghapusan belum tersedia. Untuk sementara, catat di **Keterangan** buku."],
+        ["Bagaimana bila buku rusak atau hilang?", "Usulkan lewat **Penghapusan**. Tidak ada denda."],
         ["Unduhan gagal dengan pesan ExcelJS.", "Matikan VPN atau coba jaringan lain, mis. data seluler."],
       ], [2.4, 4.6]),
     ] },
@@ -244,6 +269,8 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         ["**Koleksi Literasi**", "Daftar buku di Pojok Literasi; menambah, mengubah, mengunduh, dan mengunggah."],
         ["**Pinjam & Kembali**", "Peminjaman buku Pojok Literasi."],
         ["**Label Buku**", "Mencetak label buku koleksi Anda."],
+        ["**Pengajuan Buku**", "Mengusulkan buku baru."],
+        ["**Penghapusan**", "Mengusulkan penghapusan buku koleksi Anda; alurnya disetujui Wakasek Kurikulum, diketahui Kepala Sekolah, lalu Anda menghapusnya."],
       ], [1.6, 4.4]),
       KOTAK("info", "Koleksi masih kosong?", "Saat pertama dipakai, koleksi Pojok Literasi bisa masih kosong. Tambahkan bukunya sendiri, atau minta Penanggung Jawab Perpustakaan memindahkan buku yang sudah ada di katalog."),
       H1("Koleksi Literasi"),
@@ -300,6 +327,8 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       ], [2, 2.6, 2.6]),
       H2("Mengembalikan buku"),
       P("Bawa bukunya ke meja pustakawan. Pustakawan yang mencatat pengembalian, lalu buku hilang dari **Pinjamanku**. Bila HP dipakai bergantian, tekan **Keluar** setelah selesai."),
+      H2("Mengusulkan buku"),
+      P("Bila bukunya belum ada, tekan **Usulkan** di bagian **Usulkan buku**, lalu isi judul dan kegunaannya. Kabar usulanmu tampil di halaman yang sama."),
       H2("Tanya jawab"),
       TB(["Pertanyaan", "Jawaban"], [
         ["NISN ditolak.", "Periksa lagi angkanya. Bila tetap ditolak, tanyakan ke pustakawan atau wali kelas."],

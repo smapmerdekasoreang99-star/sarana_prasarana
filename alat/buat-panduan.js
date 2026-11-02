@@ -164,8 +164,12 @@ const ISI_STAF = [
     "**Pindah ruang**: pilih ruang lain. Penanggung jawab hanya bisa memindah di antara ruang miliknya; pemindahan ke ruang lain dilakukan Staf Sarpras.",
     "**Jumlah belum pasti**: barang dari Excel yang jumlahnya kosong dicatat 1 dan bertanda **?**. Setelah dihitung, isi angkanya dan centang **Jumlah sudah dihitung ulang**."),
   P("Barang di ruang yang bukan tanggung jawab Anda terbuka sebagai rincian saja, tanpa tombol simpan."),
+  H2("Mengatur kategori (Staf Sarpras)"),
+  P("Tekan **Kategori** di menu Sarana & Alat untuk menambah kategori, mengganti nama, mengubah golongan, atau menghapus kategori yang belum dipakai. Kode kategori masuk ke kode inventaris, jadi tidak bisa diubah."),
   H2("Menghapus (Staf Sarpras)"),
-  P("Tombol **Hapus** hanya untuk barang yang **salah catat atau tercatat dua kali**. Tulis alasannya. Barang hilang dari daftar, tetapi riwayatnya tetap disimpan. Barang yang rusak berat **jangan dihapus**; catat kondisinya sebagai rusak berat."),
+  P("Tombol **Hapus** hanya untuk barang yang **salah catat atau tercatat dua kali**. Tulis alasannya. Barang hilang dari daftar, tetapi riwayatnya tetap disimpan."),
+  H2("Penghapusan barang"),
+  P("Barang rusak, hilang, atau tidak terpakai diusulkan lewat tombol **Usulkan penghapusan** atau menu **Penghapusan**: dibuat penanggung jawab ruang atau Staf Sarpras → **disetujui Wakasek atau Staf Sarana Prasarana** → **diketahui Kepala Sekolah** → terbit berita acara → **Hapus dari inventaris**. Unit rusak berat dikurangi lebih dulu. Foto belum bisa dilampirkan; tulis kondisinya di keterangan."),
 
   /* ============================ 7 ============================ */
   H1("Bahan Habis Pakai"),
@@ -231,10 +235,10 @@ const ISI_STAF = [
   /* ============================ 10 ============================ */
   H1("Label QR"),
   OL("Buka **Label QR** (atau **Label ruang ini** dari halaman ruang).",
-    "Pilih **Ruang**, **Golongan**, dan **Banyak label**: satu per jenis barang, atau satu per unit (paling banyak 40 per jenis).",
+    "Pilih **Ruang**, **Golongan**, **Ukuran**, **Isi** (QR, barkode, atau keduanya), dan **Banyak label**: satu per jenis barang, atau satu per unit (paling banyak 40 per jenis).",
     "Periksa pratinjau lembar. Jumlah label dan lembar A4 tertulis di atasnya.",
     "Tekan **Cetak**. Pilih kertas **A4**, skala **100%** (bukan \"sesuaikan dengan halaman\"), tanpa kepala dan kaki halaman peramban."),
-  P("Kertas yang dipakai: **stiker A4 isi 24 (3 × 8), ukuran 70 × 37 mm**. Setiap label berisi kode QR, nama sekolah, nama barang, kode inventaris (dan nomor unit bila per unit), ruang, sumber dana, dan tahun."),
+  P("Kertas: **stiker A4 isi 24 (70 × 37 mm)** atau **isi 65 (38 × 21 mm)**. Kode inventaris panjang, jadi pada ukuran kecil lebih baik memakai QR; barkode perlu alat pemindai. Setiap label berisi kode QR, nama sekolah, nama barang, kode inventaris (dan nomor unit bila per unit), ruang, sumber dana, dan tahun."),
   P("**Memindai label.** Arahkan kamera HP ke label. Kartu barang terbuka **tanpa PIN**: nama, kategori, ruang, penanggung jawab, jumlah dan kondisi, merek, tahun, dan sumber dana. **Harga dan bukti belanja tidak ditampilkan.** Menemukan kerusakan? Sampaikan ke penanggung jawab yang tertulis di kartu. Penanggung jawab bisa menekan **Masuk untuk mengubah**."),
   KOTAK("saran", "Tips menempel label",
     "Tempel di tempat yang mudah dipindai dan tidak cepat aus: sisi belakang atau samping, bukan permukaan yang sering digosok. Untuk barang kecil sejenis (bola, kabel), cukup satu label per jenis pada wadah atau rak penyimpanannya."),
@@ -269,7 +273,7 @@ const ISI_STAF = [
     ["Penanggung jawab tidak melihat ruangnya.", "Pasang namanya sebagai penanggung jawab ruang itu di menu **Ruang**, lalu minta ia masuk ulang."],
     ["Penanggung jawab mengeluh ruangnya kosong.", "Barang tanpa ruang tidak terlihat olehnya. Tempatkan barang lewat kotak **Tanpa ruang** di denah."],
     ["Barang perlu dipindah ke ruang lain.", "Staf Sarpras yang memindahkan: buka barangnya, lalu pilih ruang lain."],
-    ["Barang rusak berat, apakah dihapus?", "Tidak. Catat jumlahnya di kolom **Rusak berat**. Hapus hanya untuk salah catat atau tercatat dua kali."],
+    ["Barang rusak berat, apakah dihapus?", "Bila masih tersimpan, catat di kolom **Rusak berat**. Bila akan dikeluarkan, ajukan lewat menu **Penghapusan**. Tombol Hapus hanya untuk salah catat atau tercatat dua kali."],
     ["Tahun di kode berbeda dengan tahun perolehan.", "Kode dibuat saat barang dicatat. Bila tahunnya belum diketahui saat itu, kode memakai tahun pencatatan, dan tidak berubah walaupun tahunnya diisi kemudian."],
     ["Unggahan ditolak.", "Baca daftar **baris yang perlu diperbaiki** di pratinjau atau pesan galat; nomor baris sama dengan nomor baris di Excel. Perbaiki, lalu unggah lagi. Tidak ada yang tersimpan sebelum semuanya benar."],
     ["Saya mengunggah berkas yang sama dua kali.", "Baris barang baru dari berkas yang sama dilewati, jadi tidak tercatat dua kali. Baris yang berkode hanya mengubah isian yang berbeda."],
@@ -446,7 +450,7 @@ async function buatDOCX(keluaran) {
 
 const PERAN = require("./panduan-peran.js")({ H1, H2, H3, P, UL, OL, TB, KOTAK, STAT });
 const SEMUA = [{ nama: "Panduan_Sarana_Prasarana", judul: "Panduan Sarana Prasarana", sub: "Staf Sarpras dan admin: inventaris semua ruang · Buku Induk · label QR",
-  untuk: "Staf Sarana Prasarana, admin, dan pimpinan", isi: ISI_STAF }, PERAN.pj, PERAN.perpus, PERAN.literasi, PERAN.siswa, PERAN.wali];
+  untuk: "Staf Sarana Prasarana, admin, dan pimpinan", isi: ISI_STAF }, PERAN.pj, PERAN.perpus, PERAN.literasi, PERAN.siswa, PERAN.wali, PERAN.pimpinan];
 (async () => {
   for (const g of SEMUA) {
     NAMA = g.nama; JUDUL = g.judul; SUBJUDUL = g.sub; UNTUK = g.untuk; ISI = g.isi; nomori();

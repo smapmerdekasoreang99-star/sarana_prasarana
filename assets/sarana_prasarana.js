@@ -174,7 +174,7 @@ async function masuk(pin) {
   document.querySelectorAll("[data-admin]").forEach((b) => (b.hidden = !admin()));
   aturTab();
   aturPanduan(panduanSaya());
-  buka(admin() ? "ringkas" : aksesBuku() ? "buku" : S.pengingat.terlambat.length ? "pengingat" : "ruang");
+  buka(admin() ? "ringkas" : aksesBuku() ? "buku" : pimpinan() && S.pengajuan.some(aksiAju) ? "pengajuan" : pimpinan() && S.penghapusan.some(aksiHps) ? "hapusan" : S.pengingat.terlambat.length ? "pengingat" : "ruang");
   bukaPindaianAlamat();
 }
 async function muatUlang() {
@@ -195,8 +195,11 @@ const grupRuang = () => pjRuang() && bukuSemua() && ruangBarang().length > 0;
 function aturTab() {
   const pj = pjRuang(), barang = !pj || ruangBarang().length > 0, sendiri = barang && !grupRuang();
   const boleh = { ringkas: !pj, ruang: sendiri, alat: sendiri, bahan: sendiri, induk: sendiri, label: sendiri, grupruang: grupRuang(),
-    buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), labelbuku: !!aksesBuku(), terima: bukuSemua(), pengingat: (S.akses.wali || []).length > 0 || S.pengingat.terlambat.length > 0, profil: barang || bukuSemua() };
+    buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), labelbuku: !!aksesBuku(), terima: bukuSemua(), pengajuan: !pj || !!aksesBuku() || pimpinan(), hapusan: admin() || !!aksesBuku() || (pj && ruangBarang().length > 0) || pimpinan(), pengingat: (S.akses.wali || []).length > 0 || S.pengingat.terlambat.length > 0, profil: barang || bukuSemua() };
   document.querySelectorAll("#tab button[data-tab]").forEach((b) => { b.hidden = !boleh[b.dataset.tab]; });
+  const adaTugas = (s) => s ? ` (${s})` : "";
+  document.querySelector('#tab [data-tab="pengajuan"]').lastChild.textContent = "Pengajuan Buku" + adaTugas(S.pengajuan.filter(aksiAju).length);
+  document.querySelector('#tab [data-tab="hapusan"]').lastChild.textContent = "Penghapusan" + adaTugas(S.penghapusan.filter(aksiHps).length);
   document.querySelector('#tab [data-tab="grupruang"]').lastChild.textContent = ruangBarang().length === 1 ? "Ruang " + namaRuang(ruangBarang()[0]) : "Ruang Saya";
   document.querySelector('#tab [data-tab="buku"]').lastChild.textContent = bukuLiterasi() ? "Koleksi Literasi" : "Katalog Buku";
   document.querySelector('#tab [data-tab="pengingat"]').lastChild.textContent = "Pengingat Buku" + (S.pengingat.terlambat.length ? ` (${S.pengingat.terlambat.length})` : "");
@@ -206,6 +209,7 @@ function keluar() { ssSet("sp_pin", null); location.href = location.pathname; }
 /* ================================================================ panduan per peran */
 const PANDUAN = {
   staf: ["Panduan_Sarana_Prasarana", "Staf Sarpras dan admin", "Inventaris semua ruang, Buku Induk, unggah data, dan label QR."],
+  pimpinan: ["Panduan_Pimpinan", "Wakasek Kurikulum dan Kepala Sekolah", "Menyetujui dan mengetahui pengajuan serta penghapusan."],
   wali: ["Panduan_Wali_Kelas", "Wali kelas dan guru", "Membaca pengingat buku yang terlambat."],
   pj: ["Panduan_Penanggung_Jawab_Ruang", "Penanggung jawab ruang", "Mencatat inventaris ruang Anda: UKS, Lab IPA, Lab Komputer, dan lainnya."],
   perpus: ["Panduan_Perpustakaan", "Perpustakaan", "Katalog buku, peminjaman, dan penerimaan buku."],
@@ -213,7 +217,7 @@ const PANDUAN = {
   siswa: ["Panduan_Pinjam_Buku_Siswa", "Pinjam buku (siswa)", "Meminjam buku dari HP dengan NISN."],
 };
 function panduanSaya() {
-  const wali = (S.akses.wali || []).length || S.pengingat.terlambat.length ? ["wali"] : [];
+  const wali = [...(pimpinan() && S.akses.id !== "ADMIN" ? ["pimpinan"] : []), ...((S.akses.wali || []).length || S.pengingat.terlambat.length ? ["wali"] : [])];
   if (!pjRuang()) return ["staf", ...(bukuSemua() ? ["perpus"] : []), ...wali];
   return [...(bukuSemua() ? ["perpus"] : []), ...(bukuLiterasi() ? ["literasi"] : []), ...(ruangBarang().length ? ["pj"] : []), ...wali];
 }
@@ -421,7 +425,7 @@ TAB.alat = () => {
   const s = S.saring;
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Sarana &amp; Alat</h2><p class="sub">Seluruh sarana dan alat di semua ruang. Klik baris untuk melihat rincian dan riwayatnya.</p></div>
-      <div class="aksi">${tombolBerkas("alat", "b-unduh")}${bisaUbah() ? `<button class="tombol utama" id="b-baru" type="button">${ikon("tambah")}Catat barang</button>` : ""}</div></div>
+      <div class="aksi">${admin() ? `<button class="tombol" type="button" id="b-kategori-barang">${ikon("tabel")}Kategori</button>` : ""}${tombolBerkas("alat", "b-unduh")}${bisaUbah() ? `<button class="tombol utama" id="b-baru" type="button">${ikon("tambah")}Catat barang</button>` : ""}</div></div>
     <div class="saring">
       <label class="f cari" for="s-q">Cari${ikon("cari")}<input type="search" id="s-q" value="${esc(s.q)}" placeholder="Nama, kode, atau merek"></label>
       <label class="f" for="s-gol">Golongan<select id="s-gol"><option value="">Sarana &amp; alat</option>${opsi([["sarana", "Sarana"], ["alat", "Alat"]], s.gol)}</select></label>
@@ -438,6 +442,7 @@ TAB.alat.sesudah = () => {
   isi();
   [["s-q", "q"], ["s-gol", "gol"], ["s-kat", "kat"], ["s-ruang", "ruang"], ["s-lengkap", "lengkap"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { S.saring[k] = e.target.value; isi(); }));
   if ($("b-baru")) $("b-baru").onclick = () => formAlat(null, { ruang: S.akses.peran === "pj" ? ruangSaya()[0] : "" });
+  if ($("b-kategori-barang")) $("b-kategori-barang").onclick = formKategoriBarang;
   $("b-unduh").onclick = () => unduhBukuInduk(saringAlat().sort((a, b) => a.kode.localeCompare(b.kode)), "Sarana & Alat");
   pasangTombolBerkas($("isi"));
 };
@@ -572,7 +577,7 @@ async function formAlat(a, awal = {}) {
     ${baru ? "" : '<p class="kecil">Kode inventaris tidak berubah walaupun tahun, kategori, atau ruang diubah, karena labelnya sudah tertempel.</p>'}
     ${htmlRiwayat(riw)}`;
   dialog({ atas: baru ? "" : a.kode, judul: baru ? "Catat sarana / alat baru" : a.nama, isi,
-    kaki: kakiSimpan(baru ? "Catat" : "Simpan", !baru && admin() ? `<button class="tombol bahaya kiri" value="hapus" formnovalidate>${ikon("hapus")}Hapus</button>` : ""),
+    kaki: kakiSimpan(baru ? "Catat" : "Simpan", `${!baru && admin() ? `<button class="tombol bahaya kiri" value="hapus" formnovalidate>${ikon("hapus")}Hapus</button>` : ""}${!baru && a.kategori !== "BK" ? `<button class="tombol${admin() ? "" : " kiri"}" type="button" id="b-usul-hapus" data-alat="${a.id}">Usulkan penghapusan</button>` : ""}`),
     onSimpan: async (aksi) => {
       if (aksi === "hapus") return konfirmasiHapus(a, "alat");
       const n = (id) => { const x = $(id).value.trim(); return x === "" ? null : Number(x); };
@@ -725,31 +730,39 @@ async function formPasangRombel() {
 
 /* ---------------------------------------------------------------- label QR */
 TAB.label = () => `<section class="kartu">
-  <div class="kepala-bagian"><div><h2>Label QR</h2><p class="sub">Cetak di kertas stiker A4 isi 24 (3 × 8, ukuran 70 × 37 mm), lalu tempel pada barang. Saat dipindai kamera HP, kartu barang terbuka tanpa PIN dan tanpa harga.</p></div>
+  <div class="kepala-bagian"><div><h2>Label QR</h2><p class="sub">Cetak di kertas stiker A4, lalu tempel pada barang. Saat QR dipindai kamera HP, kartu barang terbuka tanpa PIN dan tanpa harga. Barkode perlu alat pemindai dan kodenya panjang, jadi pada ukuran kecil pakailah QR bila bisa.</p></div>
     <div class="aksi"><button class="tombol utama" id="b-cetak" type="button">${ikon("cetak")}Cetak</button></div></div>
   <div class="saring">
     <label class="f" for="l-ruang">Ruang<select id="l-ruang"><option value="">Semua ruang</option>${opsi(ruangTampil().map((r) => [r.kode, r.nama]), S.labelRuang)}${opsiTanpaRuang(S.labelRuang)}</select></label>
     <label class="f" for="l-gol">Golongan<select id="l-gol"><option value="">Sarana &amp; alat</option><option value="sarana">Sarana</option><option value="alat">Alat</option></select></label>
+    <label class="f" for="l-ukuran">Ukuran<select id="l-ukuran"><option value="besar">Besar, A4 isi 24 (70 × 37 mm)</option><option value="kecil">Kecil, A4 isi 65 (38 × 21 mm)</option></select></label>
+    <label class="f" for="l-isi">Isi<select id="l-isi"><option value="qr">QR</option><option value="bc">Barkode</option><option value="dua">QR dan barkode</option></select></label>
     <label class="f" for="l-per">Banyak label<select id="l-per"><option value="1">Satu per jenis barang</option><option value="n">Satu per unit (maks. 40 per jenis)</option></select></label>
   </div>
   <p class="kecil" id="l-jml"></p>
   <div class="lembar-wadah"><div class="lembar" id="lembar"></div></div>
 </section>`;
 TAB.label.sesudah = () => {
-  const gambar = () => {
+  const gambar = async () => {
     S.labelRuang = $("l-ruang").value;
-    const per = $("l-per").value, gol = $("l-gol").value;
+    const per = $("l-per").value, gol = $("l-gol").value, kecilL = $("l-ukuran").value === "kecil", isiL = $("l-isi").value, adaQR = isiL !== "bc", adaBc = isiL !== "qr";
+    if (adaBc && !window.JsBarcode) await muatSkrip("assets/vendor/JsBarcode-3.11.6.all.min.js");
     // Aset buku berlabel sendiri di menu Label Buku.
     const d = S.alat.filter((a) => a.kategori !== "BK" && (!S.labelRuang || (S.labelRuang === "-" ? !a.ruang : a.ruang === S.labelRuang)) && (!gol || golongan(a) === gol));
     const daftar = [];
     d.forEach((a) => { const n = per === "n" ? Math.min(40, a.jumlah) : 1; for (let i = 1; i <= n; i++) daftar.push([a, n > 1 ? `${i}/${n}` : ""]); });
-    $("l-jml").textContent = `${daftar.length} label · ${Math.max(1, Math.ceil(daftar.length / 24))} lembar A4`;
-    $("lembar").innerHTML = daftar.map(([a, ke], i) => `<div class="label"><div class="qr" id="qr-${i}"></div><div class="t"><small>SMA PLUS MERDEKA SOREANG</small><b>${esc(a.nama)}</b>
-      <span class="k">${esc(a.kode)}${ke ? " · " + ke : ""}</span><small>${esc(namaRuang(a.ruang) || "")}${a.sumber_dana ? " · " + esc(a.sumber_dana) : ""}${a.tahun ? " " + a.tahun : ""}</small></div></div>`).join("");
-    daftar.forEach(([a], i) => { if (window.QRCode) new QRCode($("qr-" + i), { text: urlKartu(a.kode), width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M }); });
+    const perLembar = kecilL ? 65 : 24, totalL = daftar.length * (adaQR && adaBc ? 2 : 1);
+    $("l-jml").textContent = `${totalL} label · ${Math.max(1, Math.ceil(totalL / perLembar))} lembar A4`;
+    $("lembar").className = kecilL ? "lembar-kecil" : "lembar";
+    $("lembar").innerHTML = daftar.map(([a, ke], i) => kecilL
+      ? `${adaQR ? `<div class="lb lb-qr"><div class="qr" id="qr-${i}"></div><div class="t">${LOGO_LABEL}<span class="j">${esc(a.nama)}</span><span class="k panjang">${esc(a.kode)}${ke ? " · " + ke : ""}</span></div></div>` : ""}${adaBc ? `<div class="lb lb-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${esc(a.nama)}</small></div><svg data-kode="${esc(a.kode)}"></svg></div>` : ""}`
+      : `${adaBc ? `<div class="label label-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${esc(a.nama)}${ke ? " · " + ke : ""}</small></div><svg data-kode="${esc(a.kode)}"></svg></div>` : ""}${adaQR ? `<div class="label"><div class="qr" id="qr-${i}"></div><div class="t">${LOGO_LABEL}<small>SMA PLUS MERDEKA SOREANG</small><b>${esc(a.nama)}</b>
+      <span class="k">${esc(a.kode)}${ke ? " · " + ke : ""}</span><small>${esc(namaRuang(a.ruang) || "")}${a.sumber_dana ? " · " + esc(a.sumber_dana) : ""}${a.tahun ? " " + a.tahun : ""}</small></div></div>` : ""}`).join("");
+    if (adaQR) daftar.forEach(([a], i) => { if (window.QRCode) new QRCode($("qr-" + i), { text: urlKartu(a.kode), width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M }); });
+    if (adaBc && window.JsBarcode) $("lembar").querySelectorAll("svg[data-kode]").forEach((el) => JsBarcode(el, el.dataset.kode, { format: "CODE128", height: 40, width: 1, fontSize: 10, margin: 0, background: "transparent" }));
   };
-  $("l-ruang").onchange = gambar; $("l-per").onchange = gambar; $("l-gol").onchange = gambar; gambar();
-  $("b-cetak").onclick = () => { $("cetak").innerHTML = `<div class="lembar">${$("lembar").innerHTML}</div>`; window.print(); };
+  ["l-ruang", "l-per", "l-gol", "l-ukuran", "l-isi"].forEach((id) => { $(id).onchange = gambar; }); gambar();
+  $("b-cetak").onclick = () => { $("cetak").innerHTML = `<div class="${$("lembar").className}">${$("lembar").innerHTML}</div>`; window.print(); };
 };
 
 /* ---------------------------------------------------------------- impor Excel */
@@ -1360,7 +1373,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try { await sibuk(() => masuk($("pin").value.trim())); }
     catch (err) { $("galat-pin").textContent = err.message; $("galat-pin").hidden = false; }
   };
-  aturPanduan(["pj", "perpus", "literasi", "wali", "staf", "siswa"]);
+  aturPanduan(["pj", "perpus", "literasi", "wali", "pimpinan", "staf", "siswa"]);
   const cari = new URLSearchParams(location.search), kode = cari.get("k");
   if (kode) return kartuPublik(kode);
   // ?b= dari kamera bawaan HP: petugas yang sudah masuk atau menekan "Masuk dengan PIN" ke halaman petugas, selain itu halaman siswa.
