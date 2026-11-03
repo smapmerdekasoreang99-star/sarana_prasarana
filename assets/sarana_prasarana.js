@@ -768,7 +768,10 @@ TAB.label.sesudah = () => {
   const gambar = async () => {
     S.labelRuang = $("l-ruang").value;
     const per = $("l-per").value, gol = $("l-gol").value, kecilL = $("l-ukuran").value === "kecil", isiL = $("l-isi").value, adaQR = isiL !== "bc", adaBc = isiL !== "qr";
-    if (adaBc && !window.JsBarcode) await muatSkrip("assets/vendor/JsBarcode-3.11.6.all.min.js");
+    try {
+      if (adaBc && !window.JsBarcode) await muatSkrip("assets/vendor/JsBarcode-3.11.6.all.min.js");
+      if (adaQR) await siapkanQR();
+    } catch (e) { $("lembar").innerHTML = ""; $("l-jml").textContent = e.message; return; }
     // Aset buku berlabel sendiri di menu Label Buku.
     const d = S.alat.filter((a) => a.kategori !== "BK" && (!S.labelRuang || (S.labelRuang === "-" ? !a.ruang : a.ruang === S.labelRuang)) && (!gol || golongan(a) === gol));
     const daftar = [];
@@ -780,11 +783,11 @@ TAB.label.sesudah = () => {
       ? `${adaQR ? `<div class="lb lb-qr"><div class="qr" id="qr-${i}"></div><div class="t">${LOGO_LABEL}<span class="j">${esc(a.nama)}</span><span class="k panjang">${esc(a.kode)}${ke ? " · " + ke : ""}</span></div></div>` : ""}${adaBc ? `<div class="lb lb-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${esc(a.nama)}</small></div><svg data-kode="${esc(a.kode)}"></svg></div>` : ""}`
       : `${adaBc ? `<div class="label label-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${esc(a.nama)}${ke ? " · " + ke : ""}</small></div><svg data-kode="${esc(a.kode)}"></svg></div>` : ""}${adaQR ? `<div class="label"><div class="qr" id="qr-${i}"></div><div class="t">${LOGO_LABEL}<small>SMA PLUS MERDEKA SOREANG</small><b>${esc(a.nama)}</b>
       <span class="k">${esc(a.kode)}${ke ? " · " + ke : ""}</span><small>${esc(namaRuang(a.ruang) || "")}${a.sumber_dana ? " · " + esc(a.sumber_dana) : ""}${a.tahun ? " " + a.tahun : ""}</small></div></div>` : ""}`).join("");
-    if (adaQR) daftar.forEach(([a], i) => { if (window.QRCode) new QRCode($("qr-" + i), { text: urlKartu(a.kode), width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M }); });
+    if (adaQR) daftar.forEach(([a], i) => gambarQR($("qr-" + i), urlKartu(a.kode), 160));
     if (adaBc && window.JsBarcode) $("lembar").querySelectorAll("svg[data-kode]").forEach((el) => JsBarcode(el, el.dataset.kode, { format: "CODE128", height: 40, width: 1, fontSize: 10, margin: 0, background: "transparent" }));
   };
   ["l-ruang", "l-per", "l-gol", "l-ukuran", "l-isi"].forEach((id) => { $(id).onchange = gambar; }); gambar();
-  $("b-cetak").onclick = () => { $("cetak").innerHTML = `<div class="${$("lembar").className}">${$("lembar").innerHTML}</div>`; window.print(); };
+  $("b-cetak").onclick = () => cetakLabel($("lembar").className, $("lembar").innerHTML);
 };
 
 /* ---------------------------------------------------------------- impor Excel */
@@ -805,7 +808,26 @@ async function muatExcelJS() {
   }
   throw new Error("Pembuat Excel (ExcelJS) tidak bisa diunduh. Biasanya jaringan memblokir cdnjs.cloudflare.com dan cdn.jsdelivr.net; coba jaringan lain.");
 }
-function muatSkrip(src) { return new Promise((ok, gagal) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => gagal(new Error("Pustaka Excel gagal dimuat. Periksa internet lalu coba lagi.")); document.head.appendChild(s); }); }
+function muatSkrip(src) { return new Promise((ok, gagal) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => gagal(new Error("Pustaka pendukung gagal dimuat. Periksa internet lalu coba lagi.")); document.head.appendChild(s); }); }
+/* Label (3 Nov 2026): QR langsung dijadikan satu gambar. Pustaka QR menggambar di kanvas lalu menukarnya ke gambar
+   belakangan, padahal isi kanvas hilang saat label disalin ke lembar cetak, sehingga QR bisa tercetak kosong. */
+async function siapkanQR() { if (!window.QRCode) await muatSkrip("assets/vendor/qrcode-1.0.0.min.js"); }
+function gambarQR(el, teks, ukuran) {
+  const sementara = document.createElement("div");
+  new QRCode(sementara, { text: teks, width: ukuran, height: ukuran, correctLevel: QRCode.CorrectLevel.M });
+  const img = document.createElement("img");
+  img.alt = "QR"; img.src = sementara.querySelector("canvas").toDataURL("image/png");
+  el.replaceChildren(img);
+}
+async function cetakLabel(kelas, html) {
+  if (!html.trim()) return toast("Belum ada label untuk dicetak.");
+  const wadah = $("cetak");
+  wadah.innerHTML = `<div class="${kelas}">${html}</div>`;
+  if ([...wadah.querySelectorAll(".qr")].some((q) => !q.querySelector("img"))) return toast("QR belum tergambar. Muat ulang halaman lalu coba lagi.");
+  // Tunggu semua gambar siap: browser tertentu memuat gambar salinan belakangan, dan print() tidak menunggunya.
+  await Promise.all([...wadah.querySelectorAll("img")].map((i) => i.decode().catch(() => {})));
+  window.print();
+}
 async function muatSheetJS() { if (!window.XLSX) await muatSkrip("assets/vendor/xlsx-0.20.3.full.min.js"); return window.XLSX; }
 function unduhBlob(blob, nama) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nama;

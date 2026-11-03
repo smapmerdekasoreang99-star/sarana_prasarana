@@ -39,7 +39,10 @@ TAB.labelbuku.sesudah = async () => {
     if (!jenis) { $("lb-lembar").innerHTML = ""; $("lb-jml").textContent = "Pilih minimal satu jenis label."; return; }
     if (total > BATAS_LABEL) { $("lb-lembar").innerHTML = ""; $("lb-jml").textContent = `${total} label terlalu banyak untuk sekali cetak. Paling banyak ${BATAS_LABEL} label; bagi rentang eksemplarnya.`; return; }
     $("lb-jml").textContent = `${eks} eksemplar × ${jenis} jenis = ${total} label · ${Math.ceil(total / 65)} lembar A4` + (sampai > b.jumlah ? ` · perhatian: buku ini tercatat ${b.jumlah} eksemplar` : "");
-    if (s.barkode && !window.JsBarcode) await muatSkrip("assets/vendor/JsBarcode-3.11.6.all.min.js");
+    try {
+      if (s.barkode && !window.JsBarcode) await muatSkrip("assets/vendor/JsBarcode-3.11.6.all.min.js");
+      if (s.qr) await siapkanQR();
+    } catch (e) { $("lb-lembar").innerHTML = ""; $("lb-jml").textContent = e.message; return; }
     const atas = esc(b.nomor_panggil || b.mapel || b.kode), judul = esc(b.judul);
     let h = "";
     for (let n = dari; n <= sampai; n++) {
@@ -50,12 +53,12 @@ TAB.labelbuku.sesudah = async () => {
     }
     $("lb-lembar").innerHTML = h;
     const dasar = location.origin + location.pathname + "?b=";
-    $("lb-lembar").querySelectorAll(".qr").forEach((el) => { if (window.QRCode) new QRCode(el, { text: dasar + encodeURIComponent(el.dataset.kode), width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M }); });
+    $("lb-lembar").querySelectorAll(".qr").forEach((el) => gambarQR(el, dasar + encodeURIComponent(el.dataset.kode), 128));
     if (window.JsBarcode) $("lb-lembar").querySelectorAll("svg[data-kode]").forEach((el) => JsBarcode(el, el.dataset.kode, { format: "CODE128", height: 34, width: 1, fontSize: 10, margin: 0, background: "transparent" }));
   };
   await gambar();
   $("lb-buku").addEventListener("input", (e) => { s.id = e.target.value; const b = S.buku.find((x) => String(x.id) === String(s.id)); s.dari = 1; s.sampai = b ? b.jumlah : 0; $("lb-dari").value = 1; $("lb-sampai").value = s.sampai; gambar(); });
   [["lb-dari", "dari"], ["lb-sampai", "sampai"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { s[k] = e.target.value; gambar(); }));
   [["lb-punggung", "punggung"], ["lb-qr", "qr"], ["lb-barkode", "barkode"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { s[k] = e.target.checked; gambar(); }));
-  $("lb-cetak").onclick = () => { if (!$("lb-lembar").children.length) return toast($("lb-jml").textContent); $("cetak").innerHTML = `<div class="lembar-kecil">${$("lb-lembar").innerHTML}</div>`; window.print(); };
+  $("lb-cetak").onclick = () => { if (!$("lb-lembar").children.length) return toast($("lb-jml").textContent); cetakLabel("lembar-kecil", $("lb-lembar").innerHTML); };
 };
