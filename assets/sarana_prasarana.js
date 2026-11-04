@@ -763,8 +763,10 @@ TAB.label = () => `<section class="kartu">
   </div>
   <p class="kecil" id="l-jml"></p>
   <div class="lembar-wadah"><div class="lembar" id="lembar"></div></div>
+  <div class="lembar-nav" id="l-nav" hidden></div>
 </section>`;
 TAB.label.sesudah = () => {
+  const p = { items: [], per: 24, hal: 0 };
   const gambar = async () => {
     S.labelRuang = $("l-ruang").value;
     const per = $("l-per").value, gol = $("l-gol").value, kecilL = $("l-ukuran").value === "kecil", isiL = $("l-isi").value, adaQR = isiL !== "bc", adaBc = isiL !== "qr";
@@ -776,18 +778,19 @@ TAB.label.sesudah = () => {
     const d = S.alat.filter((a) => a.kategori !== "BK" && (!S.labelRuang || (S.labelRuang === "-" ? !a.ruang : a.ruang === S.labelRuang)) && (!gol || golongan(a) === gol));
     const daftar = [];
     d.forEach((a) => { const n = per === "n" ? Math.min(40, a.jumlah) : 1; for (let i = 1; i <= n; i++) daftar.push([a, n > 1 ? `${i}/${n}` : ""]); });
-    const perLembar = kecilL ? 65 : 24, totalL = daftar.length * (adaQR && adaBc ? 2 : 1);
-    $("l-jml").textContent = `${totalL} label · ${Math.max(1, Math.ceil(totalL / perLembar))} lembar A4`;
+    const perLembar = kecilL ? 65 : 24, totalL = daftar.length * (adaQR && adaBc ? 2 : 1), lembarL = Math.max(1, Math.ceil(totalL / perLembar));
+    $("l-jml").textContent = `${totalL} label · ${lembarL} lembar A4${lembarL > 1 ? " · tombol Cetak mencetak semua lembar" : ""}`;
     $("lembar").className = kecilL ? "lembar-kecil" : "lembar";
-    $("lembar").innerHTML = daftar.map(([a, ke], i) => kecilL
-      ? `${adaQR ? `<div class="lb lb-qr"><div class="qr" id="qr-${i}"></div><div class="t">${LOGO_LABEL}<span class="j">${esc(a.nama)}</span><span class="k panjang">${esc(a.kode)}${ke ? " · " + ke : ""}</span></div></div>` : ""}${adaBc ? `<div class="lb lb-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${esc(a.nama)}</small></div><svg data-kode="${esc(a.kode)}"></svg></div>` : ""}`
-      : `${adaBc ? `<div class="label label-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${esc(a.nama)}${ke ? " · " + ke : ""}</small></div><svg data-kode="${esc(a.kode)}"></svg></div>` : ""}${adaQR ? `<div class="label"><div class="qr" id="qr-${i}"></div><div class="t">${LOGO_LABEL}<small>SMA PLUS MERDEKA SOREANG</small><b>${esc(a.nama)}</b>
-      <span class="k">${esc(a.kode)}${ke ? " · " + ke : ""}</span><small>${esc(namaRuang(a.ruang) || "")}${a.sumber_dana ? " · " + esc(a.sumber_dana) : ""}${a.tahun ? " " + a.tahun : ""}</small></div></div>` : ""}`).join("");
-    if (adaQR) daftar.forEach(([a], i) => gambarQR($("qr-" + i), urlKartu(a.kode), 160));
-    if (adaBc && window.JsBarcode) $("lembar").querySelectorAll("svg[data-kode]").forEach((el) => JsBarcode(el, el.dataset.kode, { format: "CODE128", height: 40, width: 1, fontSize: 10, margin: 0, background: "transparent" }));
+    const tandaQR = (a) => `<div class="qr" data-qr="${esc(urlKartu(a.kode))}" data-uk="160"></div>`, tandaBc = (a) => `<svg data-kode="${esc(a.kode)}" data-tinggi="40"></svg>`;
+    p.per = perLembar; p.hal = 0;
+    p.items = daftar.flatMap(([a, ke]) => kecilL
+      ? [`${adaQR ? `<div class="lb lb-qr">${tandaQR(a)}<div class="t">${LOGO_LABEL}<span class="j">${esc(a.nama)}</span><span class="k panjang">${esc(a.kode)}${ke ? " · " + ke : ""}</span></div></div>` : ""}`, `${adaBc ? `<div class="lb lb-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${esc(a.nama)}</small></div>${tandaBc(a)}</div>` : ""}`]
+      : [`${adaBc ? `<div class="label label-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${esc(a.nama)}${ke ? " · " + ke : ""}</small></div>${tandaBc(a)}</div>` : ""}`, `${adaQR ? `<div class="label">${tandaQR(a)}<div class="t">${LOGO_LABEL}<small>SMA PLUS MERDEKA SOREANG</small><b>${esc(a.nama)}</b>
+      <span class="k">${esc(a.kode)}${ke ? " · " + ke : ""}</span><small>${esc(namaRuang(a.ruang) || "")}${a.sumber_dana ? " · " + esc(a.sumber_dana) : ""}${a.tahun ? " " + a.tahun : ""}</small></div></div>` : ""}`]).filter(Boolean);
+    tampilLembar($("lembar"), $("l-nav"), p);
   };
   ["l-ruang", "l-per", "l-gol", "l-ukuran", "l-isi"].forEach((id) => { $(id).onchange = gambar; }); gambar();
-  $("b-cetak").onclick = () => cetakLabel($("lembar").className, $("lembar").innerHTML);
+  $("b-cetak").onclick = () => cetakLabel($("lembar").className, p.items, $("b-cetak"));
 };
 
 /* ---------------------------------------------------------------- impor Excel */
@@ -812,21 +815,66 @@ function muatSkrip(src) { return new Promise((ok, gagal) => { const s = document
 /* Label (3 Nov 2026): QR langsung dijadikan satu gambar. Pustaka QR menggambar di kanvas lalu menukarnya ke gambar
    belakangan, padahal isi kanvas hilang saat label disalin ke lembar cetak, sehingga QR bisa tercetak kosong. */
 async function siapkanQR() { if (!window.QRCode) await muatSkrip("assets/vendor/qrcode-1.0.0.min.js"); }
+/* Label cepat (4 Nov 2026): satu QR butuh sekitar 46 ms, jadi menggambar semuanya sekaligus membekukan halaman.
+   Layar hanya menggambar lembar yang dilihat; sisanya digambar bertahap saat Cetak. QR yang sudah jadi diingat. */
+const _qrJadi = new Map();
 function gambarQR(el, teks, ukuran) {
-  const sementara = document.createElement("div");
-  new QRCode(sementara, { text: teks, width: ukuran, height: ukuran, correctLevel: QRCode.CorrectLevel.M });
+  const kunci = ukuran + "|" + teks;
+  let src = _qrJadi.get(kunci);
+  if (!src) {
+    const sementara = document.createElement("div");
+    new QRCode(sementara, { text: teks, width: ukuran, height: ukuran, correctLevel: QRCode.CorrectLevel.M });
+    src = sementara.querySelector("canvas").toDataURL("image/png");
+    _qrJadi.set(kunci, src);
+  }
   const img = document.createElement("img");
-  img.alt = "QR"; img.src = sementara.querySelector("canvas").toDataURL("image/png");
+  img.alt = "QR"; img.src = src;
   el.replaceChildren(img);
 }
-async function cetakLabel(kelas, html) {
-  if (!html.trim()) return toast("Belum ada label untuk dicetak.");
-  const wadah = $("cetak");
-  wadah.innerHTML = `<div class="${kelas}">${html}</div>`;
-  if ([...wadah.querySelectorAll(".qr")].some((q) => !q.querySelector("img"))) return toast("QR belum tergambar. Muat ulang halaman lalu coba lagi.");
-  // Tunggu semua gambar siap: browser tertentu memuat gambar salinan belakangan, dan print() tidak menunggunya.
-  await Promise.all([...wadah.querySelectorAll("img")].map((i) => i.decode().catch(() => {})));
-  window.print();
+const jeda = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+// Mengisi QR (.qr[data-qr]) dan barkode (svg[data-kode]), memberi jeda agar halaman tetap bisa dipakai. false = dibatalkan.
+async function isiLabel(akar, { lanjut = () => true, kemajuan } = {}) {
+  const sasaran = [...akar.querySelectorAll(".qr[data-qr], svg[data-kode]")];
+  let mulai = performance.now();
+  for (let i = 0; i < sasaran.length; i++) {
+    if (!lanjut()) return false;
+    const el = sasaran[i];
+    if (el.dataset.qr) gambarQR(el, el.dataset.qr, +el.dataset.uk);
+    else if (window.JsBarcode) JsBarcode(el, el.dataset.kode, { format: "CODE128", height: +el.dataset.tinggi, width: 1, fontSize: 10, margin: 0, background: "transparent" });
+    if (performance.now() - mulai > 40) {
+      if (kemajuan) kemajuan(i + 1, sasaran.length);
+      await jeda();
+      mulai = performance.now();
+    }
+  }
+  return true;
+}
+// p = { items: [html per label], per: label per lembar, hal: lembar yang tampil (mulai 0) }
+let _giliranLembar = 0;
+function tampilLembar(lembar, nav, p) {
+  const n = Math.max(1, Math.ceil(p.items.length / p.per));
+  p.hal = Math.min(Math.max(0, p.hal), n - 1);
+  lembar.innerHTML = p.items.slice(p.hal * p.per, (p.hal + 1) * p.per).join("");
+  nav.hidden = n < 2;
+  nav.innerHTML = n < 2 ? "" : `<button class="tombol" type="button" data-geser="-1"${p.hal === 0 ? " disabled" : ""}>Lembar sebelumnya</button><span class="kecil">Lembar ${p.hal + 1} dari ${n}</span><button class="tombol" type="button" data-geser="1"${p.hal === n - 1 ? " disabled" : ""}>Lembar berikutnya</button>`;
+  nav.querySelectorAll("button").forEach((b) => { b.onclick = () => { p.hal += +b.dataset.geser; tampilLembar(lembar, nav, p); }; });
+  const giliran = ++_giliranLembar;
+  isiLabel(lembar, { lanjut: () => giliran === _giliranLembar && lembar.isConnected }).catch((e) => toast(e.message));
+}
+async function cetakLabel(kelas, items, tombol) {
+  if (!items.length) return toast("Belum ada label untuk dicetak.");
+  const wadah = $("cetak"), asal = tombol.innerHTML;
+  tombol.disabled = true; tombol.textContent = "Menyiapkan...";
+  try {
+    await jeda(20);
+    wadah.innerHTML = `<div class="${kelas}">${items.join("")}</div>`;
+    await isiLabel(wadah, { kemajuan: (i, n) => { tombol.textContent = `Menyiapkan ${i} dari ${n}...`; } });
+    if ([...wadah.querySelectorAll(".qr")].some((q) => !q.querySelector("img"))) return toast("QR belum tergambar. Muat ulang halaman lalu coba lagi.");
+    // Tunggu semua gambar siap: browser tertentu memuat gambar salinan belakangan, dan print() tidak menunggunya.
+    await Promise.all([...wadah.querySelectorAll("img")].map((i) => i.decode().catch(() => {})));
+    window.print();
+  } catch (e) { toast(e.message); }
+  finally { tombol.disabled = false; tombol.innerHTML = asal; }
 }
 async function muatSheetJS() { if (!window.XLSX) await muatSkrip("assets/vendor/xlsx-0.20.3.full.min.js"); return window.XLSX; }
 function unduhBlob(blob, nama) {

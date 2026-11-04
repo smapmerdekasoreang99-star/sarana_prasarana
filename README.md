@@ -12,7 +12,7 @@ Alamat (setelah repositori `sarana_prasarana` dibuat di akun sekolah): https://s
 | Sarana & Alat | Seluruh barang, saring golongan/kategori/ruang/kelengkapan, formulir + riwayat, unduh Excel (lembar Sarana & Alat + Bahan) |
 | Bahan | Stok bahan habis pakai per ruang, status Cukup/Menipis/Habis, tombol Masuk/Keluar, kartu stok, hitung ulang |
 | Buku Induk | Tampilan buku induk (semua kolom, jumlah unit & nilai perolehan), saring ruang/golongan/dana/tahun, **Unduh** xlsx berkop (format Profil Dokumen + tanda tangan), **Unduh template**, **Unggah data** |
-| Label QR | Lembar stiker A4 3 × 8 (70 × 37 mm), per ruang/golongan, satu label per jenis atau per unit |
+| Label QR | Lembar stiker A4 3 × 8 (70 × 37 mm), per ruang/golongan, satu label per jenis atau per unit. Layar hanya menggambar lembar yang dilihat; sisanya digambar bertahap saat Cetak |
 | Profil Dokumen | Pratinjau kop, isian profil, penanda tangan dokumen Sarpras. Dibaca dari Data Induk → Profil Dokumen (diubah di sana) |
 
 **Unduh / Unduh template / Unggah data** ada di Ruang, Sarana & Alat, Bahan, dan Buku Induk:

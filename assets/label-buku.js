@@ -26,39 +26,39 @@ TAB.labelbuku = () => {
     <p class="kecil"><b>QR</b> terbaca kamera semua HP. <b>Barkode</b> perlu alat pemindai, atau kamera di browser tertentu seperti Chrome di Android. Bila belum punya alat pemindai, cukup pilih QR.</p>
     <p class="kecil" id="lb-jml"></p>
     <div class="lembar-wadah"><div class="lembar-kecil" id="lb-lembar"></div></div>
+    <div class="lembar-nav" id="lb-nav" hidden></div>
     <p class="kecil">Coba cetak satu lembar di kertas biasa, lalu tumpuk dengan kertas stiker untuk memeriksa posisinya. Saat mencetak pilih A4, skala 100%, tanpa kepala dan kaki halaman.</p>
   </section>`;
 };
 TAB.labelbuku.sesudah = async () => {
-  const s = S.labelBuku;
+  const s = S.labelBuku, p = { items: [], per: 65, hal: 0 };
+  const kosongkan = (pesan) => { p.items = []; tampilLembar($("lb-lembar"), $("lb-nav"), p); $("lb-jml").textContent = pesan; };
   const gambar = async () => {
     const b = S.buku.find((x) => String(x.id) === String(s.id));
-    if (!b) { $("lb-lembar").innerHTML = ""; $("lb-jml").textContent = "Belum ada buku."; return; }
+    if (!b) return kosongkan("Belum ada buku.");
     const dari = Math.max(1, +s.dari || 1), sampai = Math.max(dari, +s.sampai || dari), jenis = (s.punggung ? 1 : 0) + (s.qr ? 1 : 0) + (s.barkode ? 1 : 0);
     const eks = sampai - dari + 1, total = eks * jenis;
-    if (!jenis) { $("lb-lembar").innerHTML = ""; $("lb-jml").textContent = "Pilih minimal satu jenis label."; return; }
-    if (total > BATAS_LABEL) { $("lb-lembar").innerHTML = ""; $("lb-jml").textContent = `${total} label terlalu banyak untuk sekali cetak. Paling banyak ${BATAS_LABEL} label; bagi rentang eksemplarnya.`; return; }
-    $("lb-jml").textContent = `${eks} eksemplar × ${jenis} jenis = ${total} label · ${Math.ceil(total / 65)} lembar A4` + (sampai > b.jumlah ? ` · perhatian: buku ini tercatat ${b.jumlah} eksemplar` : "");
+    if (!jenis) return kosongkan("Pilih minimal satu jenis label.");
+    if (total > BATAS_LABEL) return kosongkan(`${total} label terlalu banyak untuk sekali cetak. Paling banyak ${BATAS_LABEL} label; bagi rentang eksemplarnya.`);
+    $("lb-jml").textContent = `${eks} eksemplar × ${jenis} jenis = ${total} label · ${Math.ceil(total / 65)} lembar A4` + (total > 65 ? " · tombol Cetak mencetak semua lembar" : "") + (sampai > b.jumlah ? ` · perhatian: buku ini tercatat ${b.jumlah} eksemplar` : "");
     try {
       if (s.barkode && !window.JsBarcode) await muatSkrip("assets/vendor/JsBarcode-3.11.6.all.min.js");
       if (s.qr) await siapkanQR();
-    } catch (e) { $("lb-lembar").innerHTML = ""; $("lb-jml").textContent = e.message; return; }
+    } catch (e) { return kosongkan(e.message); }
     const atas = esc(b.nomor_panggil || b.mapel || b.kode), judul = esc(b.judul);
-    let h = "";
+    const dasar = location.origin + location.pathname + "?b=", h = [];
     for (let n = dari; n <= sampai; n++) {
       const kode = kodeEksemplar(b, n);
-      if (s.punggung) h += `<div class="lb lb-pg">${LOGO_LABEL}<b>${(b.nomor_panggil ? b.nomor_panggil.split(/\s+/).map(esc) : [atas]).join("<br>")}</b><small>${esc(kode)}</small></div>`;
-      if (s.qr) h += `<div class="lb lb-qr"><div class="qr" data-kode="${esc(kode)}"></div><div class="t">${LOGO_LABEL}<small>Perpustakaan SMA Plus Merdeka</small><span class="k">${esc(kode)}</span><span class="j">${judul}</span></div></div>`;
-      if (s.barkode) h += `<div class="lb lb-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${judul}</small></div><svg data-kode="${esc(kode)}"></svg></div>`;
+      if (s.punggung) h.push(`<div class="lb lb-pg">${LOGO_LABEL}<b>${(b.nomor_panggil ? b.nomor_panggil.split(/\s+/).map(esc) : [atas]).join("<br>")}</b><small>${esc(kode)}</small></div>`);
+      if (s.qr) h.push(`<div class="lb lb-qr"><div class="qr" data-qr="${esc(dasar + encodeURIComponent(kode))}" data-uk="128"></div><div class="t">${LOGO_LABEL}<small>Perpustakaan SMA Plus Merdeka</small><span class="k">${esc(kode)}</span><span class="j">${judul}</span></div></div>`);
+      if (s.barkode) h.push(`<div class="lb lb-bc"><div class="lb-bc-atas">${LOGO_LABEL}<small>${judul}</small></div><svg data-kode="${esc(kode)}" data-tinggi="34"></svg></div>`);
     }
-    $("lb-lembar").innerHTML = h;
-    const dasar = location.origin + location.pathname + "?b=";
-    $("lb-lembar").querySelectorAll(".qr").forEach((el) => gambarQR(el, dasar + encodeURIComponent(el.dataset.kode), 128));
-    if (window.JsBarcode) $("lb-lembar").querySelectorAll("svg[data-kode]").forEach((el) => JsBarcode(el, el.dataset.kode, { format: "CODE128", height: 34, width: 1, fontSize: 10, margin: 0, background: "transparent" }));
+    p.items = h; p.hal = 0;
+    tampilLembar($("lb-lembar"), $("lb-nav"), p);
   };
   await gambar();
   $("lb-buku").addEventListener("input", (e) => { s.id = e.target.value; const b = S.buku.find((x) => String(x.id) === String(s.id)); s.dari = 1; s.sampai = b ? b.jumlah : 0; $("lb-dari").value = 1; $("lb-sampai").value = s.sampai; gambar(); });
   [["lb-dari", "dari"], ["lb-sampai", "sampai"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { s[k] = e.target.value; gambar(); }));
   [["lb-punggung", "punggung"], ["lb-qr", "qr"], ["lb-barkode", "barkode"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { s[k] = e.target.checked; gambar(); }));
-  $("lb-cetak").onclick = () => { if (!$("lb-lembar").children.length) return toast($("lb-jml").textContent); cetakLabel("lembar-kecil", $("lb-lembar").innerHTML); };
+  $("lb-cetak").onclick = () => { if (!p.items.length) return toast($("lb-jml").textContent); cetakLabel("lembar-kecil", p.items, $("lb-cetak")); };
 };

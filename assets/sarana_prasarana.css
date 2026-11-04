@@ -286,6 +286,8 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
 .label .t small { font-size: 6.5pt; color: #555; letter-spacing: .04em; }
 .label .t b { font-size: 9pt; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .label .t .k { font-family: ui-monospace, Consolas, monospace; font-size: 7.5pt; font-weight: 700; }
+.lembar-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--j3); margin-top: var(--j3); }
+.lembar-nav[hidden] { display: none; }
 /* ---------- Label Buku (cetak A4 5 × 13, 38,1 × 21,2 mm) ---------- */
 .lb-pilih label { display: inline-flex; gap: 6px; align-items: center; font-size: var(--h-s); }
 .lembar-kecil { display: grid; grid-template-columns: repeat(5, 38.1mm); column-gap: 2.5mm; background: #fff; color: #111; width: max-content; margin: 0 auto; }
