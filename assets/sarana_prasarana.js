@@ -166,7 +166,7 @@ async function masuk(pin) {
   batasiKeRuangSaya();
   ssSet("sp_pin", pin);
   $("layar-masuk").hidden = true; $("layar-app").hidden = false;
-  const peran = { admin: "Staf Sarpras · semua ruang", pj: "Penanggung jawab · " + ruangSaya().map(namaRuang).join(", "), lihat: pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "Kepala Sekolah" : "Wakasek Kurikulum") : "Hanya melihat" }[S.akses.peran];
+  const peran = { admin: "Staf Sarpras · semua ruang", pj: (S.akses.id === "PERPUS" ? "PIN bersama · " : "Penanggung jawab · ") + ruangSaya().map(namaRuang).join(", "), lihat: pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "Kepala Sekolah" : "Wakasek Kurikulum") : "Hanya melihat" }[S.akses.peran];
   $("pengguna").innerHTML = `<span class="chip"><span class="avatar">${esc(inisial(S.akses.nama))}</span><span class="nama"><b>${esc(S.akses.nama)}</b><span>${esc(peran)}</span></span></span>
     <button class="tombol-atas" id="keluar" type="button">${ikon("keluar")}<span class="t">Keluar</span></button>`;
   $("pengguna").hidden = false;
