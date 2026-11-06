@@ -45,6 +45,7 @@ Menu lebih dari 5 dikelompokkan (`KELOMPOK`, `BATAS_MENU`) dengan tab di baris k
 Label Buku (`assets/label-buku.js`, vendor JsBarcode): A4 isi 65, punggung/QR/barkode. Pengingat Buku: wali kelas dan guru pemegang set kelas melihat yang terlambat saat masuk; pustakawan punya tombol WhatsApp. PIN dibaca dari `guru_pin` (Data Induk), disalin pemicu dari `mtd_guru`.
 Panduan per peran (PDF & Word, `alat/buat-panduan.js` + `alat/panduan-peran.js`): Sarana Prasarana (Staf/admin), Penanggung Jawab Ruang, Perpustakaan, Pojok Literasi, Wali Kelas, Pinjam Buku Siswa. Tombol Panduan menampilkan yang sesuai peran.
 Ruang kelas tetap, rombel berganti: tombol Pasangkan rombel di denah (admin), tabel `sp_ruang_rombel`; barang dan buku dicatat di ruang.
+Salin isi ruang (6 Nov 2026): tombol **Salin isi ke ruang lain** di halaman satu ruang (admin, atau PJ ke ruangnya yang lain) → `sp_alat_salin(p_pin, p_ke, p_barang)`; sarana & alat jadi barang baru berkode baru, kondisi baik, jumlah per barang dari formulir; bahan tidak ikut.
 Tahap C (`assets/usulan.js`): Pengajuan Buku, Penghapusan buku & barang dengan berita acara, Kategori barang; Label QR barang: ukuran kecil, barkode, logo.
 
 ## Panduan

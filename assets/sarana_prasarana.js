@@ -62,6 +62,7 @@ const P = {
   masuk: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/>',
   kembali: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
   orang: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  salin: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   ubah: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
   cetak: '<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>',
   hapus: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/>',
@@ -354,6 +355,7 @@ function halamanRuang(kode) {
         <div class="meta"><span>${ikon("orang")}${esc(r.pj_nama)}</span>${kode !== "-" ? `<span class="kode">${esc(r.kode)}</span><span>${esc(JENIS_RUANG[r.jenis] ? JENIS_RUANG[r.jenis][0] : "")}</span>` : ""}</div></div>
       <div class="aksi">
         ${kode !== "-" ? `<button class="tombol" type="button" id="b-label-ruang">${ikon("cetak")}Label ruang ini</button>` : ""}
+        ${boleh && kode !== "-" && h.sarana.length + h.alat.length && tujuanSalin(kode).length ? `<button class="tombol" type="button" id="b-salin-ruang">${ikon("salin")}Salin isi ke ruang lain</button>` : ""}
         ${admin() && kode !== "-" ? `<button class="tombol" type="button" id="b-ubah-ruang">${ikon("ubah")}Ubah ruang</button>` : ""}
       </div></div>
     <div class="ubin">
@@ -393,6 +395,7 @@ TAB.ruang.sesudah = () => {
     : formAlat(null, { ruang: ruangIni, kategori: S.segmen === "sarana" ? "F" : "" });
   if ($("b-label-ruang")) $("b-label-ruang").onclick = () => { S.labelRuang = S.ruangBuka; buka("label"); };
   if ($("b-ubah-ruang")) $("b-ubah-ruang").onclick = () => formRuang(ruangOf(S.ruangBuka));
+  if ($("b-salin-ruang")) $("b-salin-ruang").onclick = () => formSalinRuang(S.ruangBuka);
   pasangKlikTabel(isi);
 };
 
@@ -531,7 +534,7 @@ function htmlRiwayat(riw, judul = "Riwayat") {
     if (!r.rincian) return r.keterangan || "";
     if (r.jenis === "hapus") return "Alasan: " + r.rincian.alasan;
     if (r.jenis === "impor") return r.rincian.sumber || "";
-    if (r.jenis === "baru") return r.rincian.ruang ? "di " + namaRuang(r.rincian.ruang) : "";
+    if (r.jenis === "baru") return [r.rincian.ruang ? "di " + namaRuang(r.rincian.ruang) : "", r.rincian.salin_dari ? "disalin dari " + r.rincian.salin_dari : ""].filter(Boolean).join(", ");
     return Object.entries(r.rincian).map(([k, [l, b]]) => `${LABEL_ISIAN[k] || k}: ${nilai(k, l)} → ${nilai(k, b)}`).join("; ");
   };
   return `<div><h3>${judul}</h3><ul class="riwayat">${riw.map((r) => `<li><time>${tgl(r.waktu)}</time><span><b>${JENIS_RIW[r.jenis] || r.jenis}</b> · ${esc(r.oleh || "—")}<br><span class="kecil">${esc(urai(r))}</span></span></li>`).join("")}</ul></div>`;
@@ -729,6 +732,44 @@ function formRuang(r, jenisAwal) {
     } });
   const atur = () => { $("l-pj").hidden = $("r-jenis").value === "kelas"; };
   $("r-jenis").addEventListener("change", atur); atur();
+}
+
+/* Salin sarana dan alat satu ruang ke ruang lain: tiap salinan barang baru dengan kode baru, kondisi baik. */
+const tujuanSalin = (kode) => S.ruang.filter((r) => r.aktif && r.kode !== kode && bolehRuang(r.kode));
+function formSalinRuang(kode) {
+  const r = ruangOf(kode), h = hitungRuang(kode);
+  const barang = [...h.sarana, ...h.alat];
+  const tujuan = tujuanSalin(kode);
+  const baris = (a) => `<tr><td><input type="checkbox" class="s-pilih" data-id="${a.id}" checked aria-label="Salin ${esc(a.nama)}"></td>
+    <td><b>${esc(a.nama)}</b><br><span class="kecil">${esc(golongan(a) === "sarana" ? "Sarana" : "Alat")}${a.merek ? " · " + esc(a.merek) : ""} · di sini ${a.jumlah_pasti ? bil(a.jumlah) : "belum dihitung"}</span></td>
+    <td><input type="number" class="s-jml" data-id="${a.id}" min="1" max="100000" step="1" value="${a.jumlah}" style="width:84px" aria-label="Jumlah ${esc(a.nama)} di ruang tujuan"></td></tr>`;
+  dialog({ atas: r.kode, judul: "Salin isi " + r.nama + " ke ruang lain", isi: `
+    <p class="sub">Barang yang dicentang dicatat sebagai barang baru di setiap ruang tujuan, dengan kode inventaris baru dan kondisi baik. Ubah jumlahnya bila di ruang tujuan berbeda. Bukti pembelian dan keterangan tidak ikut disalin. Bahan habis pakai tidak ikut.</p>
+    <h3>Ruang tujuan</h3>
+    <div class="gulir" style="max-height:180px;flex-shrink:0"><div class="isian-grid" style="padding:10px 12px">${tujuan.map((t) => `<label class="centang"><input type="checkbox" class="s-ke" value="${esc(t.kode)}"> ${esc(t.nama)} <span class="kecil">${esc(t.kode)}</span></label>`).join("")}</div></div>
+    <h3>Barang yang disalin</h3>
+    <label class="centang"><input type="checkbox" id="s-semua" checked> Pilih semua (${barang.length})</label>
+    <div class="gulir" style="max-height:340px;flex-shrink:0"><table><thead><tr><th></th><th>Barang</th><th>Jumlah di ruang tujuan</th></tr></thead><tbody>${barang.map(baris).join("")}</tbody></table></div>
+    <p class="kecil" id="s-ringkas"></p>`,
+    kaki: kakiSimpan("Salin"),
+    onSimpan: async () => {
+      const ke = [...document.querySelectorAll(".s-ke:checked")].map((x) => x.value);
+      const pilih = [...document.querySelectorAll(".s-pilih:checked")].map((x) => ({ id: Number(x.dataset.id), jumlah: Number(document.querySelector(`.s-jml[data-id="${x.dataset.id}"]`).value) }));
+      pilih.forEach((p) => { const a = barang.find((y) => y.id === p.id); p.pasti = !!a.jumlah_pasti || p.jumlah !== a.jumlah; });
+      if (!ke.length) throw new Error("Pilih paling sedikit satu ruang tujuan.");
+      if (!pilih.length) throw new Error("Centang paling sedikit satu barang.");
+      const salah = pilih.find((p) => !Number.isInteger(p.jumlah) || p.jumlah < 1);
+      if (salah) throw new Error("Jumlah " + (barang.find((a) => a.id === salah.id) || {}).nama + " paling sedikit 1.");
+      const hasil = await sibuk(() => rpc("sp_alat_salin", { p_pin: S.pin, p_ke: ke, p_barang: pilih }));
+      S.alat.push(...hasil);
+      tutupDialog(); segarkan(); toast(`${pilih.length} barang disalin ke ${ke.length} ruang (${hasil.length} catatan baru)`);
+    } });
+  const ringkas = () => {
+    const nk = document.querySelectorAll(".s-ke:checked").length, nb = document.querySelectorAll(".s-pilih:checked").length;
+    $("s-ringkas").textContent = nk && nb ? `Akan dibuat ${nk * nb} catatan barang baru (${nb} barang × ${nk} ruang).` : "Pilih ruang tujuan dan barangnya.";
+  };
+  $("s-semua").onchange = () => { document.querySelectorAll(".s-pilih").forEach((x) => x.checked = $("s-semua").checked); ringkas(); };
+  document.querySelectorAll(".s-ke, .s-pilih").forEach((x) => x.addEventListener("change", ringkas)); ringkas();
 }
 
 /* Ruang kelas tetap, rombel berganti tiap tahun: pasangannya diatur per tahun ajaran. */

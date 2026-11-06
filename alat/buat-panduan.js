@@ -134,6 +134,16 @@ const ISI_STAF = [
     "Kode ruang **tidak bisa diubah** setelah dibuat. Ruang kelas **selalu** di bawah Staf Sarpras, jadi isian penanggung jawabnya tersembunyi. Ruang yang sudah tidak dipakai diberi status **Tidak dipakai**, bukan dihapus, supaya riwayat barangnya tetap utuh.",
     "Untuk menambah banyak ruang sekaligus, pakai **Unduh template** lalu **Unggah data** (bagian 9)."),
 
+  H2("Menyalin isi ruang ke ruang lain"),
+  P("Ruang yang isinya serupa, mis. ruang kelas, tidak perlu dicatat satu per satu. Catat lengkap satu ruang, lalu salin sarana dan alatnya ke ruang lain."),
+  OL("Buka ruang yang sudah lengkap isinya, lalu tekan **Salin isi ke ruang lain**.",
+    "Centang **Ruang tujuan**. Boleh lebih dari satu ruang sekaligus.",
+    "Centang barang yang akan disalin (**Pilih semua** untuk semuanya), lalu ubah **Jumlah di ruang tujuan** bila berbeda.",
+    "Tekan **Salin**. Di bawah daftar tertulis berapa catatan baru yang akan dibuat."),
+  KOTAK("info", "Hasil salinan",
+    "Setiap salinan menjadi barang baru dengan **kode inventaris baru** dan kondisi **Baik**. Nama, kategori, merek, spesifikasi, tahun, sumber dana, harga, dan kode ARKAS ikut disalin; no./tanggal bukti dan keterangan tidak. Bahan habis pakai tidak ikut disalin.",
+    "Jumlah yang di ruang asal **belum dihitung** tetap ditandai belum dihitung, kecuali jumlahnya diganti saat menyalin. Periksa kondisi barang di ruang tujuan lalu perbarui bila ada yang rusak."),
+
   H2("Memasangkan ruang kelas dengan rombel"),
   P("Ruang kelas adalah tempat yang tetap, sedangkan rombel berganti tiap tahun. Barang dan buku dicatat di **ruang**, jadi tidak perlu dipindah saat rombel berganti."),
   OL("Di denah **Ruang**, tekan **Pasangkan rombel**.", "Pilih ruang kelas untuk tiap rombel tahun ajaran aktif. Satu ruang hanya untuk satu rombel.", "Tekan **Simpan**. Rombel tampil pada kotak ruang di denah."),
