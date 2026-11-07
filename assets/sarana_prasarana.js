@@ -307,20 +307,22 @@ function denah() {
   const urut = ["lab", "layanan", "kantor", "kelas", "lainnya"];
   const aktif = ruangTampil().filter((r) => r.aktif);
   const tanpa = { sarana: S.alat.filter((a) => !a.ruang && golongan(a) === "sarana").length, alat: S.alat.filter((a) => !a.ruang && golongan(a) === "alat").length, bahan: S.bahan.filter((b) => !b.ruang).length };
+  const angka = (n, t) => `<span class="${n ? "" : "nol"}"><b>${n}</b> ${t}</span>`;
   const kotak = (r) => {
     const h = hitungRuang(r.kode), saya = ruangSaya().includes(r.kode);
-    return `<button class="ruang-kotak${saya ? " saya" : ""}" type="button" data-ruang="${esc(r.kode)}" style="${warnaRuang(r.jenis)}" aria-label="${esc(r.nama)}, ${h.sarana.length} sarana, ${h.alat.length} alat, ${h.bahan.length} bahan">
-      <span class="atas-kotak"><span class="lambang">${ikon(JENIS_RUANG[r.jenis] ? r.jenis : "lainnya")}</span>
-        <span class="judul-kotak"><b>${esc(r.nama)}</b><span class="pj">${ikon("orang")}${esc(r.pj_nama)}</span></span></span>
-      <span class="tanda">${r.rombel ? `<span class="pil i">${esc(r.rombel)}</span>` : ""}${saya ? '<span class="pil saya">Ruang saya</span>' : ""}${h.rusak ? `<span class="pil k">${h.rusak} rusak</span>` : ""}${h.tipis ? `<span class="pil c">${h.tipis} bahan menipis</span>` : ""}${h.belum ? `<span class="pil n">${h.belum} belum lengkap</span>` : ""}</span>
-      <span class="hitung3"><span><b>${h.sarana.length}</b><small>Sarana</small></span><span><b>${h.alat.length}</b><small>Alat</small></span><span><b>${h.bahan.length}</b><small>Bahan</small></span></span>
+    const tanda = (h.rusak ? `<span class="rk-t k" title="Barang rusak">${h.rusak} rusak</span>` : "") + (h.tipis ? `<span class="rk-t c" title="Bahan menipis">${h.tipis} menipis</span>` : "") + (h.belum ? `<span class="rk-t n" title="Isian barang belum lengkap">${h.belum} belum lengkap</span>` : "");
+    return `<button class="ruang-kotak${saya ? " saya" : ""}" type="button" data-ruang="${esc(r.kode)}" style="${warnaRuang(r.jenis)}" title="${esc(r.nama)} · PJ ${esc(r.pj_nama || "-")}" aria-label="${esc(r.nama)}, ${h.sarana.length} sarana, ${h.alat.length} alat, ${h.bahan.length} bahan">
+      <span class="rk-kepala"><b class="rk-nama">${esc(r.jenis === "kelas" ? r.nama.replace(/^ruang\s+/i, "") : r.nama)}</b>${r.rombel ? `<span class="rk-rombel">${esc(r.rombel)}</span>` : ""}${saya ? `<span class="rk-saya" title="Ruang saya">Saya</span>` : ""}</span>
+      <span class="rk-pj">${ikon("orang")}<span>${esc(r.pj_nama || "Belum ada PJ")}</span></span>
+      <span class="rk-hitung">${angka(h.sarana.length, "sarana")}${angka(h.alat.length, "alat")}${angka(h.bahan.length, "bahan")}</span>
+      ${tanda ? `<span class="rk-tanda">${tanda}</span>` : ""}
     </button>`;
   };
   const kelompok = urut.map((j) => {
     const rs = aktif.filter((r) => r.jenis === j);
     if (!rs.length && !(j === "kelas" && admin())) return "";
-    return `<section class="kelompok-ruang"><h3>${ikon(j)} ${JENIS_RUANG[j][0]} <small>${rs.length} ruang</small></h3>
-      <div class="denah">${rs.map(kotak).join("")}${j === "kelas" && admin() ? `<button class="ruang-kotak ruang-tambah" type="button" data-tambah="kelas">${ikon("tambah")}<span>Tambah ruang kelas</span></button>` : ""}</div></section>`;
+    return `<section class="kelompok-ruang" style="${warnaRuang(j)}"><h3><span class="kr-ikon">${ikon(j)}</span>${JENIS_RUANG[j][0]} <small>${rs.length} ruang</small></h3>
+      <div class="denah">${rs.map(kotak).join("")}${j === "kelas" && admin() ? `<button class="ruang-kotak ruang-tambah" type="button" data-tambah="kelas">${ikon("tambah")}<span>Tambah kelas</span></button>` : ""}</div></section>`;
   }).join("");
   const tidakAktif = ruangTampil().filter((r) => !r.aktif);
   return `<section class="kartu">
@@ -329,11 +331,12 @@ function denah() {
     <div class="legenda">${urut.map((j) => `<span style="${warnaRuang(j)}"><i></i>${JENIS_RUANG[j][0]}</span>`).join("")}</div>
   </section>
   ${kelompok}
-  ${tanpa.sarana + tanpa.alat + tanpa.bahan ? `<section class="kelompok-ruang"><h3>${ikon("awas")} Belum ada ruang <small>perlu ditempatkan</small></h3><div class="denah">
-    <button class="ruang-kotak" type="button" data-ruang="-" style="--warna: var(--absen); --warna-muda: var(--absen-muda);">
-      <span class="atas-kotak"><span class="lambang">${ikon("awas")}</span><span class="judul-kotak"><b>Tanpa ruang</b><span class="pj">${ikon("orang")}Staf Sarpras</span></span></span>
-      <span class="tanda"><span class="pil k">Tentukan ruangnya</span></span>
-      <span class="hitung3"><span><b>${tanpa.sarana}</b><small>Sarana</small></span><span><b>${tanpa.alat}</b><small>Alat</small></span><span><b>${tanpa.bahan}</b><small>Bahan</small></span></span>
+  ${tanpa.sarana + tanpa.alat + tanpa.bahan ? `<section class="kelompok-ruang" style="--warna: var(--absen); --warna-muda: var(--absen-muda);"><h3><span class="kr-ikon">${ikon("awas")}</span>Belum ada ruang <small>perlu ditempatkan</small></h3><div class="denah">
+    <button class="ruang-kotak" type="button" data-ruang="-" style="--warna: var(--absen); --warna-muda: var(--absen-muda);" aria-label="Barang tanpa ruang, ${tanpa.sarana} sarana, ${tanpa.alat} alat, ${tanpa.bahan} bahan">
+      <span class="rk-kepala"><b class="rk-nama">Tanpa ruang</b></span>
+      <span class="rk-pj">${ikon("orang")}<span>Staf Sarpras</span></span>
+      <span class="rk-hitung">${angka(tanpa.sarana, "sarana")}${angka(tanpa.alat, "alat")}${angka(tanpa.bahan, "bahan")}</span>
+      <span class="rk-tanda"><span class="rk-t k">Tentukan ruangnya</span></span>
     </button></div></section>` : ""}
   ${tidakAktif.length && admin() ? `<p class="kecil">Ruang tidak dipakai: ${tidakAktif.map((r) => `<a href="#" data-ubah-ruang="${esc(r.kode)}">${esc(r.nama)}</a>`).join(", ")}</p>` : ""}`;
 }
