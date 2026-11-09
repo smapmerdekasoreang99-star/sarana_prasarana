@@ -75,7 +75,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
   return {
     /* ==================================================================== Pimpinan */
     pimpinan: { nama: "Panduan_Pimpinan", judul: "Panduan Wakasek Kurikulum dan Kepala Sekolah",
-      sub: "Menyetujui dan mengetahui pengajuan serta penghapusan", untuk: "Wakasek Kurikulum dan Kepala Sekolah", isi: [
+      sub: "Menyetujui dan mengetahui pengajuan, penghapusan, dan usulan perbaikan", untuk: "Wakasek Kurikulum dan Kepala Sekolah", isi: [
       H1("Persetujuan"),
       ...masukPIN("nama Anda"),
       P("Bila ada yang menunggu Anda, jumlahnya tampil pada nama menu, mis. **Pengajuan Buku (2)**, dan menu itu langsung terbuka saat Anda masuk."),
@@ -84,14 +84,19 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         ["**Pengajuan buku**", "Setujui atau Tolak", "Mengetahui"],
         ["**Penghapusan buku**", "Setujui atau Tolak", "Mengetahui"],
         ["**Penghapusan barang**", "Oleh Wakasek atau Staf Sarana Prasarana", "Mengetahui"],
+        ["**Usulan perbaikan**", "Ditinjau Staf Sarana Prasarana (prioritas)", "Mengetahui atau Tolak"],
       ], [1.6, 2.4, 1.2]),
       OL("Buka menu **Pengajuan Buku** atau **Penghapusan**.", "Baca usulannya, lalu tekan tombol pada barisnya.", "Bila menolak, tulis alasannya. Pengusul melihat alasan itu."),
       P("Setelah Kepala Sekolah mengetahui penghapusan, nomor **berita acara** terbit otomatis dan pengelola bisa menyelesaikannya. Tekan **Berita acara** untuk mengunduhnya."),
       P("Pengajuan atau penghapusan yang diunggah lewat Excel tampil sama seperti yang diisi lewat formulir: satu baris per judul atau barang, dan masing-masing disetujui atau ditolak sendiri."),
+      H1("Usulan Perbaikan (Kepala Sekolah)"),
+      P("Wali kelas dan penanggung jawab ruang mengajukan kerusakan sarana prasarana. Staf Sarana Prasarana meninjau dan memberi **prioritas** (Segera, Pekan ini, Bulan ini, Dianggarkan), lalu usulan menunggu Anda di menu **Usulan Perbaikan**."),
+      OL("Baca kerusakan, dampak, prioritas, dan catatan Sarpras. Tekan **Foto** bila ada.", "Tekan **Mengetahui**, atau **Tolak** dengan alasannya.", "Usulan yang sudah diketahui diteruskan ke bendahara. Pengerjaannya menyesuaikan keuangan sekolah; statusnya **Belum diperbaiki · … hari** sampai Staf Sarpras menandai **Sudah diperbaiki**."),
+      P("Tekan **Unduh** untuk daftar berkop sesuai saringan, mis. **Belum diperbaiki**, dengan tanda tangan Sarana Prasarana dan Kepala Sekolah, sebagai bahan bendahara dan anggaran pemeliharaan."),
     ] },
     /* ==================================================================== Wali kelas */
-    wali: { nama: "Panduan_Wali_Kelas", judul: "Panduan Pengingat Buku untuk Wali Kelas",
-      sub: "Melihat pinjaman buku yang terlambat di kelas Anda", untuk: "Wali kelas dan guru", isi: [
+    wali: { nama: "Panduan_Wali_Kelas", judul: "Panduan Wali Kelas: Pengingat Buku dan Usulan Perbaikan",
+      sub: "Pinjaman buku yang terlambat dan kerusakan di kelas Anda", untuk: "Wali kelas dan guru", isi: [
       H1("Pengingat Buku"),
       P("Menu **Pengingat Buku** menampilkan pinjaman buku perpustakaan yang sudah lewat batas kembali. Daftarnya terbentuk otomatis; Anda tidak perlu mencatat apa pun."),
       ...masukPIN("nama Anda"),
@@ -103,6 +108,22 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       H2("Yang perlu dilakukan"),
       OL("Ingatkan peminjamnya untuk mengembalikan buku ke perpustakaan. Tidak ada denda.", "Untuk pinjaman atas nama Anda, kembalikan bukunya ke pustakawan, boleh lewat siswa.", "Baris hilang sendiri setelah pustakawan menerima bukunya."),
       KOTAK("info", "Pesan WhatsApp", "Pustakawan juga bisa mengirim daftar ini lewat WhatsApp. Pastikan nomor HP Anda tercatat di Data Induk."),
+      H1("Usulan Perbaikan Kelas"),
+      P("Kerusakan di kelas yang Anda walikan (lampu, kipas, plafon, pintu, meja, dan lainnya) Anda ajukan lewat aplikasi. Siswa belum bisa melapor sendiri: mereka menyampaikannya kepada Anda. Sesuai SOP sekolah, alurnya: **diajukan Anda** → ditinjau **Staf Sarana Prasarana** (prioritas) → diketahui **Kepala Sekolah** → **bendahara**."),
+      H2("Mengajukan perbaikan"),
+      OL("Buka menu **Usulan Perbaikan** (di kelompok **Pengajuan & Usulan** bila menunya banyak), lalu tekan **Ajukan perbaikan**.",
+        "Pilih **Ruang/kelas**: kelas yang Anda walikan. Bila kelas Anda sudah dipasangkan dengan ruangnya oleh Staf Sarpras, nama ruangnya ikut tampil.",
+        "Pilih yang rusak: **Barang inventaris** (pilih barangnya dari daftar ruang itu) atau **Bangunan & lainnya** (atap/plafon, dinding/lantai, pintu/jendela/kunci, listrik, air/toilet, lainnya).",
+        "Tulis **uraian kerusakan** dengan jelas, mis. \"Plafon bocor di pojok belakang, air menetes saat hujan\".",
+        "Pilih **dampak**: **Membahayakan** (mis. kabel terbuka, plafon hampir jatuh), **Mengganggu KBM** (mis. proyektor atau lampu mati), atau **Ringan** (mis. gorden sobek).",
+        "Tambahkan **foto** bila ada, paling banyak 2. Foto diperkecil otomatis di HP. Lalu tekan **Kirim**."),
+      TB(["Status", "Artinya"], [
+        ["**Menunggu Staf Sarpras**", "Usulan baru. Selama masih begini, Anda bisa menekan **Batalkan**."],
+        ["**Menunggu Kepala Sekolah**", "Sudah ditinjau dan diberi prioritas oleh Staf Sarana Prasarana."],
+        ["**Diketahui Kepala Sekolah**", "Diteruskan ke bendahara; pengerjaannya menyesuaikan keuangan sekolah. Tampil **Belum diperbaiki · … hari** sampai Staf Sarpras menandai **Sudah diperbaiki**."],
+        ["**Ditolak** / **Digabung**", "Ditolak dengan alasan yang bisa Anda baca, atau digabung dengan laporan lain untuk kerusakan yang sama (menambah bobot laporan itu)."],
+      ], [1.8, 4.2]),
+      KOTAK("info", "Kelas belum dipasangkan dengan ruang?", "Usulan tetap bisa dikirim. Pilih **Bangunan & lainnya** dan sebutkan barangnya di uraian. Barang inventaris baru bisa dipilih setelah Staf Sarpras memasangkan kelas Anda dengan ruangnya."),
     ] },
     /* ==================================================================== Penanggung jawab ruang */
     pj: { nama: "Panduan_Penanggung_Jawab_Ruang", judul: "Panduan Penanggung Jawab Ruang",
@@ -155,6 +176,21 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         "Pada baris barang yang akan dihapus, isi **Jumlah Dihapus**, **Alasan** (pilih dari daftar), dan **Keterangan** kondisinya. Baris lain biarkan kosong.",
         "Jangan mengubah **Kode Inventaris**.", "Tekan **Unggah hapus barang**, pilih berkasnya, periksa pratinjau, lalu tekan **Kirim … usulan**."),
       P("Semua usulan dikirim sekaligus atau tidak sama sekali. Jumlah Dihapus paling banyak sejumlah unit barang itu; unit belum berkurang sampai Anda menekan **Hapus dari inventaris**."),
+      H1("Usulan Perbaikan"),
+      P("Kerusakan di ruang Anda diajukan lewat menu **Usulan Perbaikan**. Sesuai SOP sekolah, aplikasi hanya untuk pengajuan: ditinjau **Staf Sarana Prasarana** → diketahui **Kepala Sekolah** → **bendahara**. Barang yang tidak bisa diperbaiki lagi diusulkan lewat **Penghapusan**."),
+      H2("Mengajukan perbaikan"),
+      OL("Buka menu **Usulan Perbaikan** (di kelompok **Pengajuan & Usulan** bila menunya banyak), lalu tekan **Ajukan perbaikan**.",
+        "Pilih **Ruang/kelas**: ruang yang Anda pegang.",
+        "Pilih yang rusak: **Barang inventaris** (pilih barangnya dari daftar ruang itu) atau **Bangunan & lainnya** (atap/plafon, dinding/lantai, pintu/jendela/kunci, listrik, air/toilet, lainnya).",
+        "Tulis **uraian kerusakan** dengan jelas, mis. \"Plafon bocor di pojok belakang, air menetes saat hujan\".",
+        "Pilih **dampak**: **Membahayakan** (mis. kabel terbuka, plafon hampir jatuh), **Mengganggu KBM** (mis. proyektor atau lampu mati), atau **Ringan** (mis. gorden sobek).",
+        "Tambahkan **foto** bila ada, paling banyak 2. Foto diperkecil otomatis di HP. Lalu tekan **Kirim**."),
+      TB(["Status", "Artinya"], [
+        ["**Menunggu Staf Sarpras**", "Usulan baru. Selama masih begini, Anda bisa menekan **Batalkan**."],
+        ["**Menunggu Kepala Sekolah**", "Sudah ditinjau dan diberi prioritas oleh Staf Sarana Prasarana."],
+        ["**Diketahui Kepala Sekolah**", "Diteruskan ke bendahara; pengerjaannya menyesuaikan keuangan sekolah. Tampil **Belum diperbaiki · … hari** sampai Staf Sarpras menandai **Sudah diperbaiki**."],
+        ["**Ditolak** / **Digabung**", "Ditolak dengan alasan yang bisa Anda baca, atau digabung dengan laporan lain untuk kerusakan yang sama (menambah bobot laporan itu)."],
+      ], [1.8, 4.2]),
       H1("Unduh, Template, dan Unggah"),
       TB(["Tombol", "Hasil"], [
         ["**Unduh**", "Excel daftar inventaris ruang Anda, memakai **kop dan penanda tangan dari Profil Dokumen**."],
@@ -188,7 +224,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       P("Perpustakaan adalah bagian dari aplikasi Sarana Prasarana. Dengan PIN Penanggung Jawab Perpustakaan, tampil dua tanggung jawab Anda: **buku** sebagai pustakawan, dan **barang di ruang Perpustakaan** sebagai pengguna ruang. Barang dikumpulkan dalam satu menu **Ruang Perpustakaan**."),
       ...masukPIN("Penanggung jawab · Perpustakaan"),
       H2("Menu Anda"),
-      P("Menu dikelompokkan. Tekan kelompoknya, lalu pilih tab di baris kedua: **Buku** berisi Katalog Buku, Pinjam & Kembali, Label Buku, Penerimaan Buku, dan Pengingat Buku; **Pengajuan & Penghapusan** berisi Pengajuan Buku dan Penghapusan. Angka pada nama menu menunjukkan yang menunggu."),
+      P("Menu dikelompokkan. Tekan kelompoknya, lalu pilih tab di baris kedua: **Buku** berisi Katalog Buku, Pinjam & Kembali, Label Buku, Penerimaan Buku, dan Pengingat Buku; **Pengajuan & Usulan** berisi Pengajuan Buku, Penghapusan, dan Usulan Perbaikan. Angka pada nama menu menunjukkan yang menunggu."),
       TB(["Menu", "Isi"], [
         ["**Katalog Buku**", "Semua buku sekolah di mana pun disimpan, termasuk koleksi Pojok Literasi."],
         ["**Pinjam & Kembali**", "Permintaan dari HP siswa, meminjamkan, menerima pengembalian, keterlambatan."],

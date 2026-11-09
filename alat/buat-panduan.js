@@ -36,7 +36,7 @@ const ISI_STAF = [
   ], [1, 1.6, 2.4, 2]),
   P("Golongan sarana atau alat ditentukan oleh **kategori** barang: kategori **Mebel** dan **Pelengkap ruangan** termasuk sarana, kategori lainnya termasuk alat."),
   H2("Menu aplikasi"),
-  P("Menu dikelompokkan. Tekan kelompoknya, lalu pilih tab di baris kedua: **Inventaris** (Ruang, Sarana & Alat, Bahan, Buku Induk, Label QR), **Buku** (Katalog Buku, Pinjam & Kembali, Label Buku, Penerimaan Buku, Pengingat Buku), dan **Pengajuan & Penghapusan**. Panduan ini menyebut nama tabnya."),
+  P("Menu dikelompokkan. Tekan kelompoknya, lalu pilih tab di baris kedua: **Inventaris** (Ruang, Sarana & Alat, Bahan, Buku Induk, Label QR), **Buku** (Katalog Buku, Pinjam & Kembali, Label Buku, Penerimaan Buku, Pengingat Buku), dan **Pengajuan & Usulan** (Pengajuan Buku, Penghapusan, Usulan Perbaikan). Panduan ini menyebut nama tabnya."),
   TB(["Menu", "Isi"], [
     ["**Ringkasan**", "Jumlah barang dan unit, unit rusak, bahan menipis, isian yang masih kosong."],
     ["**Ruang**", "Denah kotak semua ruang. Pilih satu kotak untuk melihat sarana, alat, dan bahan di dalamnya."],
@@ -46,6 +46,7 @@ const ISI_STAF = [
     ["**Label QR**", "Mencetak label stiker untuk ditempel pada barang."],
     ["**Katalog Buku**, **Pinjam & Kembali**, **Label Buku**, **Penerimaan Buku**", "Perpustakaan (bagian 12)."],
     ["**Pengingat Buku**", "Muncul untuk wali kelas dan guru yang punya pinjaman terlambat."],
+    ["**Pengajuan Buku**, **Penghapusan**, **Usulan Perbaikan**", "Usulan yang diproses bertahap sampai diketahui Kepala Sekolah (bagian 13 untuk Usulan Perbaikan)."],
     ["**Profil Dokumen**", "Kop, identitas sekolah, dan penanda tangan yang dipakai semua unduhan."],
   ], [1.4, 4.6]),
   P("Tombol **Unduh**, **Unduh template**, dan **Unggah data** ada di menu Ruang, Sarana & Alat, Bahan, dan Buku Induk (bagian 9)."),
@@ -279,6 +280,18 @@ const ISI_STAF = [
   P("Agar seseorang menjadi pengelola buku, pasang namanya sebagai penanggung jawab ruang **Perpustakaan** atau **Pojok Literasi** di menu **Ruang**."),
 
   /* ============================ 13 ============================ */
+  H1("Usulan Perbaikan"),
+  P("Wali kelas (untuk kelasnya), penanggung jawab ruang (untuk ruangnya), dan Staf Sarpras (untuk semua ruang) mengajukan kerusakan lewat menu **Usulan Perbaikan**, lengkap dengan dampak dan paling banyak 2 foto. Siswa menyampaikan lewat wali kelas. Sesuai SOP, aplikasi hanya pengajuan; pengerjaan dan pembayaran lewat **bendahara** sesuai keuangan sekolah."),
+  TB(["Langkah", "Oleh", "Tombol"], [
+    ["Diajukan", "Wali kelas, penanggung jawab ruang, Staf Sarpras", "**Ajukan perbaikan**; pengusul bisa **Batalkan** selama belum ditinjau"],
+    ["Ditinjau", "Staf Sarpras", "**Tinjau** (pilih prioritas, tulis catatan), **Gabung** (laporan ganda), atau **Tolak**"],
+    ["Diketahui", "Kepala Sekolah", "**Mengetahui** atau **Tolak**"],
+    ["Diperbaiki", "Staf Sarpras", "**Sudah diperbaiki** (tanggal, keterangan); **Ubah prioritas** selama belum; **Batalkan tanda** bila salah"],
+  ], [1.1, 2.2, 3.7]),
+  P("Daftar diurutkan menurut **prioritas** Anda. Yang belum ditinjau diurutkan dari **dampak** (Membahayakan, Mengganggu KBM, Ringan), lalu banyaknya siswa terdampak (jumlah siswa rombel), lama menunggu, dan banyaknya laporan yang digabung. Jumlah yang menunggu tampil pada nama menu."),
+  P("Supaya wali kelas bisa memilih barang inventaris kelasnya, pasangkan dulu ruang kelas dengan rombelnya (tombol **Pasangkan rombel** di menu Ruang). Tanpa pasangan, wali kelas tetap bisa mengajukan kerusakan bangunan atau menyebut barangnya di uraian."),
+  P("**Unduh** menghasilkan daftar berkop sesuai saringan (mis. **Belum diperbaiki**) dengan tanda tangan Sarana Prasarana dan Kepala Sekolah, untuk bendahara. Setelah ditandai sudah diperbaiki, perbarui juga kondisi barangnya di kartu barang bila berubah."),
+
   H1("Tanya Jawab"),
   TB(["Pertanyaan", "Jawaban"], [
     ["PIN saya ditolak.", "Pakai PIN pribadi yang sama dengan Matematika Dasar dan Asesmen. Bila lupa, minta admin Asesmen mengatur ulang; PIN baru langsung berlaku di sini."],

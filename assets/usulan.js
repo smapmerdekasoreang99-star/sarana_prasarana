@@ -14,8 +14,9 @@ const bolehUsulBarang = () => admin() || (pjRuang() && ruangBarang().length > 0)
 const bolehKelolaHapus = (h) => h.jenis === "buku" ? bukuSemua() || (bukuLiterasi() && h.lokasi_jenis === "literasi") : admin() || (pjRuang() && ruangSaya().includes(h.ruang));
 
 async function muatUsulan() {
-  const [a, h] = await Promise.all([rpc("sp_pengajuan_daftar", { p_pin: S.pin }).catch(() => null), rpc("sp_penghapusan_daftar", { p_pin: S.pin }).catch(() => null)]);
-  S.pengajuan = a || []; S.penghapusan = h || [];
+  const [a, h, pb] = await Promise.all([rpc("sp_pengajuan_daftar", { p_pin: S.pin }).catch(() => null), rpc("sp_penghapusan_daftar", { p_pin: S.pin }).catch(() => null),
+    rpc("sp_perbaikan_daftar", { p_pin: S.pin }).catch(() => null)]);
+  S.pengajuan = a || []; S.penghapusan = h || []; S.perbaikan = pb || [];
 }
 const aksiAju = (a) => (a.status === "diajukan" && punyaJabatan("wakasek_kurikulum")) || (a.status === "disetujui" && punyaJabatan("kepala_sekolah"));
 const aksiHps = (h) => (h.status === "diusulkan" && punyaJabatan(h.jenis === "buku" ? "wakasek_kurikulum" : "sarpras")) || (h.status === "disetujui" && punyaJabatan("kepala_sekolah")) || (h.status === "diketahui" && bolehKelolaHapus(h));
