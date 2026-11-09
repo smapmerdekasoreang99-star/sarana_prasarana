@@ -1384,12 +1384,12 @@ function pratinjauUnggah(jenis, berkas, h) {
     ${h.baris.length ? `<div class="gulir" style="max-height:340px"><table><thead><tr><th>Baris</th>${U.kepala.map((k) => `<th>${k}</th>`).join("")}</tr></thead><tbody>
       ${h.baris.slice(0, 300).map((o) => `<tr><td class="kecil">${o.baris}</td>${U.kolom(o).map((v) => `<td>${v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
       ${h.baris.length > 300 ? `<p class="kecil">Menampilkan 300 baris pertama dari ${h.baris.length}.</p>` : ""}` : ""}
-    <p class="kecil">Satu unggahan disimpan seluruhnya atau tidak sama sekali. Sel kosong tidak menghapus isi yang sudah ada.</p>`,
-    kaki: `<button class="tombol" value="batal" formnovalidate>Batal</button>${bisa ? `<button class="tombol utama" value="simpan">${ikon("unggah")}Simpan ${h.baris.length} baris</button>` : ""}`,
+    <p class="kecil">${U.catatan || "Satu unggahan disimpan seluruhnya atau tidak sama sekali. Sel kosong tidak menghapus isi yang sudah ada."}</p>`,
+    kaki: `<button class="tombol" value="batal" formnovalidate>Batal</button>${bisa ? `<button class="tombol utama" value="simpan">${ikon("unggah")}${U.tombol ? U.tombol(h) : `Simpan ${h.baris.length} baris`}</button>` : ""}`,
     onSimpan: async () => {
       const x = await sibuk(() => rpc(U.rpc, { p_pin: S.pin, p_baris: h.baris }));
-      await sibuk(muatUlang);
-      tutupDialog(); segarkan(); toast("Tersimpan: " + U.hasil(x));
+      await sibuk(U.muat || muatUlang);
+      tutupDialog(); if (U.sesudah) U.sesudah(); segarkan(); toast("Tersimpan: " + U.hasil(x));
     } });
 }
 const tombolBerkas = (jenis, unduhId) => `

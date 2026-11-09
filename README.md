@@ -47,6 +47,7 @@ Panduan per peran (PDF & Word, `alat/buat-panduan.js` + `alat/panduan-peran.js`)
 Ruang kelas tetap, rombel berganti: tombol Pasangkan rombel di denah (admin), tabel `sp_ruang_rombel`; barang dan buku dicatat di ruang.
 Salin isi ruang (6 Nov 2026): tombol **Salin isi ke ruang lain** di halaman satu ruang (admin, atau PJ ke ruangnya yang lain) → `sp_alat_salin(p_pin, p_ke, p_barang)`; sarana & alat jadi barang baru berkode baru, kondisi baik, jumlah per barang dari formulir; bahan tidak ikut.
 Tahap C (`assets/usulan.js`): Pengajuan Buku, Penghapusan buku & barang dengan berita acara, Kategori barang; Label QR barang: ukuran kecil, barkode, logo.
+Unggah Excel (9 Nov 2026): Pengajuan Buku → Unduh template / Unggah (`sp_pengajuan_unggah(p_pin, p_baris)`, siapa pun yang masuk); Penghapusan → Template hapus buku / Unggah hapus buku (template berisi buku per lokasi yang dikelola; isi Jumlah Dihapus, Alasan, Keterangan; `sp_penghapusan_unggah(p_pin, p_baris)` memanggil `sp_penghapusan_usul` per baris + cek jumlah gabungan ≤ stok). Keduanya sekaligus atau tidak sama sekali, galat menyebut nomor baris. Penghapusan barang tetap satu per satu.
 
 ## Panduan
 

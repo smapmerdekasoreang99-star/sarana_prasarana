@@ -29,7 +29,7 @@ TAB.pengajuan = () => {
   const n = (s) => S.pengajuan.filter((a) => a.status === s).length;
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Pengajuan Buku</h2><p class="sub">Usulan buku dari guru dan siswa: disetujui Wakasek Kurikulum, diketahui Kepala Sekolah, lalu dicatat di Penerimaan Buku saat dibeli.</p></div>
-      <div class="aksi"><button class="tombol" type="button" id="aj-unduh">${ikon("unduh")}Unduh</button><button class="tombol utama" type="button" id="aj-baru">${ikon("tambah")}Ajukan buku</button></div></div>
+      <div class="aksi"><button class="tombol" type="button" id="aj-unduh">${ikon("unduh")}Unduh</button><button class="tombol" type="button" data-template="pengajuan">${ikon("tabel")}Unduh template</button><button class="tombol" type="button" data-unggah="pengajuan">${ikon("unggah")}Unggah</button><button class="tombol utama" type="button" id="aj-baru">${ikon("tambah")}Ajukan buku</button></div></div>
     <div class="ubin"><div class="c"><span class="lambang">${ikon("info")}</span><span><b>${n("diajukan")}</b><span class="t">menunggu Wakasek Kurikulum</span></span></div>
       <div class="i"><span class="lambang">${ikon("orang")}</span><span><b>${n("disetujui")}</b><span class="t">menunggu Kepala Sekolah</span></span></div>
       <div class="b"><span class="lambang">${ikon("centang")}</span><span><b>${n("diketahui")}</b><span class="t">siap dibeli</span></span></div></div>
@@ -54,6 +54,7 @@ TAB.pengajuan.sesudah = () => {
   $("aj-saring").addEventListener("input", (e) => { S.saringAju = e.target.value; segarkan(); });
   $("aj-baru").onclick = formAjukan;
   $("aj-unduh").onclick = unduhPengajuan;
+  pasangTombolBerkas($("isi").querySelector("section"));
   $("isi").querySelector("section").addEventListener("click", async (e) => {
     const t = e.target.closest("[data-aaju]"); if (!t) return;
     const id = +t.dataset.id, aksi = t.dataset.aaju, a = S.pengajuan.find((x) => x.id === id);
@@ -98,13 +99,60 @@ async function unduhPengajuan() {
   } catch (e) { toast(e.message); }
 }
 
+/* Pengajuan dari Excel (9 Nov 2026): template → isi beberapa judul → unggah; dikirim sekaligus lewat sp_pengajuan_unggah. */
+TEMPLATE.pengajuan = () => ({ judul: "Pengajuan Buku", berkas: "Pengajuan_Buku",
+  kolom: [{ judul: "Judul", lebar: 36, wajib: true }, { judul: "Penulis", lebar: 22 }, { judul: "Penerbit", lebar: 20 }, { judul: "Jumlah", lebar: 9 },
+    { judul: "Mapel/Kelas", lebar: 16 }, { judul: "Alasan", lebar: 40 }],
+  daftar: [],
+  petunjuk: ["• Satu baris = satu judul buku yang diajukan. Kolom berwarna merah wajib: Judul.",
+    "• Jumlah = banyak eksemplar, bilangan bulat 1–1000. Bila kosong, dicatat 1.",
+    "• Mapel/Kelas: mapel atau kelas yang memakai buku itu (mis. Sejarah, atau Kelas 11). Alasan: kegunaan buku.",
+    "• Panjang isian paling banyak: Judul 200 huruf, Penulis 150, Penerbit 100, Mapel/Kelas 80, Alasan 300.",
+    "• Pengajuan tercatat atas nama Anda, lalu diteruskan ke Wakasek Kurikulum dan diketahui Kepala Sekolah, sama seperti tombol Ajukan buku.",
+    "• Satu unggahan dikirim seluruhnya atau tidak sama sekali. Bila ada baris yang ditolak, pesannya menyebut nomor barisnya.",
+    "• Jangan mengunggah berkas hasil tombol Unduh (daftar pengajuan berkop); pakai template ini."] });
+function bacaPengajuan(XLSX, wb) {
+  const L = bacaLembar(XLSX, wb, /^judul$/);
+  if (!L) throw new Error('Kolom "Judul" tidak ditemukan. Pakai template Pengajuan Buku.');
+  const K = kolomDari(L.kep, { judul: /^judul$/, penulis: /^penulis/, penerbit: /^penerbit/, jumlah: /^(jumlah|eks)/, ket: /^(mapel|kelas|keterangan)/, alasan: /^alasan/, pengusul: /^pengusul/, status: /^status/ });
+  if (K.pengusul >= 0 || K.status >= 0) throw new Error("Ini berkas hasil tombol Unduh (daftar pengajuan yang sudah ada). Mengunggahnya akan mengajukan ulang buku yang sama. Pakai Unduh template.");
+  const ambil = (r, k) => normal(K[k] >= 0 ? r[K[k]] : "");
+  const hasil = { baris: [], galat: [], peringatan: [], baru: 0, ubah: 0 };
+  const dalam = new Map(), berjalan = new Set(S.pengajuan.filter((a) => ["diajukan", "disetujui", "diketahui"].includes(a.status)).map((a) => kecil(a.judul)));
+  const batas = [["judul", "Judul", 200], ["penulis", "Penulis", 150], ["penerbit", "Penerbit", 100], ["ket", "Mapel/Kelas", 80], ["alasan", "Alasan", 300]];
+  for (let i = L.hi + 1; i < L.rows.length; i++) {
+    const r = L.rows[i], ke = i + 1, judul = ambil(r, "judul");
+    if (r.every((v) => normal(v) === "")) continue;
+    if (!judul) { hasil.galat.push(`Baris ${ke}: Judul kosong.`); continue; }
+    const panjang = batas.find(([k, , n]) => ambil(r, k).length > n);
+    if (panjang) { hasil.galat.push(`Baris ${ke}: ${panjang[1]} terlalu panjang (paling banyak ${panjang[2]} huruf).`); continue; }
+    const o = { baris: ke, judul };
+    const jx = ambil(r, "jumlah");
+    if (jx) { const n = Number(jx); if (!Number.isInteger(n) || n < 1 || n > 1000) { hasil.galat.push(`Baris ${ke}: Jumlah "${jx}" harus bilangan bulat 1–1000.`); continue; } o.jumlah = n; }
+    [["penulis", "penulis"], ["penerbit", "penerbit"], ["ket", "keterangan"], ["alasan", "alasan"]].forEach(([k, f]) => { const x = ambil(r, k); if (x) o[f] = x; });
+    const kj = kecil(judul);
+    if (dalam.has(kj)) hasil.peringatan.push(`Baris ${ke}: judul sama dengan baris ${dalam.get(kj)}.`); else dalam.set(kj, ke);
+    if (berjalan.has(kj)) hasil.peringatan.push(`Baris ${ke}: "${judul}" sudah ada di pengajuan yang masih berjalan.`);
+    hasil.baru++;
+    hasil.baris.push(o);
+  }
+  return hasil;
+}
+UNGGAH.pengajuan = { judul: "Unggah pengajuan buku", baca: bacaPengajuan, rpc: "sp_pengajuan_unggah", muat: muatUsulan, sesudah: aturTab,
+  ringkas: (h) => `${h.baru} judul akan diajukan`,
+  hasil: (x) => `${x.baru} judul diajukan ke Wakasek Kurikulum`,
+  tombol: (h) => `Kirim ${h.baris.length} pengajuan`,
+  catatan: "Semua baris dikirim sekaligus ke Wakasek Kurikulum atas nama Anda, atau tidak sama sekali bila ada yang gagal.",
+  kolom: (o) => [esc(o.judul), esc([o.penulis, o.penerbit].filter(Boolean).join(" · ")), esc(o.jumlah ?? 1), esc(o.keterangan || ""), esc(o.alasan || "")],
+  kepala: ["Judul", "Penulis · Penerbit", "Eks", "Mapel/Kelas", "Alasan"] };
+
 /* ================================================================ Penghapusan */
 TAB.hapusan = () => {
   const d = S.penghapusan.filter((h) => S.saringHps === "semua" || (S.saringHps === "aktif" ? ["diusulkan", "disetujui", "diketahui"].includes(h.status) : h.status === S.saringHps));
   const n = (a) => S.penghapusan.filter((h) => h.status !== "ditolak" && h.alasan === a).reduce((s, h) => s + h.jumlah, 0);
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Penghapusan</h2><p class="sub">Mengeluarkan buku atau barang karena rusak, hilang, ganti kurikulum, atau alasan lain. Buku disetujui Wakasek Kurikulum, barang disetujui Wakasek atau Staf Sarana Prasarana; keduanya diketahui Kepala Sekolah, lalu terbit berita acara.</p></div>
-      <div class="aksi">${bolehUsulBuku() || bolehUsulBarang() ? `<button class="tombol utama" type="button" id="h-baru">${ikon("tambah")}Usulkan penghapusan</button>` : ""}</div></div>
+      <div class="aksi">${bolehUsulBuku() ? `<button class="tombol" type="button" data-template="hapusbuku">${ikon("tabel")}Template hapus buku</button><button class="tombol" type="button" data-unggah="hapusbuku">${ikon("unggah")}Unggah hapus buku</button>` : ""}${bolehUsulBuku() || bolehUsulBarang() ? `<button class="tombol utama" type="button" id="h-baru">${ikon("tambah")}Usulkan penghapusan</button>` : ""}</div></div>
     <div class="ubin">${Object.entries(ALASAN_HPS).map(([k, v]) => `<div><span class="lambang">${ikon(k === "hilang" ? "awas" : k === "rusak" ? "rusak" : "dokumen")}</span><span><b>${bil(n(k))}</b><span class="t">${v}</span></span></div>`).join("")}</div>
     <div class="saring"><label class="f" for="h-saring">Tampilkan<select id="h-saring">${opsi([["aktif", "Yang masih berjalan"], ["selesai", "Sudah dihapus"], ["ditolak", "Ditolak"], ["semua", "Semua"]], S.saringHps)}</select></label></div>
     ${d.length ? `<div class="gulir"><table><thead><tr><th>Buku / barang</th><th class="n">Jumlah</th><th>Alasan</th><th>Keterangan</th><th>Status</th><th></th></tr></thead><tbody>${d.map((h) => `<tr>
@@ -127,6 +175,7 @@ function tombolHps(h) {
 TAB.hapusan.sesudah = () => {
   $("h-saring").addEventListener("input", (e) => { S.saringHps = e.target.value; segarkan(); });
   if ($("h-baru")) $("h-baru").onclick = () => formUsulHapus();
+  pasangTombolBerkas($("isi").querySelector("section"));
   $("isi").querySelector("section").addEventListener("click", async (e) => {
     const t = e.target.closest("[data-ahps]"); if (!t) return;
     const id = +t.dataset.id, aksi = t.dataset.ahps, h = S.penghapusan.find((x) => x.id === id);
@@ -181,6 +230,65 @@ async function unduhBA(h) {
     });
   } catch (e) { toast(e.message); }
 }
+
+/* Usulan penghapusan buku dari Excel (9 Nov 2026): template berisi buku per lokasi yang dikelola; isi Jumlah Dihapus,
+   Alasan, Keterangan pada buku yang akan dihapus, lalu unggah. Dikirim sekaligus lewat sp_penghapusan_unggah. */
+TEMPLATE.hapusbuku = () => ({ judul: "Usulan Penghapusan Buku", berkas: "Penghapusan_Buku",
+  kolom: [{ judul: "Kode Buku", lebar: 11, wajib: true }, { judul: "Judul", lebar: 34 }, { judul: "Lokasi", lebar: 15, wajib: true }, { judul: "Tempat", lebar: 16 },
+    { judul: "Stok", lebar: 7 }, { judul: "Jumlah Dihapus", lebar: 10, wajib: true }, { judul: "Alasan", lebar: 17, wajib: true }, { judul: "Keterangan", lebar: 40, wajib: true }],
+  isi: bukuTampil().flatMap((b) => b.lokasi.filter((l) => l.jumlah > 0 && (!bukuLiterasi() || l.jenis === "literasi"))
+    .map((l) => [b.kode, b.judul, LOKASI_BUKU[l.jenis], l.tempat || "", l.jumlah, "", "", ""])),
+  daftar: [{ judul: "Alasan", untuk: "Alasan", isi: Object.values(ALASAN_HPS) }],
+  petunjuk: ["• Template sudah berisi semua buku yang Anda kelola, satu baris per lokasi. Isi hanya baris buku yang akan dihapus; baris dengan Jumlah Dihapus kosong dilewati.",
+    "• Jumlah Dihapus: bilangan bulat, paling banyak sebanyak Stok di lokasi itu.",
+    "• Alasan pilih dari daftar: Rusak, Hilang, Ganti kurikulum, atau Lainnya.",
+    "• Keterangan kondisi wajib (minimal 3 huruf), mis. \"Jilid lepas, halaman 12–30 hilang\". Bila buku hilang, tulis nama peminjam terakhir.",
+    "• Jangan mengubah Kode Buku, Lokasi, dan Tempat; ketiganya menunjuk buku dan tempat yang dihapus. Judul dan Stok hanya keterangan.",
+    "• Usulan diteruskan ke Wakasek Kurikulum, lalu diketahui Kepala Sekolah dan terbit berita acara, sama seperti tombol Usulkan penghapusan.",
+    "• Satu unggahan dikirim seluruhnya atau tidak sama sekali. Bila ada baris yang ditolak, pesannya menyebut nomor barisnya."] });
+function bacaHapusBuku(XLSX, wb) {
+  const L = bacaLembar(XLSX, wb, /^kode buku$/);
+  if (!L) throw new Error('Kolom "Kode Buku" tidak ditemukan. Pakai template Penghapusan Buku.');
+  const K = kolomDari(L.kep, { kode: /^kode buku$/, lokasi: /^lokasi/, tempat: /^tempat/, jumlah: /^jumlah dihapus/, alasan: /^alasan/, ket: /^keterangan/ });
+  if (K.jumlah < 0) throw new Error('Kolom "Jumlah Dihapus" tidak ditemukan. Pakai template Penghapusan Buku (bukan template atau unduhan Katalog Buku).');
+  const ambil = (r, k) => normal(K[k] >= 0 ? r[K[k]] : "");
+  const lokasiDari = (v) => Object.keys(LOKASI_BUKU).find((k) => k === kecil(v) || kecil(LOKASI_BUKU[k]) === kecil(v));
+  const alasanDari = (v) => Object.keys(ALASAN_HPS).find((k) => k === kecil(v) || kecil(ALASAN_HPS[k]) === kecil(v));
+  const berjalan = S.penghapusan.filter((h) => h.jenis === "buku" && ["diusulkan", "disetujui", "diketahui"].includes(h.status));
+  const terpakai = new Map(), hasil = { baris: [], galat: [], peringatan: [], baru: 0, ubah: 0 };
+  for (let i = L.hi + 1; i < L.rows.length; i++) {
+    const r = L.rows[i], ke = i + 1, jx = ambil(r, "jumlah"), ax = ambil(r, "alasan"), ket = ambil(r, "ket");
+    if (!jx) { if (ax || ket) hasil.galat.push(`Baris ${ke}: Alasan/Keterangan terisi tetapi Jumlah Dihapus kosong.`); continue; }
+    const kode = ambil(r, "kode").toUpperCase(), b = S.buku.find((x) => x.kode === kode);
+    if (!b) { hasil.galat.push(`Baris ${ke}: kode buku "${kode}" tidak ditemukan.`); continue; }
+    const lx = ambil(r, "lokasi"), lok = lokasiDari(lx), tx = kecil(ambil(r, "tempat"));
+    if (!lok) { hasil.galat.push(`Baris ${ke}: Lokasi "${lx}" tidak dikenal.`); continue; }
+    if (bukuLiterasi() && lok !== "literasi") { hasil.galat.push(`Baris ${ke}: Anda hanya mengelola buku berlokasi Pojok Literasi.`); continue; }
+    const l = b.lokasi.find((x) => x.jenis === lok && kecil(x.tempat || "") === tx);
+    if (!l) { hasil.galat.push(`Baris ${ke}: ${b.kode} tidak ada di ${LOKASI_BUKU[lok]}${tx ? " · " + ambil(r, "tempat") : ""}.`); continue; }
+    const n = Number(jx);
+    if (!Number.isInteger(n) || n < 1) { hasil.galat.push(`Baris ${ke}: Jumlah Dihapus "${jx}" harus bilangan bulat minimal 1.`); continue; }
+    const kunci = `${b.id}|${lok}|${l.tempat || ""}`, total = (terpakai.get(kunci) || 0) + n;
+    if (total > l.jumlah) { hasil.galat.push(`Baris ${ke}: ${b.kode} di ${namaLokasi(l)} hanya ${l.jumlah} eksemplar${total > n ? " (dihitung bersama baris lain untuk buku dan tempat yang sama)" : ""}.`); continue; }
+    const alasan = alasanDari(ax);
+    if (!alasan) { hasil.galat.push(`Baris ${ke}: Alasan "${ax}" harus Rusak, Hilang, Ganti kurikulum, atau Lainnya.`); continue; }
+    if (ket.length < 3) { hasil.galat.push(`Baris ${ke}: tulis Keterangan kondisinya (minimal 3 huruf).`); continue; }
+    if (ket.length > 300) { hasil.galat.push(`Baris ${ke}: Keterangan terlalu panjang (paling banyak 300 huruf).`); continue; }
+    terpakai.set(kunci, total);
+    if (berjalan.some((h) => h.buku === b.id && h.lokasi_jenis === lok && (h.lokasi_tempat || "") === (l.tempat || ""))) hasil.peringatan.push(`Baris ${ke}: ${b.kode} di ${namaLokasi(l)} sudah punya usulan penghapusan yang masih berjalan.`);
+    hasil.baru++;
+    hasil.baris.push({ baris: ke, buku: b.id, lokasi_jenis: lok, lokasi_tempat: l.tempat || "", jumlah: n, alasan, keterangan: ket, kode: b.kode, judul: b.judul });
+  }
+  if (!hasil.baris.length && !hasil.galat.length) hasil.galat.push("Belum ada baris dengan Jumlah Dihapus terisi.");
+  return hasil;
+}
+UNGGAH.hapusbuku = { judul: "Unggah usulan penghapusan buku", baca: bacaHapusBuku, rpc: "sp_penghapusan_unggah", muat: muatUsulan, sesudah: aturTab,
+  ringkas: (h) => `${h.baru} usulan penghapusan buku`,
+  hasil: (x) => `${x.baru} usulan penghapusan dikirim ke Wakasek Kurikulum`,
+  tombol: (h) => `Kirim ${h.baris.length} usulan`,
+  catatan: "Semua baris dikirim sekaligus ke Wakasek Kurikulum atas nama Anda, atau tidak sama sekali bila ada yang gagal. Stok belum berkurang sampai penghapusan diselesaikan.",
+  kolom: (o) => [esc(o.kode), esc(o.judul), esc(namaLokasi({ jenis: o.lokasi_jenis, tempat: o.lokasi_tempat })), esc(o.jumlah), esc(ALASAN_HPS[o.alasan]), esc(o.keterangan)],
+  kepala: ["Kode", "Judul", "Lokasi", "Jumlah", "Alasan", "Keterangan"] };
 
 /* ================================================================ Kategori barang (Staf Sarpras) */
 function formKategoriBarang() {
