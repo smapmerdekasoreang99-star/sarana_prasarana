@@ -78,7 +78,7 @@ const ISI_STAF = [
     ["**Penanggung jawab ruang**", "Guru yang dipasang sebagai penanggung jawab ruang tertentu", "Hanya **melihat dan mengisi ruangnya sendiri**. Punya panduan sendiri: Panduan Penanggung Jawab Ruang"],
     ["**Penanggung jawab Perpustakaan**", "Penanggung jawab ruang Perpustakaan", "Menu buku, pengadaan buku, dan barang di ruang Perpustakaan. Punya panduan sendiri: Panduan Perpustakaan"],
     ["**Penanggung jawab Pojok Literasi**", "Penanggung jawab ruang Pojok Literasi", "Hanya buku di Pojok Literasi. Punya panduan sendiri: Panduan Pojok Literasi"],
-    ["**Guru lain**", "Guru lain yang punya PIN pribadi", "Melihat dan mengunduh; tidak mengubah"],
+    ["**Guru lain**", "Guru lain yang punya PIN pribadi, termasuk wali kelas", "Hanya menu untuk guru: **Katalog Buku** (melihat), **Pengajuan Buku**, **Usulan Perbaikan** (wali kelas), dan **Pengingat Buku**. Tidak melihat inventaris ruang lain"],
   ], [1.6, 2.4, 2.6]),
   TB(["Ruang", "Penanggung jawab"], [
     ["Lab Komputer", "Yeni Isnaeni"], ["Lab IPA", "Yanti Ratnasih, S.Pd."], ["Perpustakaan", "Candra Wibawa, S.Pd."], ["Pojok Literasi", "Puspa Adiyuka Nurzanah, S.Pd."], ["Ruang UKS", "Imas Kurniasih, S.Pd.I."],
@@ -87,7 +87,7 @@ const ISI_STAF = [
   KOTAK("awas", "Batasan diperiksa di server",
     "Penanggung jawab tidak bisa mencatat barang di ruang orang lain, dan tidak bisa memindahkan barang ke ruang yang bukan tanggung jawabnya. Pemindahan antarruang dilakukan oleh Staf Sarpras.",
     "Jaga PIN Anda. Jangan memberikannya kepada siswa atau orang luar."),
-  P("**Menu yang pertama terbuka.** Staf Sarpras langsung masuk ke **Ringkasan**, guru lain ke **Ruang**, penanggung jawab ruang ke halaman ruangnya, dan pengelola buku ke menu bukunya."),
+  P("**Menu yang pertama terbuka.** Staf Sarpras langsung masuk ke **Ringkasan**, wali kelas ke **Usulan Perbaikan**, guru lain ke **Pengajuan Buku**, penanggung jawab ruang ke halaman ruangnya, dan pengelola buku ke menu bukunya."),
   KOTAK("info", "Barang di ruang buku", "Barang di ruang Perpustakaan dicatat penanggung jawabnya. Barang di Pojok Literasi (meja, rak, dan sebagainya) dicatat Staf Sarpras, karena penanggung jawabnya hanya melihat menu buku. **Rak buku perpus** dan barang lain yang belum berruang perlu ditempatkan dulu oleh Staf Sarpras."),
 
   /* ============================ 3 ============================ */

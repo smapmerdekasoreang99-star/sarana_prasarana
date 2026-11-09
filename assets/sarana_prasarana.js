@@ -167,7 +167,7 @@ async function masuk(pin) {
   batasiKeRuangSaya();
   ssSet("sp_pin", pin);
   $("layar-masuk").hidden = true; $("layar-app").hidden = false;
-  const peran = { admin: "Staf Sarpras · semua ruang", pj: (S.akses.id === "PERPUS" ? "PIN bersama · " : "Penanggung jawab · ") + ruangSaya().map(namaRuang).join(", "), lihat: pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "Kepala Sekolah" : "Wakasek Kurikulum") : "Hanya melihat" }[S.akses.peran];
+  const peran = { admin: "Staf Sarpras · semua ruang", pj: (S.akses.id === "PERPUS" ? "PIN bersama · " : "Penanggung jawab · ") + ruangSaya().map(namaRuang).join(", "), lihat: pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "Kepala Sekolah" : "Wakasek Kurikulum") : (S.akses.wali || []).length ? "Wali kelas " + S.akses.wali.join(", ") : "Guru" }[S.akses.peran];
   $("pengguna").innerHTML = `<span class="chip"><span class="avatar">${esc(inisial(S.akses.nama))}</span><span class="nama"><b>${esc(S.akses.nama)}</b><span>${esc(peran)}</span></span></span>
     <button class="tombol-atas" id="keluar" type="button">${ikon("keluar")}<span class="t">Keluar</span></button>`;
   $("pengguna").hidden = false;
@@ -175,7 +175,7 @@ async function masuk(pin) {
   document.querySelectorAll("[data-admin]").forEach((b) => (b.hidden = !admin()));
   aturTab();
   aturPanduan(panduanSaya());
-  buka(admin() ? "ringkas" : aksesBuku() ? "buku" : pimpinan() && S.pengajuan.some(aksiAju) ? "pengajuan" : pimpinan() && S.penghapusan.some(aksiHps) ? "hapusan" : kepalaPbk() && S.perbaikan.some(aksiPbk) ? "perbaikan" : S.pengingat.terlambat.length ? "pengingat" : pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "ringkas" : "pengajuan") : "ruang");
+  buka(admin() ? "ringkas" : aksesBuku() ? "buku" : pimpinan() && S.pengajuan.some(aksiAju) ? "pengajuan" : pimpinan() && S.penghapusan.some(aksiHps) ? "hapusan" : kepalaPbk() && S.perbaikan.some(aksiPbk) ? "perbaikan" : S.pengingat.terlambat.length ? "pengingat" : pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "ringkas" : "pengajuan") : guruSaja() ? ((S.akses.wali || []).length ? "perbaikan" : "pengajuan") : "ruang");
   bukaPindaianAlamat();
 }
 async function muatUlang() {
@@ -189,7 +189,7 @@ function batasiKeRuangSaya() {
   S.alat = S.alat.filter((a) => ruangBarang().includes(a.ruang));
   S.bahan = S.bahan.filter((b) => ruangBarang().includes(b.ruang));
 }
-// Tiap peran hanya melihat menu bagiannya; admin dan guru yang hanya melihat tetap melihat semua menu.
+// Tiap peran hanya melihat menu bagiannya; admin melihat semua menu, guru lain hanya MENU_GURU (9 Nov 2026).
 // Bila menunya lebih dari BATAS_MENU, menu sejenis jadi satu kelompok dengan tab di baris kedua.
 const KELOMPOK = { grupruang: ["ruang", "alat", "bahan", "induk", "label"], grupbuku: ["buku", "pinjam", "labelbuku", "terima", "pengingat"], grupusulan: ["pengajuan", "hapusan", "perbaikan"] };
 const BATAS_MENU = 5;
@@ -199,12 +199,16 @@ const namaKelompok = (k) => ({
   grupbuku: bukuLiterasi() ? "Buku Literasi" : "Buku", grupusulan: "Pengajuan & Usulan" }[k]);
 // Pimpinan yang tidak memegang ruang: Wakasek Kurikulum hanya persetujuan; Kepala Sekolah ditambah pantauan.
 const pimpinanSaja = () => S.akses.peran === "lihat" && pimpinan();
-const MENU_PIMPINAN = () => ["pengajuan", "hapusan", "pengingat", ...(punyaJabatan("kepala_sekolah") ? ["perbaikan", "ringkas", "induk"] : [])];
+const MENU_PIMPINAN = () => ["pengajuan", "hapusan", "pengingat", ...(punyaJabatan("kepala_sekolah") || (S.akses.wali || []).length ? ["perbaikan"] : []), ...(punyaJabatan("kepala_sekolah") ? ["ringkas", "induk"] : [])];
+// Guru tanpa ruang dan tanpa jabatan pimpinan (mis. wali kelas, 9 Nov 2026): hanya menu yang memang untuknya, bukan semua menu Staf Sarpras.
+const guruSaja = () => S.akses.peran === "lihat" && !pimpinan();
+const MENU_GURU = ["buku", "pengajuan", "perbaikan", "pengingat"];
 function aturTab() {
   const pj = pjRuang(), barang = !pj || ruangBarang().length > 0;
   const boleh = { ringkas: !pj, ruang: barang, alat: barang, bahan: barang, induk: barang, label: barang,
     buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), labelbuku: !!aksesBuku(), terima: bukuSemua(), pengajuan: !pj || !!aksesBuku() || pimpinan(), hapusan: admin() || !!aksesBuku() || (pj && ruangBarang().length > 0) || pimpinan(), pengingat: (S.akses.wali || []).length > 0 || S.pengingat.terlambat.length > 0, profil: barang || bukuSemua(), perbaikan: bolehPbk() };
   if (pimpinanSaja()) Object.keys(boleh).forEach((k) => { if (!MENU_PIMPINAN().includes(k)) boleh[k] = false; });
+  if (guruSaja()) Object.keys(boleh).forEach((k) => { if (!MENU_GURU.includes(k)) boleh[k] = false; });
   document.querySelectorAll("#tab button[data-tab]").forEach((b) => { b.hidden = !boleh[b.dataset.tab]; });
   const adaTugas = (s) => s ? ` (${s})` : "";
   document.querySelector('#tab [data-tab="pengajuan"]').lastChild.textContent = "Pengajuan Buku" + adaTugas(S.pengajuan.filter(aksiAju).length);
@@ -241,6 +245,7 @@ const PANDUAN = {
 function panduanSaya() {
   const wali = [...(pimpinan() && S.akses.id !== "ADMIN" ? ["pimpinan"] : []), ...((S.akses.wali || []).length || S.pengingat.terlambat.length ? ["wali"] : [])];
   if (pimpinanSaja()) return wali;
+  if (guruSaja()) return ["wali"];
   if (!pjRuang()) return ["staf", ...(bukuSemua() ? ["perpus"] : []), ...wali];
   return [...(bukuSemua() ? ["perpus"] : []), ...(bukuLiterasi() ? ["literasi"] : []), ...(ruangBarang().length ? ["pj"] : []), ...wali];
 }

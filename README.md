@@ -69,7 +69,7 @@ Masuk dengan **PIN pribadi yang sama dengan Matematika Dasar dan Asesmen** (tabe
 |---|---|---|
 | Staf Sarpras (admin) | Rian Herdiansah & Piki Permana (jabatan aktif *Staf Sarana Prasarana* di Data Induk; *Wakasek Sarana Prasarana* juga), atau **PIN admin Sarpras** (`sp_privat.pin_admin`) | Semua ruang, termasuk **semua ruang kelas**; atur ruang; impor; hapus |
 | Penanggung jawab ruang | Yeni (Lab Komputer), Yanti (Lab IPA), Candra (Perpustakaan), Imas (Ruang UKS); diubah di tab Ruang | Catat & ubah sarana, alat, bahan **di ruangnya sendiri**; tidak bisa memindah ke ruang lain |
-| Lihat | Guru lain dengan PIN pribadi | Hanya melihat |
+| Lihat | Guru lain dengan PIN pribadi (termasuk wali kelas) | Sejak 9 Nov 2026 hanya menu guru (`MENU_GURU`): Katalog Buku, Pengajuan Buku, Usulan Perbaikan (wali kelas), Pengingat Buku |
 
 Label QR membuka `?k=<kode>`: kartu barang **tanpa PIN**, tanpa harga dan bukti belanja.
 
