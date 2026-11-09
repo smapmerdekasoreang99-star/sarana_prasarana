@@ -12,7 +12,7 @@
 const fs = require("fs"), path = require("path"), os = require("os"), { spawn } = require("child_process");
 
 let SUBJUDUL, UNTUK, NAMA, JUDUL, ISI, DAFTAR;
-const AKAR = path.join(__dirname, ".."), VERSI = "2 November 2026", MEREK = "SARANA PRASARANA · SMA PLUS MERDEKA SOREANG";
+const AKAR = path.join(__dirname, ".."), VERSI = "9 November 2026", MEREK = "SARANA PRASARANA · SMA PLUS MERDEKA SOREANG";
 
 /* ================= Isi panduan =================
    Blok: H1/H2/H3 (judul, dinomori otomatis), P (paragraf), UL/OL (daftar), TB (tabel: kepala, baris, lebar relatif),
@@ -181,6 +181,7 @@ const ISI_STAF = [
   P("Tombol **Hapus** hanya untuk barang yang **salah catat atau tercatat dua kali**. Tulis alasannya. Barang hilang dari daftar, tetapi riwayatnya tetap disimpan."),
   H2("Penghapusan barang"),
   P("Barang rusak, hilang, atau tidak terpakai diusulkan lewat tombol **Usulkan penghapusan** atau menu **Penghapusan**: dibuat penanggung jawab ruang atau Staf Sarpras → **disetujui Wakasek atau Staf Sarana Prasarana** → **diketahui Kepala Sekolah** → terbit berita acara → **Hapus dari inventaris**. Unit rusak berat dikurangi lebih dulu. Foto belum bisa dilampirkan; tulis kondisinya di keterangan."),
+  P("Untuk banyak barang sekaligus: di menu **Penghapusan** tekan **Template hapus barang** (berisi semua sarana dan alat), isi **Jumlah Dihapus**, **Alasan**, dan **Keterangan** pada baris yang akan dihapus, lalu tekan **Unggah hapus barang**. Semua baris dikirim sekaligus atau tidak sama sekali; tiap usulan tetap disetujui dan diketahui satu per satu. Penanggung jawab ruang (UKS, Lab Komputer, dst.) memakai cara yang sama untuk ruangnya."),
 
   /* ============================ 7 ============================ */
   H1("Bahan Habis Pakai"),

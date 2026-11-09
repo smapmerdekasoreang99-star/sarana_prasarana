@@ -152,7 +152,7 @@ TAB.hapusan = () => {
   const n = (a) => S.penghapusan.filter((h) => h.status !== "ditolak" && h.alasan === a).reduce((s, h) => s + h.jumlah, 0);
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Penghapusan</h2><p class="sub">Mengeluarkan buku atau barang karena rusak, hilang, ganti kurikulum, atau alasan lain. Buku disetujui Wakasek Kurikulum, barang disetujui Wakasek atau Staf Sarana Prasarana; keduanya diketahui Kepala Sekolah, lalu terbit berita acara.</p></div>
-      <div class="aksi">${bolehUsulBuku() ? `<button class="tombol" type="button" data-template="hapusbuku">${ikon("tabel")}Template hapus buku</button><button class="tombol" type="button" data-unggah="hapusbuku">${ikon("unggah")}Unggah hapus buku</button>` : ""}${bolehUsulBuku() || bolehUsulBarang() ? `<button class="tombol utama" type="button" id="h-baru">${ikon("tambah")}Usulkan penghapusan</button>` : ""}</div></div>
+      <div class="aksi">${bolehUsulBuku() ? `<button class="tombol" type="button" data-template="hapusbuku">${ikon("tabel")}Template hapus buku</button><button class="tombol" type="button" data-unggah="hapusbuku">${ikon("unggah")}Unggah hapus buku</button>` : ""}${bolehUsulBarang() ? `<button class="tombol" type="button" data-template="hapusbarang">${ikon("tabel")}Template hapus barang</button><button class="tombol" type="button" data-unggah="hapusbarang">${ikon("unggah")}Unggah hapus barang</button>` : ""}${bolehUsulBuku() || bolehUsulBarang() ? `<button class="tombol utama" type="button" id="h-baru">${ikon("tambah")}Usulkan penghapusan</button>` : ""}</div></div>
     <div class="ubin">${Object.entries(ALASAN_HPS).map(([k, v]) => `<div><span class="lambang">${ikon(k === "hilang" ? "awas" : k === "rusak" ? "rusak" : "dokumen")}</span><span><b>${bil(n(k))}</b><span class="t">${v}</span></span></div>`).join("")}</div>
     <div class="saring"><label class="f" for="h-saring">Tampilkan<select id="h-saring">${opsi([["aktif", "Yang masih berjalan"], ["selesai", "Sudah dihapus"], ["ditolak", "Ditolak"], ["semua", "Semua"]], S.saringHps)}</select></label></div>
     ${d.length ? `<div class="gulir"><table><thead><tr><th>Buku / barang</th><th class="n">Jumlah</th><th>Alasan</th><th>Keterangan</th><th>Status</th><th></th></tr></thead><tbody>${d.map((h) => `<tr>
@@ -289,6 +289,63 @@ UNGGAH.hapusbuku = { judul: "Unggah usulan penghapusan buku", baca: bacaHapusBuk
   catatan: "Semua baris dikirim sekaligus ke Wakasek Kurikulum atas nama Anda, atau tidak sama sekali bila ada yang gagal. Stok belum berkurang sampai penghapusan diselesaikan.",
   kolom: (o) => [esc(o.kode), esc(o.judul), esc(namaLokasi({ jenis: o.lokasi_jenis, tempat: o.lokasi_tempat })), esc(o.jumlah), esc(ALASAN_HPS[o.alasan]), esc(o.keterangan)],
   kepala: ["Kode", "Judul", "Lokasi", "Jumlah", "Alasan", "Keterangan"] };
+
+/* Usulan penghapusan barang dari Excel (9 Nov 2026): template berisi sarana & alat di ruang yang dikelola (Staf Sarpras: semua
+   ruang; PJ: ruangnya, mis. UKS, Lab Komputer); isi Jumlah Dihapus, Alasan, Keterangan lalu unggah → sp_penghapusan_unggah. */
+const barangHapusan = () => S.alat.filter((a) => a.kategori !== "BK" && (admin() || ruangBarang().includes(a.ruang)));
+const unitBarang = (a) => a.baik + a.rusak_ringan + a.rusak_berat;
+TEMPLATE.hapusbarang = () => ({ judul: "Usulan Penghapusan Barang", berkas: "Penghapusan_Barang",
+  kolom: [{ judul: "Kode Inventaris", lebar: 24, wajib: true }, { judul: "Nama Barang", lebar: 30 }, { judul: "Ruang", lebar: 20 }, { judul: "Baik", lebar: 7 },
+    { judul: "Rusak Ringan", lebar: 8 }, { judul: "Rusak Berat", lebar: 8 }, { judul: "Jumlah Dihapus", lebar: 10, wajib: true }, { judul: "Alasan", lebar: 17, wajib: true }, { judul: "Keterangan", lebar: 40, wajib: true }],
+  isi: barangHapusan().filter((a) => unitBarang(a) > 0).sort((a, b) => (namaRuang(a.ruang) || "").localeCompare(namaRuang(b.ruang) || "") || a.kode.localeCompare(b.kode))
+    .map((a) => [a.kode, a.nama, namaRuang(a.ruang) || "", a.baik, a.rusak_ringan, a.rusak_berat, "", "", ""]),
+  daftar: [{ judul: "Alasan", untuk: "Alasan", isi: Object.values(ALASAN_HPS) }],
+  petunjuk: ["• Template sudah berisi semua sarana dan alat di ruang yang Anda kelola (Staf Sarpras: semua ruang). Isi hanya baris barang yang akan dihapus; baris dengan Jumlah Dihapus kosong dilewati.",
+    "• Jumlah Dihapus: bilangan bulat, paling banyak sejumlah unit barang itu (Baik + Rusak Ringan + Rusak Berat). Saat penghapusan diselesaikan, unit rusak berat dikurangi lebih dulu.",
+    "• Alasan pilih dari daftar: Rusak, Hilang, Ganti kurikulum, atau Lainnya.",
+    "• Keterangan kondisi wajib (minimal 3 huruf), mis. \"Layar pecah, tidak bisa menyala\".",
+    "• Jangan mengubah Kode Inventaris; kode itu menunjuk barang yang dihapus. Nama, Ruang, dan jumlah kondisi hanya keterangan.",
+    "• Usulan diteruskan ke Wakasek atau Staf Sarana Prasarana untuk disetujui, lalu diketahui Kepala Sekolah dan terbit berita acara, sama seperti tombol Usulkan penghapusan.",
+    "• Satu unggahan dikirim seluruhnya atau tidak sama sekali. Bila ada baris yang ditolak, pesannya menyebut nomor barisnya."] });
+function bacaHapusBarang(XLSX, wb) {
+  const L = bacaLembar(XLSX, wb, /^kode inventaris$/);
+  if (!L) throw new Error('Kolom "Kode Inventaris" tidak ditemukan. Pakai template Penghapusan Barang.');
+  const K = kolomDari(L.kep, { kode: /^kode inventaris$/, jumlah: /^jumlah dihapus/, alasan: /^alasan/, ket: /^keterangan/ });
+  if (K.jumlah < 0) throw new Error('Kolom "Jumlah Dihapus" tidak ditemukan. Pakai template Penghapusan Barang (bukan template atau unduhan Buku Induk).');
+  const ambil = (r, k) => normal(K[k] >= 0 ? r[K[k]] : "");
+  const alasanDari = (v) => Object.keys(ALASAN_HPS).find((k) => k === kecil(v) || kecil(ALASAN_HPS[k]) === kecil(v));
+  const berjalan = S.penghapusan.filter((h) => h.jenis === "barang" && ["diusulkan", "disetujui", "diketahui"].includes(h.status));
+  const terpakai = new Map(), hasil = { baris: [], galat: [], peringatan: [], baru: 0, ubah: 0 };
+  for (let i = L.hi + 1; i < L.rows.length; i++) {
+    const r = L.rows[i], ke = i + 1, jx = ambil(r, "jumlah"), ax = ambil(r, "alasan"), ket = ambil(r, "ket");
+    if (!jx) { if (ax || ket) hasil.galat.push(`Baris ${ke}: Alasan/Keterangan terisi tetapi Jumlah Dihapus kosong.`); continue; }
+    const kode = ambil(r, "kode").toUpperCase(), a = S.alat.find((x) => x.kode.toUpperCase() === kode);
+    if (!a) { hasil.galat.push(`Baris ${ke}: kode inventaris "${kode}" tidak ditemukan.`); continue; }
+    if (a.kategori === "BK") { hasil.galat.push(`Baris ${ke}: ${a.kode} adalah aset buku; hapus lewat template hapus buku.`); continue; }
+    if (!admin() && !ruangBarang().includes(a.ruang)) { hasil.galat.push(`Baris ${ke}: ${a.kode} bukan di ruang tanggung jawab Anda.`); continue; }
+    const n = Number(jx);
+    if (!Number.isInteger(n) || n < 1) { hasil.galat.push(`Baris ${ke}: Jumlah Dihapus "${jx}" harus bilangan bulat minimal 1.`); continue; }
+    const total = (terpakai.get(a.id) || 0) + n;
+    if (total > unitBarang(a)) { hasil.galat.push(`Baris ${ke}: ${a.kode} hanya ${unitBarang(a)} unit${total > n ? " (dihitung bersama baris lain untuk barang yang sama)" : ""}.`); continue; }
+    const alasan = alasanDari(ax);
+    if (!alasan) { hasil.galat.push(`Baris ${ke}: Alasan "${ax}" harus Rusak, Hilang, Ganti kurikulum, atau Lainnya.`); continue; }
+    if (ket.length < 3) { hasil.galat.push(`Baris ${ke}: tulis Keterangan kondisinya (minimal 3 huruf).`); continue; }
+    if (ket.length > 300) { hasil.galat.push(`Baris ${ke}: Keterangan terlalu panjang (paling banyak 300 huruf).`); continue; }
+    terpakai.set(a.id, total);
+    if (berjalan.some((h) => h.alat === a.id)) hasil.peringatan.push(`Baris ${ke}: ${a.kode} sudah punya usulan penghapusan yang masih berjalan.`);
+    hasil.baru++;
+    hasil.baris.push({ baris: ke, jenis: "barang", alat: a.id, jumlah: n, alasan, keterangan: ket, kode: a.kode, nama: a.nama, ruang: a.ruang });
+  }
+  if (!hasil.baris.length && !hasil.galat.length) hasil.galat.push("Belum ada baris dengan Jumlah Dihapus terisi.");
+  return hasil;
+}
+UNGGAH.hapusbarang = { judul: "Unggah usulan penghapusan barang", baca: bacaHapusBarang, rpc: "sp_penghapusan_unggah", muat: muatUsulan, sesudah: aturTab,
+  ringkas: (h) => `${h.baru} usulan penghapusan barang`,
+  hasil: (x) => `${x.baru} usulan penghapusan barang dikirim`,
+  tombol: (h) => `Kirim ${h.baris.length} usulan`,
+  catatan: "Semua baris dikirim sekaligus atas nama Anda, atau tidak sama sekali bila ada yang gagal. Unit belum berkurang sampai penghapusan diselesaikan.",
+  kolom: (o) => [esc(o.kode), esc(o.nama), esc(namaRuang(o.ruang) || "—"), esc(o.jumlah), esc(ALASAN_HPS[o.alasan]), esc(o.keterangan)],
+  kepala: ["Kode", "Nama barang", "Ruang", "Jumlah", "Alasan", "Keterangan"] };
 
 /* ================================================================ Kategori barang (Staf Sarpras) */
 function formKategoriBarang() {
