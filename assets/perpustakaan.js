@@ -49,7 +49,7 @@ function penandaTanganBuku() {
 /* ================================================================ Katalog Buku */
 TAB.buku = () => {
   const s = S.saringBuku;
-  return `<section class="kartu">
+  return `${aksesBuku() ? "" : htmlSetKelasGuru()}<section class="kartu">
     <div class="kepala-bagian"><div><h2>${bukuLiterasi() ? "Koleksi Pojok Literasi" : "Katalog Buku"}</h2><p class="sub">${bukuLiterasi()
       ? "Novel dan bacaan lain yang Anda kelola. Semuanya tetap tercatat di katalog pustakawan."
       : "Semua buku sekolah, termasuk yang disimpan di kelas, Pojok Literasi, guru, atau tempat lain."}</p></div>
@@ -97,6 +97,7 @@ TAB.buku.sesudah = () => {
   if ($("b-kategori")) $("b-kategori").onclick = formKategori;
   $("b-unduh-buku").onclick = () => unduhBuku(saringBuku());
   if ($("b-buku-baru")) $("b-buku-baru").onclick = () => formBuku(null);
+  pasangSetKelasGuru();
   pasangTombolBerkas($("isi"));
 };
 

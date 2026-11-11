@@ -20,7 +20,7 @@ function prosesPindaian(teks) {
 function kartuPindai(kode) {
   const k = kodeDariPindaian(kode), b = k && S.buku.find((x) => x.kode === k.split(".")[0]);
   if (!b) return toast(`Buku ${kode} tidak ada di katalog.`);
-  if (!aksesBuku()) return kartuBuku(b.id);
+  if (!aksesBuku()) return S.pinjamGuru ? kartuGuru(b, k) : kartuBuku(b.id);
   if (bukuLiterasi() && !adaDiLiterasi(b)) return dialog({ atas: k, judul: b.judul, isi: `<p class="catatan awas">${ikon("awas")}<span>Buku ini bukan koleksi Pojok Literasi. Peminjamannya dilayani pustakawan.</span></p>`, kaki: `<button class="tombol" value="batal" formnovalidate>Tutup</button>` });
   const milik = S.pinjam.filter((p) => p.buku === b.id), minta = milik.filter((p) => p.status === "menunggu"), aktif = milik.filter((p) => p.status === "dipinjam");
   const ada = bukuLiterasi() ? b.tersedia_literasi : b.tersedia;

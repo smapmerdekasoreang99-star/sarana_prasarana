@@ -15,7 +15,8 @@ const peminjamTeks = (p) => p.jenis === "set_kelas" ? [p.nama_guru, p.nama_siswa
 
 async function muatPinjam() {
   S.pengingat = (await rpc("sp_pinjam_pengingat", { p_pin: S.pin }).catch(() => null)) || { kelas: [], terlambat: [] };
-  if (!aksesBuku()) { S.pinjam = []; return; }
+  if (!aksesBuku()) { S.pinjam = []; S.pinjamGuru = await rpc("sp_pinjam_guru_data", { p_pin: S.pin }).catch(() => null); return; }
+  S.pinjamGuru = null;
   const [p, w] = await Promise.all([rpc("sp_pinjam_daftar", { p_pin: S.pin, p_dari: null }).catch(() => []), rpc("sp_pinjam_wali", { p_pin: S.pin }).catch(() => [])]);
   S.pinjam = p || []; S.waliKelas = w || [];
 }
@@ -88,7 +89,7 @@ TAB.pinjam.sesudah = () => {
   const isi = () => {
     const d = saringPinjam();
     $("pj-tabel").innerHTML = d.length ? `<div class="gulir" style="max-height:640px"><table><thead><tr><th>No.</th><th>Peminjam</th><th>Kelas</th><th>Judul buku</th><th class="n">Jml</th><th>Pinjam</th><th>Batas</th><th>Kembali</th><th>Status</th><th></th></tr></thead><tbody>
-      ${d.map((p) => `<tr><td class="kode">${p.nomor}</td><td class="nama-sel"><b>${esc(p.jenis === "set_kelas" ? p.nama_guru : p.nama_siswa)}</b>${p.jenis === "set_kelas" && p.nama_siswa ? `<p class="kecil">diambil ${esc(p.nama_siswa)}</p>` : ""}${p.keperluan ? `<p class="kecil">${esc(p.keperluan)}</p>` : ""}</td><td>${esc(p.kelas || "")}</td>
+      ${d.map((p) => `<tr><td class="kode">${p.nomor}</td><td class="nama-sel"><b>${esc(p.jenis === "set_kelas" ? p.nama_guru : p.nama_siswa)}</b>${p.jenis === "set_kelas" && p.nama_siswa ? `<p class="kecil">diambil ${esc(p.nama_siswa)}</p>` : ""}${p.keperluan ? `<p class="kecil">${esc(p.keperluan)}</p>` : ""}${p.asal === "guru" ? `<p class="kecil">dicatat guru dari kelas</p>` : ""}</td><td>${esc(p.kelas || "")}</td>
         <td>${esc(p.judul)}${p.sumber === "literasi" ? `<p class="kecil">Pojok Literasi</p>` : ""}</td><td class="n">${p.jumlah}</td><td class="kecil">${esc(tglSingkat(p.waktu_pinjam))}</td><td class="kecil">${esc(tglSingkat(p.batas))}</td><td class="kecil">${esc(tglSingkat(p.waktu_kembali))}</td><td>${pilPinjam(p)}</td>
         <td style="white-space:nowrap">${p.status === "dipinjam" ? `<button class="tombol kecil" type="button" data-kembali="${p.id}">Terima kembali</button>${p.terlambat > 0 ? ` <button class="tombol kecil" type="button" data-ingat="${p.id}">Salin pengingat</button>` : ""}` : ""}</td></tr>`).join("")}
       </tbody></table></div>`
@@ -299,4 +300,109 @@ async function halamanSiswa(kodeAwal) {
   };
   const tersimpan = ssGet("sp_nisn");
   if (tersimpan) await masukSiswa(tersimpan); else formNisn();
+}
+
+/* ================================================================ guru: set kelas dicatat dari kelas (11 Nov 2026)
+   Guru menugaskan siswa mengambil buku paket; di kelas guru memindai SATU label buku dengan HP guru, memilih rombel,
+   menyetujui jumlahnya (bawaan = jumlah siswa rombel, dibatasi stok), lalu simpan. Langsung "dipinjam" (keputusan user),
+   atas nama guru itu. Pengembalian oleh guru sendiri atau pustakawan, semua atau sebagian.
+   S.pinjamGuru = { pinjam: [set kelas saya yang masih dipinjam], kelas: [{kelas, jumlah}] }; null untuk PIN bersama/petugas. */
+const KUNCI_KELAS_GURU = "sp_kelas_guru";
+const ingatKelasGuru = (k) => { try { localStorage.setItem(KUNCI_KELAS_GURU, k); } catch (e) { /* abaikan */ } };
+const kelasGuruTerakhir = () => { try { return localStorage.getItem(KUNCI_KELAS_GURU) || ""; } catch (e) { return ""; } };
+const siswaRombel = {};
+
+function htmlSetKelasGuru() {
+  const G = S.pinjamGuru;
+  if (!G) return "";
+  const d = G.pinjam;
+  return `<section class="kartu" id="g-setkelas">
+    <div class="kepala-bagian"><div><h2>Set kelas atas nama saya</h2><p class="sub">Siswa sudah mengambil buku paket untuk pelajaran Anda? Pindai <b>satu</b> buku saja, lalu isi rombel dan jumlahnya.</p></div>
+      <div class="aksi"><button class="tombol utama" type="button" id="g-pindai">${ikon("qr")}Pindai buku untuk kelas</button></div></div>
+    ${d.length ? `<div class="gulir"><table><thead><tr><th>No.</th><th>Judul buku</th><th>Kelas</th><th class="n">Sisa</th><th>Batas</th><th></th></tr></thead><tbody>
+      ${d.map((p) => `<tr><td class="kode">${p.nomor}</td><td class="nama-sel"><b>${esc(p.judul)}</b>${p.nama_siswa ? `<p class="kecil">diambil ${esc(p.nama_siswa)}</p>` : ""}</td><td>${esc(p.kelas || "")}</td>
+        <td class="n">${p.sisa}</td><td class="kecil">${esc(tglSingkat(p.batas))}${p.terlambat > 0 ? ` <span class="pil k">Terlambat ${p.terlambat} hari</span>` : ""}</td>
+        <td><button class="tombol kecil" type="button" data-gkembali="${p.id}">Sudah kembali</button></td></tr>`).join("")}</tbody></table></div>`
+      : `<p class="kecil">Tidak ada set kelas atas nama Anda yang sedang dipinjam.</p>`}
+  </section>`;
+}
+function pasangSetKelasGuru() {
+  if (!$("g-setkelas")) return;
+  $("g-pindai").onclick = () => bukaKamera();
+  $("g-setkelas").onclick = (e) => {
+    const t = e.target.closest("[data-gkembali]");
+    if (t) formKembaliGuru(S.pinjamGuru.pinjam.find((p) => p.id === +t.dataset.gkembali));
+  };
+}
+async function segarGuru() {
+  [S.pinjamGuru, S.buku] = await Promise.all([rpc("sp_pinjam_guru_data", { p_pin: S.pin }), rpc("sp_buku_daftar", { p_pin: S.pin })]);
+}
+// Kartu sesudah guru memindai label buku.
+function kartuGuru(b, k) {
+  const milik = S.pinjamGuru.pinjam.filter((p) => p.buku === b.id);
+  dialog({ atas: k, judul: b.judul, isi: `
+    <p class="sub">${esc([b.tingkat ? "Kelas " + b.tingkat : "", b.penerbit].filter(Boolean).join(" · "))}${b.tingkat || b.penerbit ? " · " : ""}Tersedia di Perpustakaan <b>${bil(b.tersedia)}</b> dari ${bil(b.jumlah)} eksemplar</p>
+    ${milik.length ? `<h3>Set kelas atas nama Anda</h3><div class="gulir"><table><tbody>${milik.map((p) => `<tr><td class="nama-sel"><b>${esc(p.kelas || "")}</b><p class="kecil">no. ${p.nomor} · batas ${esc(tglSingkat(p.batas))}</p></td><td class="n">${p.sisa}</td>
+      <td><button class="tombol kecil" type="button" data-gkembali="${p.id}">Sudah kembali</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+    <p class="kecil">Satu pindaian cukup untuk semua buku berjudul sama: jumlahnya diisi di langkah berikutnya.</p>`,
+    kaki: `<button class="tombol" value="batal" formnovalidate>Tutup</button><button class="tombol" type="button" id="g-rinci">Rincian buku</button><button class="tombol utama" type="button" id="g-catat"${b.tersedia > 0 ? "" : " disabled"}>${ikon("tambah")}Catat set kelas</button>` });
+  $("g-rinci").onclick = () => kartuBuku(b.id);
+  $("g-catat").onclick = () => formSetKelas(b, k);
+  $("dlg-isi").onclick = (e) => {
+    const t = e.target.closest("[data-gkembali]");
+    if (t) formKembaliGuru(milik.find((p) => p.id === +t.dataset.gkembali), () => kartuGuru(S.buku.find((x) => x.id === b.id) || b, k));
+  };
+}
+function formSetKelas(b, k) {
+  const K = S.pinjamGuru.kelas, adaKelas = (x) => K.some((r) => r.kelas === x);
+  const awal = [kelasGuruTerakhir(), ...(S.akses.wali || [])].find(adaKelas) || "";
+  const jumlahKelas = (x) => (K.find((r) => r.kelas === x) || {}).jumlah || 0;
+  const usul = (x) => Math.max(1, Math.min(jumlahKelas(x) || 1, b.tersedia));
+  dialog({ atas: k, judul: "Catat set kelas", isi: `
+    <p class="sub"><b>${esc(b.judul)}</b> · tersedia ${bil(b.tersedia)} eksemplar</p>
+    <div class="isian-grid">
+      <label class="f" for="g-kelas">Rombel<select id="g-kelas" required><option value="">Pilih…</option>${opsi(K.map((r) => [r.kelas, `${r.kelas} (${r.jumlah} siswa)`]), awal)}</select></label>
+      <label class="f" for="g-jumlah">Jumlah buku<input id="g-jumlah" type="number" min="1" max="${b.tersedia}" value="${awal ? usul(awal) : ""}" required></label>
+      <label class="f" for="g-batas">Batas kembali<input id="g-batas" type="date" required value="${isoHari(1)}" min="${isoHari(0)}" max="${isoHari(30)}"></label>
+      <label class="f" for="g-siswa">Siswa yang mengambil (boleh kosong)<select id="g-siswa"><option value="">—</option></select></label>
+      <label class="f lebar" for="g-perlu">Keperluan (boleh kosong)<input id="g-perlu" maxlength="120" placeholder="mis. Kimia jam ke-3"></label>
+    </div>
+    <p class="kecil">Tercatat atas nama <b>${esc(S.akses.nama)}</b> dan langsung terlihat oleh pustakawan. Bila buku sudah kembali ke perpustakaan, tekan <b>Sudah kembali</b> (atau pustakawan yang mencatatnya).</p>`,
+    kaki: kakiSimpan("Simpan"),
+    onSimpan: async () => {
+      const kelas = $("g-kelas").value;
+      if (!kelas) throw new Error("Pilih rombelnya.");
+      const h = await sibuk(async () => {
+        const x = await rpc("sp_pinjam_guru_catat", { p_pin: S.pin, p_kode: k, p_kelas: kelas, p_jumlah: +$("g-jumlah").value,
+          p_nisn: $("g-siswa").value || null, p_batas: $("g-batas").value || null, p_keperluan: $("g-perlu").value || null });
+        await segarGuru();
+        return x;
+      });
+      ingatKelasGuru(kelas);
+      tutupDialog(); segarkan(); toast(`Tercatat no. ${h.nomor}: ${h.jumlah} × ${h.judul}, kelas ${h.kelas}`);
+    } });
+  let diubah = false;
+  $("g-jumlah").addEventListener("input", () => { diubah = true; });
+  const isiSiswa = async (x) => {
+    const sel = $("g-siswa");
+    sel.innerHTML = `<option value="">—</option>`;
+    if (!x) return;
+    try { siswaRombel[x] = siswaRombel[x] || await rpc("sp_pinjam_guru_siswa", { p_pin: S.pin, p_kelas: x }); } catch (e) { return; }
+    if ($("g-kelas") && $("g-kelas").value === x) $("g-siswa").innerHTML = `<option value="">—</option>${opsi(siswaRombel[x].map((s) => [s.nisn, s.nama]), "")}`;
+  };
+  $("g-kelas").onchange = (e) => { if (!diubah && e.target.value) $("g-jumlah").value = usul(e.target.value); isiSiswa(e.target.value); };
+  isiSiswa(awal);
+}
+function formKembaliGuru(p, sesudah) {
+  if (!p) return;
+  dialog({ atas: "Pinjaman no. " + p.nomor, judul: p.judul, isi: `
+    <dl class="dl"><dt>Kelas</dt><dd>${esc(p.kelas || "—")}</dd><dt>Dipinjam</dt><dd>${p.jumlah} eksemplar${p.jumlah_kembali ? `, sudah kembali ${p.jumlah_kembali}` : ""}</dd><dt>Batas</dt><dd>${esc(tglSingkat(p.batas))}</dd></dl>
+    <label class="f" for="gk-jumlah">Jumlah yang sudah dikembalikan ke perpustakaan<input id="gk-jumlah" type="number" min="1" max="${p.sisa}" value="${p.sisa}" required></label>
+    <p class="kecil">Bila belum semua kembali, sisanya tetap tercatat atas nama Anda dan muncul di Pengingat bila lewat batas.</p>`,
+    kaki: kakiSimpan("Simpan"),
+    onSimpan: async () => {
+      const n = +$("gk-jumlah").value;
+      await sibuk(async () => { await rpc("sp_pinjam_guru_kembali", { p_pin: S.pin, p_id: p.id, p_jumlah: n }); await segarGuru(); });
+      tutupDialog(); segarkan(); toast(n === p.sisa ? "Semua sudah kembali" : `${n} kembali, sisa ${p.sisa - n}`); if (sesudah) sesudah();
+    } });
 }
