@@ -377,3 +377,10 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
 .lb-qr .k.panjang { white-space: normal; word-break: break-all; font-size: 5.3pt; }
 .lb-bc svg { min-width: 0; }
 .baris-aksi { display: flex; flex-wrap: wrap; gap: var(--j3); align-items: flex-end; }
+
+/* Peran ganda (12 Nov 2026): PJ ruang yang juga wali kelas / guru */
+.peran-saya { display: flex; flex-wrap: wrap; align-items: center; gap: var(--j2); max-width: var(--lebar); margin: var(--j3) auto 0; padding: 0 var(--j4); }
+.peran-saya .peran-judul { font-size: var(--h-xs); color: var(--tinta-2); font-weight: 600; }
+.peran-saya .peran-pintas { height: auto; min-height: 40px; padding: 6px var(--j3); text-align: left; white-space: normal; }
+.peran-saya .peran-pintas span { display: grid; line-height: 1.25; }
+.peran-saya .peran-pintas small { font-weight: 500; opacity: .75; }

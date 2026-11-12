@@ -167,13 +167,14 @@ async function masuk(pin) {
   batasiKeRuangSaya();
   ssSet("sp_pin", pin);
   $("layar-masuk").hidden = true; $("layar-app").hidden = false;
-  const peran = { admin: "Staf Sarpras · semua ruang", pj: (S.akses.id === "PERPUS" ? "PIN bersama · " : "Penanggung jawab · ") + ruangSaya().map(namaRuang).join(", "), lihat: pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "Kepala Sekolah" : "Wakasek Kurikulum") : (S.akses.wali || []).length ? "Wali kelas " + S.akses.wali.join(", ") : "Guru" }[S.akses.peran];
+  const peran = { admin: "Staf Sarpras · semua ruang", pj: S.akses.id === "PERPUS" ? "PIN bersama · " + ruangSaya().map(namaRuang).join(", ") : peranGanda().map((p) => p[1]).join(" · "), lihat: pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "Kepala Sekolah" : "Wakasek Kurikulum") : (S.akses.wali || []).length ? "Wali kelas " + S.akses.wali.join(", ") : "Guru" }[S.akses.peran];
   $("pengguna").innerHTML = `<span class="chip"><span class="avatar">${esc(inisial(S.akses.nama))}</span><span class="nama"><b>${esc(S.akses.nama)}</b><span>${esc(peran)}</span></span></span>
     <button class="tombol-atas" id="keluar" type="button">${ikon("keluar")}<span class="t">Keluar</span></button>`;
   $("pengguna").hidden = false;
   $("keluar").onclick = keluar;
   document.querySelectorAll("[data-admin]").forEach((b) => (b.hidden = !admin()));
   aturTab();
+  tampilPeranGanda();
   aturPanduan(panduanSaya());
   buka(admin() ? "ringkas" : aksesBuku() ? "buku" : pimpinan() && S.pengajuan.some(aksiAju) ? "pengajuan" : pimpinan() && S.penghapusan.some(aksiHps) ? "hapusan" : kepalaPbk() && S.perbaikan.some(aksiPbk) ? "perbaikan" : S.pengingat.terlambat.length ? "pengingat" : pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "ringkas" : "pengajuan") : guruSaja() ? ((S.akses.wali || []).length ? "perbaikan" : "pengajuan") : "ruang");
   bukaPindaianAlamat();
@@ -183,6 +184,21 @@ async function muatUlang() {
     rpc("sp_masuk", { p_pin: S.pin }).then((d) => d.ruang)]);
   await muatPerpus();
   batasiKeRuangSaya();
+}
+/* Peran ganda (12 Nov 2026): PIN pribadi penanggung jawab ruang tetap membawa perannya sebagai guru dan wali kelas.
+   Mis. Pak Candra: penanggung jawab Perpustakaan + wali kelas (lapor kerusakan kelas) + guru (ajukan buku baru).
+   Semua peran ditulis di kepala halaman, dan ada pintasan ke menunya supaya tidak tertutup menu perpustakaan. */
+function peranGanda() {
+  const a = S.akses; if (!a || a.peran !== "pj" || a.id === "PERPUS") return [];
+  return [["pj", "Penanggung jawab " + ruangSaya().map(namaRuang).join(", "), aksesBuku() ? "buku" : "ruang", bukuSemua() ? "rak" : "ruang", bukuLiterasi() || bukuSemua() ? "Buka buku" : "Buka ruang"],
+    ...(a.wali || []).map((k) => ["wali", "Wali kelas " + k, "perbaikan", "alat", "Laporkan kerusakan kelas"]),
+    ["guru", "Guru", "pengajuan", "dokumen", "Ajukan buku baru"]];
+}
+function tampilPeranGanda() {
+  const el = $("peran-saya"), p = peranGanda();
+  el.hidden = p.length < 2; if (el.hidden) return;
+  el.innerHTML = `<span class="peran-judul">Peran Anda:</span>${p.map(([k, nama, tab, ik, aksi]) => `<button class="tombol kecil peran-pintas ${k}" type="button" data-pintas="${tab}">${ikon(ik)}<span><b>${esc(nama)}</b><small>${esc(aksi)}</small></span></button>`).join("")}`;
+  el.onclick = (e) => { const b = e.target.closest("[data-pintas]"); if (b) buka(b.dataset.pintas); };
 }
 function batasiKeRuangSaya() {
   if (!pjRuang()) return;
@@ -206,7 +222,7 @@ const MENU_GURU = ["buku", "pengajuan", "perbaikan", "pengingat"];
 function aturTab() {
   const pj = pjRuang(), barang = !pj || ruangBarang().length > 0;
   const boleh = { ringkas: !pj, ruang: barang, alat: barang, bahan: barang, induk: barang, label: barang,
-    buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), labelbuku: !!aksesBuku(), terima: bukuSemua(), pengajuan: !pj || !!aksesBuku() || pimpinan(), hapusan: admin() || !!aksesBuku() || (pj && ruangBarang().length > 0) || pimpinan(), pengingat: (S.akses.wali || []).length > 0 || S.pengingat.terlambat.length > 0, profil: barang || bukuSemua(), perbaikan: bolehPbk() };
+    buku: !pj || !!aksesBuku(), pinjam: !!aksesBuku(), labelbuku: !!aksesBuku(), terima: bukuSemua(), pengajuan: true /* semua guru boleh mengajukan buku, termasuk PJ ruang (12 Nov 2026) */, hapusan: admin() || !!aksesBuku() || (pj && ruangBarang().length > 0) || pimpinan(), pengingat: (S.akses.wali || []).length > 0 || S.pengingat.terlambat.length > 0, profil: barang || bukuSemua(), perbaikan: bolehPbk() };
   if (pimpinanSaja()) Object.keys(boleh).forEach((k) => { if (!MENU_PIMPINAN().includes(k)) boleh[k] = false; });
   if (guruSaja()) Object.keys(boleh).forEach((k) => { if (!MENU_GURU.includes(k)) boleh[k] = false; });
   document.querySelectorAll("#tab button[data-tab]").forEach((b) => { b.hidden = !boleh[b.dataset.tab]; });
