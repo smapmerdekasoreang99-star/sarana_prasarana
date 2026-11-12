@@ -32,7 +32,7 @@ svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-widt
 .avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: var(--gelap); background: var(--emas); flex: none; }
 .pengguna .nama { display: flex; flex-direction: column; line-height: 1.2; font-size: var(--h-s); padding-right: 8px; }
 .pengguna .nama b { color: var(--tinta-terang); font-weight: 600; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pengguna .nama span { color: var(--tinta-terang-2); font-size: 11.5px; }
+.pengguna .nama span { color: var(--tinta-terang-2); font-size: 11.5px; max-width: 340px; }
 .tombol-atas { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--tinta-terang); border: 1px solid rgba(255,255,255,.28); border-radius: var(--r2); padding: 0 var(--j3); min-height: 38px; font: 600 var(--h-s) var(--f-isi); cursor: pointer; }
 .tombol-atas:hover { border-color: var(--emas); background: rgba(255,255,255,.06); }
 

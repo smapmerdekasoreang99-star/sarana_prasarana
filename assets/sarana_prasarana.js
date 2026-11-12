@@ -167,8 +167,8 @@ async function masuk(pin) {
   batasiKeRuangSaya();
   ssSet("sp_pin", pin);
   $("layar-masuk").hidden = true; $("layar-app").hidden = false;
-  const peran = { admin: "Staf Sarpras · semua ruang", pj: S.akses.id === "PERPUS" ? "PIN bersama · " + ruangSaya().map(namaRuang).join(", ") : peranGanda().map((p) => p[1]).join(" · "), lihat: pimpinanSaja() ? (punyaJabatan("kepala_sekolah") ? "Kepala Sekolah" : "Wakasek Kurikulum") : (S.akses.wali || []).length ? "Wali kelas " + S.akses.wali.join(", ") : "Guru" }[S.akses.peran];
-  $("pengguna").innerHTML = `<span class="chip"><span class="avatar">${esc(inisial(S.akses.nama))}</span><span class="nama"><b>${esc(S.akses.nama)}</b><span>${esc(peran)}</span></span></span>
+  const peran = labelPeran();
+  $("pengguna").innerHTML = `<span class="chip" title="${esc(S.akses.nama + " — " + peran)}"><span class="avatar">${esc(inisial(S.akses.nama))}</span><span class="nama"><b>${esc(S.akses.nama)}</b><span>${esc(peran)}</span></span></span>
     <button class="tombol-atas" id="keluar" type="button">${ikon("keluar")}<span class="t">Keluar</span></button>`;
   $("pengguna").hidden = false;
   $("keluar").onclick = keluar;
@@ -193,6 +193,15 @@ function peranGanda() {
   return [["pj", "Penanggung jawab " + ruangSaya().map(namaRuang).join(", "), aksesBuku() ? "buku" : "ruang", bukuSemua() ? "rak" : "ruang", bukuLiterasi() || bukuSemua() ? "Buka buku" : "Buka ruang"],
     ...(a.wali || []).map((k) => ["wali", "Wali kelas " + k, "perbaikan", "alat", "Laporkan kerusakan kelas"]),
     ["guru", "Guru", "pengajuan", "dokumen", "Ajukan buku baru"]];
+}
+/* Kepala halaman: semua peran (12 Nov 2026), mis. "Kepala Sekolah · Wali kelas X-1", "Staf Sarpras · semua ruang · Wali kelas XI-2" */
+function labelPeran() {
+  const a = S.akses; if (a.id === "ADMIN") return "Staf Sarpras · semua ruang";
+  if (a.id === "PERPUS") return "PIN bersama · " + ruangSaya().map(namaRuang).join(", ");
+  const jab = a.id !== "ADMIN" ? [["kepala_sekolah", "Kepala Sekolah"], ["wakasek_kurikulum", "Wakasek Kurikulum"]].filter(([j]) => (a.jabatan || []).includes(j)).map(([, n]) => n) : [];
+  const p = [...(a.peran === "admin" ? ["Staf Sarpras · semua ruang"] : []), ...jab, ...(a.peran === "pj" ? ["Penanggung jawab " + ruangSaya().map(namaRuang).join(", ")] : []),
+    ...(a.wali || []).map((k) => "Wali kelas " + k)];
+  return [...p, ...(a.peran === "pj" || !p.length ? ["Guru"] : [])].join(" · ");
 }
 function tampilPeranGanda() {
   const el = $("peran-saya"), p = peranGanda();
