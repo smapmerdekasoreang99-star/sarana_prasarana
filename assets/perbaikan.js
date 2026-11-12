@@ -118,8 +118,11 @@ function formAjukanPbk() {
       <label class="f lebar" for="pb-uraian">Uraian kerusakan<textarea id="pb-uraian" rows="3" maxlength="500" required placeholder="mis. Plafon bocor di pojok belakang, air menetes saat hujan"></textarea></label></div>
     <p class="f" style="margin:var(--j3) 0 var(--j1)">Dampak</p>
     <div class="pilih-gerak" role="radiogroup" aria-label="Dampak">${Object.entries(DAMPAK).map(([k, [n]], i) => `<label><input type="radio" name="pb-dampak" value="${k}"${i === 1 ? " checked" : ""}>${n}</label>`).join("")}</div>
-    <label class="f" for="pb-foto" style="margin-top:var(--j3)">Foto (paling banyak 2, opsional)<input id="pb-foto" type="file" accept="image/*" multiple></label>
-    <div id="pb-pratinjau" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"></div>
+    <p class="f" style="margin:var(--j3) 0 var(--j1)">Foto keadaan (paling banyak 2, opsional)</p>
+    <div class="pb-foto-aksi">
+      <label class="tombol" for="pb-kamera">${ikon("kamera")}Ambil foto<input id="pb-kamera" class="pb-berkas" type="file" accept="image/*" capture="environment"></label>
+      <label class="tombol" for="pb-foto">${ikon("gambar")}Pilih dari galeri<input id="pb-foto" class="pb-berkas" type="file" accept="image/*" multiple></label></div>
+    <div id="pb-pratinjau" class="pb-pratinjau"></div>
     <p class="kecil" id="pb-info"></p>`, kaki: kakiSimpan("Kirim"),
     onSimpan: async () => {
       const [jt, kode] = $("pb-tempat").value.split(/:(.*)/s), jenis = $("pb-jenis").value;
@@ -141,14 +144,25 @@ function formAjukanPbk() {
   };
   const perJenis = () => { const j = $("pb-jenis").value; document.querySelectorAll(".pb-barang").forEach((x) => { x.hidden = j !== "barang"; }); document.querySelectorAll(".pb-bangunan").forEach((x) => { x.hidden = j !== "bangunan"; }); };
   $("pb-tempat").onchange = perTempat; $("pb-jenis").onchange = perJenis; perTempat();
-  $("pb-foto").onchange = async (e) => {
-    const berkas = [...e.target.files].slice(0, 2);
-    try {
-      foto = await sibuk(() => Promise.all(berkas.map(kecilkanFoto)));
-      $("pb-pratinjau").innerHTML = foto.map((f) => `<img src="${f}" alt="Pratinjau foto" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--garis)">`).join("");
-      if (e.target.files.length > 2) toast("Hanya 2 foto pertama yang dipakai.");
-    } catch (err) { foto = []; $("pb-pratinjau").innerHTML = ""; toast(err.message); }
+  /* Foto (12 Nov 2026): "Ambil foto" langsung membuka kamera belakang HP (capture); "Pilih dari galeri" seperti sebelumnya.
+     Foto dari keduanya dikumpulkan, paling banyak 2; tiap foto bisa dihapus dari pratinjau. */
+  const gambarPratinjau = () => {
+    $("pb-pratinjau").innerHTML = foto.map((f, i) => `<span class="pb-foto-kecil"><img src="${f}" alt="Pratinjau foto ${i + 1}"><button type="button" data-hapusfoto="${i}" aria-label="Hapus foto ${i + 1}">${ikon("x")}</button></span>`).join("");
+    document.querySelectorAll(".pb-foto-aksi .tombol").forEach((b) => b.classList.toggle("nonaktif", foto.length >= 2));
   };
+  const tambahFoto = async (e) => {
+    const sisa = 2 - foto.length, berkas = [...e.target.files];
+    e.target.value = "";   // supaya foto yang sama bisa dipilih/diambil lagi
+    if (!berkas.length) return;
+    if (sisa <= 0) return toast("Sudah 2 foto. Hapus salah satu dulu untuk menggantinya.");
+    try {
+      foto = foto.concat(await sibuk(() => Promise.all(berkas.slice(0, sisa).map(kecilkanFoto))));
+      if (berkas.length > sisa) toast("Paling banyak 2 foto; sisanya tidak dipakai.");
+    } catch (err) { toast(err.message); }
+    gambarPratinjau();
+  };
+  $("pb-kamera").onchange = tambahFoto; $("pb-foto").onchange = tambahFoto;
+  $("pb-pratinjau").onclick = (e) => { const b = e.target.closest("[data-hapusfoto]"); if (!b) return; foto.splice(+b.dataset.hapusfoto, 1); gambarPratinjau(); };
 }
 /* Foto diperkecil di HP: sisi terpanjang 1280 px, JPEG; kualitas diturunkan sampai ± 220 KB. */
 function kecilkanFoto(berkas) {

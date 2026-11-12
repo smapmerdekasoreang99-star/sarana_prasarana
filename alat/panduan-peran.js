@@ -116,7 +116,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         "Pilih yang rusak: **Barang inventaris** (pilih barangnya dari daftar ruang itu) atau **Bangunan & lainnya** (atap/plafon, dinding/lantai, pintu/jendela/kunci, listrik, air/toilet, lainnya).",
         "Tulis **uraian kerusakan** dengan jelas, mis. \"Plafon bocor di pojok belakang, air menetes saat hujan\".",
         "Pilih **dampak**: **Membahayakan** (mis. kabel terbuka, plafon hampir jatuh), **Mengganggu KBM** (mis. proyektor atau lampu mati), atau **Ringan** (mis. gorden sobek).",
-        "Tambahkan **foto** bila ada, paling banyak 2. Foto diperkecil otomatis di HP. Lalu tekan **Kirim**."),
+        "Tambahkan **foto** bila ada, paling banyak 2: **Ambil foto** langsung membuka kamera HP, **Pilih dari galeri** untuk foto yang sudah ada. Foto bisa dihapus dari pratinjau dan diperkecil otomatis. Lalu tekan **Kirim**."),
       TB(["Status", "Artinya"], [
         ["**Menunggu Staf Sarpras**", "Usulan baru. Selama masih begini, Anda bisa menekan **Batalkan**."],
         ["**Menunggu Kepala Sekolah**", "Sudah ditinjau dan diberi prioritas oleh Staf Sarana Prasarana."],
@@ -184,7 +184,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         "Pilih yang rusak: **Barang inventaris** (pilih barangnya dari daftar ruang itu) atau **Bangunan & lainnya** (atap/plafon, dinding/lantai, pintu/jendela/kunci, listrik, air/toilet, lainnya).",
         "Tulis **uraian kerusakan** dengan jelas, mis. \"Plafon bocor di pojok belakang, air menetes saat hujan\".",
         "Pilih **dampak**: **Membahayakan** (mis. kabel terbuka, plafon hampir jatuh), **Mengganggu KBM** (mis. proyektor atau lampu mati), atau **Ringan** (mis. gorden sobek).",
-        "Tambahkan **foto** bila ada, paling banyak 2. Foto diperkecil otomatis di HP. Lalu tekan **Kirim**."),
+        "Tambahkan **foto** bila ada, paling banyak 2: **Ambil foto** langsung membuka kamera HP, **Pilih dari galeri** untuk foto yang sudah ada. Foto bisa dihapus dari pratinjau dan diperkecil otomatis. Lalu tekan **Kirim**."),
       TB(["Status", "Artinya"], [
         ["**Menunggu Staf Sarpras**", "Usulan baru. Selama masih begini, Anda bisa menekan **Batalkan**."],
         ["**Menunggu Kepala Sekolah**", "Sudah ditinjau dan diberi prioritas oleh Staf Sarana Prasarana."],

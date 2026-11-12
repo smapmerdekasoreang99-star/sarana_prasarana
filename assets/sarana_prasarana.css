@@ -384,3 +384,15 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
 .peran-saya .peran-pintas { height: auto; min-height: 40px; padding: 6px var(--j3); text-align: left; white-space: normal; }
 .peran-saya .peran-pintas span { display: grid; line-height: 1.25; }
 .peran-saya .peran-pintas small { font-weight: 500; opacity: .75; }
+
+/* Foto Usulan Perbaikan: kamera HP atau galeri (12 Nov 2026) */
+.pb-foto-aksi { display: flex; flex-wrap: wrap; gap: var(--j2); }
+.pb-foto-aksi .tombol { position: relative; overflow: hidden; }
+.pb-foto-aksi .tombol.nonaktif { opacity: .5; }
+.pb-foto-aksi .pb-berkas { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.pb-foto-aksi .tombol:focus-within { outline: 2px solid var(--fokus, currentColor); outline-offset: 2px; }
+.pb-pratinjau { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.pb-foto-kecil { position: relative; }
+.pb-foto-kecil img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid var(--garis); display: block; }
+.pb-foto-kecil button { position: absolute; top: -8px; right: -8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--gelap); color: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.pb-foto-kecil button svg { width: 16px; height: 16px; }
