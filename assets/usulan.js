@@ -30,7 +30,7 @@ TAB.pengajuan = () => {
   const n = (s) => S.pengajuan.filter((a) => a.status === s).length;
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Pengajuan Buku</h2><p class="sub">Usulan buku dari guru dan siswa: disetujui Wakasek Kurikulum, diketahui Kepala Sekolah, lalu dicatat di Penerimaan Buku saat dibeli.</p></div>
-      <div class="aksi"><button class="tombol" type="button" id="aj-unduh">${ikon("unduh")}Unduh</button><button class="tombol" type="button" data-template="pengajuan">${ikon("tabel")}Unduh template</button><button class="tombol" type="button" data-unggah="pengajuan">${ikon("unggah")}Unggah</button><button class="tombol utama" type="button" id="aj-baru">${ikon("tambah")}Ajukan buku</button></div></div>
+      <div class="aksi"><button class="tombol" type="button" data-alur="buku">${ikon("info")}Lihat alur</button><button class="tombol" type="button" id="aj-unduh">${ikon("unduh")}Unduh</button><button class="tombol" type="button" data-template="pengajuan">${ikon("tabel")}Unduh template</button><button class="tombol" type="button" data-unggah="pengajuan">${ikon("unggah")}Unggah</button><button class="tombol utama" type="button" id="aj-baru">${ikon("tambah")}Ajukan buku</button></div></div>
     <div class="ubin"><div class="c"><span class="lambang">${ikon("info")}</span><span><b>${n("diajukan")}</b><span class="t">menunggu Wakasek Kurikulum</span></span></div>
       <div class="i"><span class="lambang">${ikon("orang")}</span><span><b>${n("disetujui")}</b><span class="t">menunggu Kepala Sekolah</span></span></div>
       <div class="b"><span class="lambang">${ikon("centang")}</span><span><b>${n("diketahui")}</b><span class="t">siap dibeli</span></span></div></div>
@@ -38,7 +38,7 @@ TAB.pengajuan = () => {
     ${d.length ? `<div class="gulir"><table><thead><tr><th>Judul</th><th class="n">Eks</th><th>Pengusul</th><th>Alasan</th><th>Status</th><th></th></tr></thead><tbody>${d.map((a) => `<tr>
       <td class="nama-sel"><b>${esc(a.judul)}</b><p class="kecil">${esc([a.penulis, a.penerbit].filter(Boolean).join(" · "))}</p></td><td class="n">${a.jumlah}</td>
       <td>${esc(a.nama_pengusul)}<p class="kecil">${esc(a.keterangan || "")}</p></td><td class="kecil">${esc(a.alasan || "")}</td>
-      <td><span class="pil ${ST_AJU[a.status][1]}">${ST_AJU[a.status][0]}</span><p class="kecil">${esc(jejakTeks(a))}</p></td>
+      <td><span class="pil ${ST_AJU[a.status][1]}">${ST_AJU[a.status][0]}</span><p class="kecil">${esc(jejakTeks(a))}</p><button class="tautan-alur" type="button" data-alur="buku" data-id="${a.id}">Posisi di alur</button></td>
       <td style="white-space:nowrap">${tombolAju(a)}</td></tr>`).join("")}</tbody></table></div>`
       : `<div class="kosong">${ikon("buku")}<span>Tidak ada pengajuan di sini.</span></div>`}
   </section>`;

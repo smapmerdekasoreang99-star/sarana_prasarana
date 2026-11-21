@@ -37,7 +37,7 @@ TAB.perbaikan = () => {
   const tempat = [...new Map(S.perbaikan.map((p) => [kunciTempat(p), tempatPbk(p)])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   return `<section class="kartu">
     <div class="kepala-bagian"><div><h2>Usulan Perbaikan</h2><p class="sub">Kerusakan sarana dan prasarana diajukan wali kelas atau penanggung jawab ruang, ditinjau Staf Sarana Prasarana, lalu diketahui Kepala Sekolah. Pengerjaan dan pembayaran lewat bendahara sesuai keuangan sekolah.</p></div>
-      <div class="aksi"><button class="tombol" type="button" id="pb-unduh">${ikon("unduh")}Unduh</button>${bisaUsulPbk() ? `<button class="tombol utama" type="button" id="pb-baru">${ikon("tambah")}Ajukan perbaikan</button>` : ""}</div></div>
+      <div class="aksi"><button class="tombol" type="button" data-alur="perbaikan">${ikon("info")}Lihat alur</button><button class="tombol" type="button" id="pb-unduh">${ikon("unduh")}Unduh</button>${bisaUsulPbk() ? `<button class="tombol utama" type="button" id="pb-baru">${ikon("tambah")}Ajukan perbaikan</button>` : ""}</div></div>
     <div class="ubin"><div class="c"><span class="lambang">${ikon("info")}</span><span><b>${n((p) => p.status === "diajukan")}</b><span class="t">menunggu Staf Sarpras</span></span></div>
       <div class="i"><span class="lambang">${ikon("orang")}</span><span><b>${n((p) => p.status === "ditinjau")}</b><span class="t">menunggu Kepala Sekolah</span></span></div>
       <div class="k"><span class="lambang">${ikon("rusak")}</span><span><b>${n(belumPbk)}</b><span class="t">belum diperbaiki</span></span></div>
@@ -50,7 +50,7 @@ TAB.perbaikan = () => {
       <td><b>${esc(p.nama)}</b>${p.kode ? ` <span class="kode">${esc(p.kode)}</span>` : ""}<p class="kecil">${esc(p.uraian)}</p>${tombolFotoPbk(p)}${p.dukungan ? ` <span class="pil c">+${p.dukungan} laporan sama</span>` : ""}</td>
       <td><span class="pil ${DAMPAK[p.dampak][1]}">${DAMPAK[p.dampak][0]}</span></td>
       <td>${p.prioritas ? `<b>${PRIORITAS[p.prioritas]}</b>` : `<span class="kecil">belum</span>`}${p.catatan ? `<p class="tanggapan"><b>Tanggapan Sarpras${p.catatan_waktu ? ", " + esc(tglSingkat(p.catatan_waktu)) : ""}</b>${esc(p.catatan)}</p>` : ""}</td>
-      <td>${statusPbk(p)}</td>
+      <td>${statusPbk(p)}<button class="tautan-alur" type="button" data-alur="perbaikan" data-id="${p.id}">Posisi di alur</button></td>
       <td style="white-space:nowrap">${tombolPbk(p)}</td></tr>`).join("")}</tbody></table></div>`
       : `<div class="kosong">${ikon("centang")}<span>${S.perbaikan.length ? "Tidak ada usulan di sini." : "Belum ada usulan perbaikan."}</span></div>`}
   </section>`;

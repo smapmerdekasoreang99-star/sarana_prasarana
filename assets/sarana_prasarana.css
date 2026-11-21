@@ -413,3 +413,27 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
 @media (max-width: 560px) { .pb-banding { grid-template-columns: minmax(0, 1fr); } }
 .tanggapan { margin: 4px 0 0; padding: 6px 8px; border-left: 3px solid var(--sakit); background: var(--sakit-muda); color: var(--tinta); border-radius: 0 var(--r1) var(--r1) 0; font-size: var(--h-s); display: grid; gap: 2px; min-width: 180px; }
 .tanggapan b { font-size: var(--h-xs); color: var(--sakit-tua); }
+
+/* Alur bergambar di dalam aplikasi (21 Nov 2026): Usulan Perbaikan dan Pengajuan Buku */
+.tautan-alur { display: block; margin-top: 4px; padding: 0; border: 0; background: none; color: var(--sakit); font: inherit; font-size: var(--h-xs); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.tautan-alur:hover { color: var(--sakit-tua); }
+.alur-posisi { display: grid; gap: 2px; padding: var(--j3); margin: var(--j3) 0; border: 1px solid var(--garis); border-radius: var(--r2); background: var(--kertas-3); }
+.alur-daftar { list-style: none; margin: var(--j4) 0 0; padding: 0; display: grid; }
+.alur-l { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: var(--j3); padding-bottom: var(--j4); }
+.alur-l:not(:last-child)::before { content: ""; position: absolute; left: 16px; top: 36px; bottom: 2px; width: 2px; background: var(--garis-2); border-radius: 1px; }
+.alur-l.selesai:not(:last-child)::before { background: var(--hadir); }
+.alur-tanda { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #fff; background: var(--warna); font-variant-numeric: tabular-nums; }
+.alur-tanda .i { width: 18px; height: 18px; }
+.alur-isi { min-width: 0; display: grid; gap: 2px; padding-top: 2px; }
+.alur-atas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--j2); }
+.alur-peran { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--warna); }
+.alur-isi b { font-size: var(--h-b); }
+.alur-isi p { margin: 0; font-size: var(--h-s); color: var(--tinta-2); }
+.alur-kini { font-size: 11px; font-weight: 700; color: var(--emas-teks); background: var(--emas-muda); border: 1px solid var(--emas); border-radius: var(--r-bulat); padding: 1px 8px; }
+.alur-daftar.berposisi .alur-l.selesai .alur-tanda { background: var(--hadir); }
+.alur-daftar.berposisi .alur-l.nanti { opacity: .55; }
+.alur-daftar.berposisi .alur-l.nanti .alur-tanda { background: var(--kertas-2); color: var(--warna); box-shadow: inset 0 0 0 2px var(--warna); }
+.alur-l.kini .alur-isi { background: var(--emas-kabut); border: 1px solid var(--emas); border-radius: var(--r2); padding: var(--j2) var(--j3); margin-top: -4px; }
+.alur-l.kini .alur-tanda { box-shadow: 0 0 0 4px var(--emas-muda); }
+.alur-l.henti .alur-tanda { background: var(--absen); }
+.alur-henti { color: var(--absen-tua) !important; font-weight: 600; }
