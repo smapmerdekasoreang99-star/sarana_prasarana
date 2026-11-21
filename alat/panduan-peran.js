@@ -91,7 +91,7 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
       P("Pengajuan atau penghapusan yang diunggah lewat Excel tampil sama seperti yang diisi lewat formulir: satu baris per judul atau barang, dan masing-masing disetujui atau ditolak sendiri."),
       H1("Usulan Perbaikan (Kepala Sekolah)"),
       P("Wali kelas dan penanggung jawab ruang mengajukan kerusakan sarana prasarana. Staf Sarana Prasarana meninjau dan memberi **prioritas** (Segera, Pekan ini, Bulan ini, Dianggarkan), lalu usulan menunggu Anda di menu **Usulan Perbaikan**."),
-      OL("Baca kerusakan, dampak, prioritas, dan catatan Sarpras. Tekan **Foto** bila ada.", "Tekan **Mengetahui**, atau **Tolak** dengan alasannya.", "Usulan yang sudah diketahui diteruskan ke bendahara. Pengerjaannya menyesuaikan keuangan sekolah; statusnya **Belum diperbaiki · … hari** sampai Staf Sarpras menandai **Sudah diperbaiki**."),
+      OL("Baca kerusakan, dampak, prioritas, dan **tanggapan Sarpras**. Tekan **Foto** bila ada.", "Tekan **Mengetahui**, atau **Tolak** dengan alasannya.", "Usulan yang sudah diketahui diteruskan ke bendahara. Pengerjaannya menyesuaikan keuangan sekolah; statusnya **Belum diperbaiki · … hari** sampai Staf Sarpras menandai **Sudah diperbaiki**.", "Setelah diperbaiki, tekan **Foto sebelum & sesudah** untuk melihat hasilnya bila Staf Sarpras melampirkan foto."),
       P("Tekan **Unduh** untuk daftar berkop sesuai saringan, mis. **Belum diperbaiki**, dengan tanda tangan Sarana Prasarana dan Kepala Sekolah, sebagai bahan bendahara dan anggaran pemeliharaan."),
     ] },
     /* ==================================================================== Wali kelas */
@@ -119,10 +119,13 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         "Tambahkan **foto** bila ada, paling banyak 2: **Ambil foto** langsung membuka kamera HP, **Pilih dari galeri** untuk foto yang sudah ada. Foto bisa dihapus dari pratinjau dan diperkecil otomatis. Lalu tekan **Kirim**."),
       TB(["Status", "Artinya"], [
         ["**Menunggu Staf Sarpras**", "Usulan baru. Selama masih begini, Anda bisa menekan **Batalkan**."],
-        ["**Menunggu Kepala Sekolah**", "Sudah ditinjau dan diberi prioritas oleh Staf Sarana Prasarana."],
-        ["**Diketahui Kepala Sekolah**", "Diteruskan ke bendahara; pengerjaannya menyesuaikan keuangan sekolah. Tampil **Belum diperbaiki · … hari** sampai Staf Sarpras menandai **Sudah diperbaiki**."],
+        ["**Menunggu Kepala Sekolah**", "Sudah ditinjau dan diberi prioritas oleh Staf Sarana Prasarana. **Tanggapan Sarpras** di kolom Prioritas menjelaskan rencana penanganannya."],
+        ["**Diketahui Kepala Sekolah**", "Diteruskan ke bendahara; pengerjaannya menyesuaikan keuangan sekolah. Tampil **Belum diperbaiki · … hari** sampai Staf Sarpras menandai **Sudah diperbaiki**. Bila perbaikan perlu menunggu, Staf Sarpras menuliskan alasan dan perkiraan waktunya."],
         ["**Ditolak** / **Digabung**", "Ditolak dengan alasan yang bisa Anda baca, atau digabung dengan laporan lain untuk kerusakan yang sama (menambah bobot laporan itu)."],
       ], [1.8, 4.2]),
+      H2("Kabar untuk usulan Anda"),
+      P("Saat Anda masuk, di atas halaman muncul tanda bila ada kabar untuk usulan Anda: **sudah diperbaiki**, **tanggapan baru** dari Staf Sarpras, atau **ditolak**. Tekan **Lihat**. Usulan yang baru mendapat kabar diberi label **Baru**; tandanya hilang setelah menu Usulan Perbaikan dibuka."),
+      P("Setelah diperbaiki, tekan **Foto sebelum & sesudah** untuk membandingkan foto Anda dengan foto hasil perbaikan dari Staf Sarpras, bila dilampirkan."),
       KOTAK("info", "Kelas belum dipasangkan dengan ruang?", "Usulan tetap bisa dikirim. Pilih **Bangunan & lainnya** dan sebutkan barangnya di uraian. Barang inventaris baru bisa dipilih setelah Staf Sarpras memasangkan kelas Anda dengan ruangnya."),
     ] },
     /* ==================================================================== Penanggung jawab ruang */
@@ -187,10 +190,13 @@ module.exports = ({ H1, H2, P, UL, OL, TB, KOTAK }) => {
         "Tambahkan **foto** bila ada, paling banyak 2: **Ambil foto** langsung membuka kamera HP, **Pilih dari galeri** untuk foto yang sudah ada. Foto bisa dihapus dari pratinjau dan diperkecil otomatis. Lalu tekan **Kirim**."),
       TB(["Status", "Artinya"], [
         ["**Menunggu Staf Sarpras**", "Usulan baru. Selama masih begini, Anda bisa menekan **Batalkan**."],
-        ["**Menunggu Kepala Sekolah**", "Sudah ditinjau dan diberi prioritas oleh Staf Sarana Prasarana."],
-        ["**Diketahui Kepala Sekolah**", "Diteruskan ke bendahara; pengerjaannya menyesuaikan keuangan sekolah. Tampil **Belum diperbaiki · … hari** sampai Staf Sarpras menandai **Sudah diperbaiki**."],
+        ["**Menunggu Kepala Sekolah**", "Sudah ditinjau dan diberi prioritas oleh Staf Sarana Prasarana. **Tanggapan Sarpras** di kolom Prioritas menjelaskan rencana penanganannya."],
+        ["**Diketahui Kepala Sekolah**", "Diteruskan ke bendahara; pengerjaannya menyesuaikan keuangan sekolah. Tampil **Belum diperbaiki · … hari** sampai Staf Sarpras menandai **Sudah diperbaiki**. Bila perbaikan perlu menunggu, Staf Sarpras menuliskan alasan dan perkiraan waktunya."],
         ["**Ditolak** / **Digabung**", "Ditolak dengan alasan yang bisa Anda baca, atau digabung dengan laporan lain untuk kerusakan yang sama (menambah bobot laporan itu)."],
       ], [1.8, 4.2]),
+      H2("Kabar untuk usulan Anda"),
+      P("Saat Anda masuk, di atas halaman muncul tanda bila ada kabar untuk usulan Anda: **sudah diperbaiki**, **tanggapan baru** dari Staf Sarpras, atau **ditolak**. Tekan **Lihat**. Usulan yang baru mendapat kabar diberi label **Baru**; tandanya hilang setelah menu Usulan Perbaikan dibuka."),
+      P("Setelah diperbaiki, tekan **Foto sebelum & sesudah** untuk membandingkan foto Anda dengan foto hasil perbaikan dari Staf Sarpras, bila dilampirkan."),
       H1("Unduh, Template, dan Unggah"),
       TB(["Tombol", "Hasil"], [
         ["**Unduh**", "Excel daftar inventaris ruang Anda, memakai **kop dan penanda tangan dari Profil Dokumen**."],

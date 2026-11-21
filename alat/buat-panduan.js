@@ -12,7 +12,7 @@
 const fs = require("fs"), path = require("path"), os = require("os"), { spawn } = require("child_process");
 
 let SUBJUDUL, UNTUK, NAMA, JUDUL, ISI, DAFTAR;
-const AKAR = path.join(__dirname, ".."), VERSI = "9 November 2026", MEREK = "SARANA PRASARANA · SMA PLUS MERDEKA SOREANG";
+const AKAR = path.join(__dirname, ".."), VERSI = "21 November 2026", MEREK = "SARANA PRASARANA · SMA PLUS MERDEKA SOREANG";
 
 /* ================= Isi panduan =================
    Blok: H1/H2/H3 (judul, dinomori otomatis), P (paragraf), UL/OL (daftar), TB (tabel: kepala, baris, lebar relatif),
@@ -284,10 +284,12 @@ const ISI_STAF = [
   P("Wali kelas (untuk kelasnya), penanggung jawab ruang (untuk ruangnya), dan Staf Sarpras (untuk semua ruang) mengajukan kerusakan lewat menu **Usulan Perbaikan**, lengkap dengan dampak dan paling banyak 2 foto. Siswa menyampaikan lewat wali kelas. Sesuai SOP, aplikasi hanya pengajuan; pengerjaan dan pembayaran lewat **bendahara** sesuai keuangan sekolah."),
   TB(["Langkah", "Oleh", "Tombol"], [
     ["Diajukan", "Wali kelas, penanggung jawab ruang, Staf Sarpras", "**Ajukan perbaikan**; pengusul bisa **Batalkan** selama belum ditinjau"],
-    ["Ditinjau", "Staf Sarpras", "**Tinjau** (pilih prioritas, tulis catatan), **Gabung** (laporan ganda), atau **Tolak**"],
+    ["Ditinjau", "Staf Sarpras", "**Tinjau** (pilih prioritas, tulis **tanggapan untuk pengusul**), **Gabung** (laporan ganda), atau **Tolak**"],
     ["Diketahui", "Kepala Sekolah", "**Mengetahui** atau **Tolak**"],
-    ["Diperbaiki", "Staf Sarpras", "**Sudah diperbaiki** (tanggal, keterangan); **Ubah prioritas** selama belum; **Batalkan tanda** bila salah"],
+    ["Diperbaiki", "Staf Sarpras", "**Sudah diperbaiki** (tanggal, keterangan, **foto hasil** bila ada); **Ubah prioritas/tanggapan** selama belum; **Tambah foto hasil** atau **Ubah hasil** sesudahnya; **Batalkan tanda** bila salah"],
   ], [1.1, 2.2, 3.7]),
+  KOTAK("saran", "Tanggapan bila perbaikan harus menunggu", "Prioritas **Bulan ini** atau **Dianggarkan** wajib disertai **tanggapan untuk pengusul**: alasannya dan perkiraan waktunya, mis. \"Menunggu dana pemeliharaan bulan Januari; sementara kipas dipindahkan dari ruang guru.\" Pengusul mendapat tanda setiap ada tanggapan baru, sehingga tahu usulannya diperhatikan walau belum disegerakan. Bila rencananya berubah, perbarui lewat **Ubah prioritas/tanggapan**."),
+  P("**Foto hasil** tidak wajib, tetapi dianjurkan: ambil paling banyak 2 foto saat menandai **Sudah diperbaiki**, sebaiknya dari sudut yang sama dengan foto pengusul. Pengusul dan Kepala Sekolah membandingkannya lewat tombol **Foto sebelum & sesudah**. Pengusul juga mendapat tanda bahwa usulannya sudah diperbaiki."),
   P("Daftar diurutkan menurut **prioritas** Anda. Yang belum ditinjau diurutkan dari **dampak** (Membahayakan, Mengganggu KBM, Ringan), lalu banyaknya siswa terdampak (jumlah siswa rombel), lama menunggu, dan banyaknya laporan yang digabung. Jumlah yang menunggu tampil pada nama menu."),
   P("Supaya wali kelas bisa memilih barang inventaris kelasnya, pasangkan dulu ruang kelas dengan rombelnya (tombol **Pasangkan rombel** di menu Ruang). Tanpa pasangan, wali kelas tetap bisa mengajukan kerusakan bangunan atau menyebut barangnya di uraian."),
   P("**Unduh** menghasilkan daftar berkop sesuai saringan (mis. **Belum diperbaiki**) dengan tanda tangan Sarana Prasarana dan Kepala Sekolah, untuk bendahara. Setelah ditandai sudah diperbaiki, perbarui juga kondisi barangnya di kartu barang bila berubah."),
