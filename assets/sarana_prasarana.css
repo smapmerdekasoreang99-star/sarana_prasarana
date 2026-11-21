@@ -396,3 +396,20 @@ legend { font-weight: 700; font-size: var(--h-s); padding: 0 6px; color: var(--g
 .pb-foto-kecil img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid var(--garis); display: block; }
 .pb-foto-kecil button { position: absolute; top: -8px; right: -8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--gelap); color: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
 .pb-foto-kecil button svg { width: 16px; height: 16px; }
+
+/* Usulan Perbaikan (21 Nov 2026): tanda untuk pengusul dan foto sebelum–sesudah */
+.kabar-pbk { max-width: var(--lebar); margin: var(--j3) auto 0; padding: 0 var(--j4); }
+.catatan.kabar { align-items: center; border-color: #BCD6C4; background: var(--hadir-muda); color: var(--hadir-tua); }
+.catatan.kabar > span { flex: 1; min-width: 0; }
+.catatan.kabar .tombol { flex: none; }
+.pb-banding { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--j3); margin-top: var(--j3); }
+.pb-banding.satu { grid-template-columns: minmax(0, 1fr); }
+.pb-kolom { margin: 0; display: grid; gap: var(--j2); align-content: start; min-width: 0; }
+.pb-kolom figcaption { display: grid; line-height: 1.3; }
+.pb-kolom figcaption b { font-size: var(--h-m); }
+.pb-kolom figcaption span { font-size: var(--h-xs); color: var(--tinta-2); }
+.pb-kolom img { width: 100%; border-radius: var(--r1); border: 1px solid var(--garis); display: block; }
+.pb-tanpa-foto { margin: 0; padding: var(--j4) var(--j3); border: 1px dashed var(--garis-2); border-radius: var(--r1); color: var(--tinta-3); font-size: var(--h-s); text-align: center; }
+@media (max-width: 560px) { .pb-banding { grid-template-columns: minmax(0, 1fr); } }
+.tanggapan { margin: 4px 0 0; padding: 6px 8px; border-left: 3px solid var(--sakit); background: var(--sakit-muda); color: var(--tinta); border-radius: 0 var(--r1) var(--r1) 0; font-size: var(--h-s); display: grid; gap: 2px; min-width: 180px; }
+.tanggapan b { font-size: var(--h-xs); color: var(--sakit-tua); }

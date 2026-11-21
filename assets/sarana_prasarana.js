@@ -296,6 +296,7 @@ function buka(tab, tetap) {
   $("subtab").innerHTML = diGrup ? KELOMPOK[diGrup].filter((k) => grupMenu[k] === diGrup).map((k) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${k === tab}">${tombolMenu(k).innerHTML}</button>`).join("") : "";
   $("isi").innerHTML = TAB[tab]();
   if (TAB[tab].sesudah) TAB[tab].sesudah();
+  if (typeof tampilKabarPbk === "function") tampilKabarPbk();   // tanda "usulan Anda sudah diperbaiki" (21 Nov 2026)
 }
 const segarkan = () => buka(S.tab, true);
 

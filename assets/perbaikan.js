@@ -47,14 +47,21 @@ TAB.perbaikan = () => {
     <p class="kecil">Urutan: prioritas dari Staf Sarpras; yang belum ditinjau diurutkan menurut dampak, banyaknya siswa terdampak, lama menunggu, dan laporan yang digabung.</p>
     ${d.length ? `<div class="gulir"><table><thead><tr><th>Ruang/kelas</th><th>Kerusakan</th><th>Dampak</th><th>Prioritas</th><th>Status</th><th></th></tr></thead><tbody>${d.map((p) => `<tr>
       <td class="nama-sel"><b>${esc(tempatPbk(p))}</b><p class="kecil">${p.jumlah_siswa ? `${p.jumlah_siswa} siswa · ` : ""}${esc(p.oleh)} · ${esc(tglSingkat(p.dibuat))}</p></td>
-      <td><b>${esc(p.nama)}</b>${p.kode ? ` <span class="kode">${esc(p.kode)}</span>` : ""}<p class="kecil">${esc(p.uraian)}</p>${p.n_foto ? `<button class="tombol kecil" type="button" data-pbfoto="${p.id}">Foto (${p.n_foto})</button>` : ""}${p.dukungan ? ` <span class="pil c">+${p.dukungan} laporan sama</span>` : ""}</td>
+      <td><b>${esc(p.nama)}</b>${p.kode ? ` <span class="kode">${esc(p.kode)}</span>` : ""}<p class="kecil">${esc(p.uraian)}</p>${tombolFotoPbk(p)}${p.dukungan ? ` <span class="pil c">+${p.dukungan} laporan sama</span>` : ""}</td>
       <td><span class="pil ${DAMPAK[p.dampak][1]}">${DAMPAK[p.dampak][0]}</span></td>
-      <td>${p.prioritas ? `<b>${PRIORITAS[p.prioritas]}</b>` : `<span class="kecil">belum</span>`}${p.catatan ? `<p class="kecil">${esc(p.catatan)}</p>` : ""}</td>
+      <td>${p.prioritas ? `<b>${PRIORITAS[p.prioritas]}</b>` : `<span class="kecil">belum</span>`}${p.catatan ? `<p class="tanggapan"><b>Tanggapan Sarpras${p.catatan_waktu ? ", " + esc(tglSingkat(p.catatan_waktu)) : ""}</b>${esc(p.catatan)}</p>` : ""}</td>
       <td>${statusPbk(p)}</td>
       <td style="white-space:nowrap">${tombolPbk(p)}</td></tr>`).join("")}</tbody></table></div>`
       : `<div class="kosong">${ikon("centang")}<span>${S.perbaikan.length ? "Tidak ada usulan di sini." : "Belum ada usulan perbaikan."}</span></div>`}
   </section>`;
 };
+/* Foto (21 Nov 2026): foto keadaan dari pengusul (sebelum) dan foto hasil dari Staf Sarpras (sesudah, tidak wajib). */
+function tombolFotoPbk(p) {
+  const a = p.n_foto || 0, b = p.n_foto_sesudah || 0;
+  if (!a && !b) return "";
+  const label = a && b ? "Foto sebelum & sesudah" : b ? `Foto hasil (${b})` : `Foto (${a})`;
+  return `<button class="tombol kecil" type="button" data-pbfoto="${p.id}">${ikon("gambar")}${label}</button>`;
+}
 function statusPbk(p) {
   const st = `<span class="pil ${ST_PBK[p.status][1]}">${ST_PBK[p.status][0]}</span>`;
   const jejak = [p.tinjau_oleh && p.status !== "digabung" ? `Ditinjau ${p.tinjau_oleh}` : "", p.tahu_oleh ? `Diketahui ${p.tahu_oleh}` : "",
@@ -62,19 +69,47 @@ function statusPbk(p) {
   const perb = p.status !== "diketahui" ? "" : p.perbaikan === "sudah"
     ? `<span class="pil b">Sudah diperbaiki ${esc(tglSingkat(p.diperbaiki_tgl))}</span>${p.diperbaiki_ket ? `<p class="kecil">${esc(p.diperbaiki_ket)}</p>` : ""}`
     : `<span class="pil k">Belum diperbaiki · ${hariSejak(p.tahu_waktu)} hari</span>`;
-  return `${st}${perb}${jejak ? `<p class="kecil">${esc(jejak)}</p>` : ""}${p.status === "diajukan" ? `<p class="kecil">Menunggu ${hariSejak(p.dibuat)} hari</p>` : ""}`;
+  const baru = (S.pbBaru || []).includes(p.id) ? ` <span class="pil c">Baru</span>` : "";
+  return `${st}${baru}${perb}${jejak ? `<p class="kecil">${esc(jejak)}</p>` : ""}${p.status === "diajukan" ? `<p class="kecil">Menunggu ${hariSejak(p.dibuat)} hari</p>` : ""}`;
 }
 function tombolPbk(p) {
   const t = [], b = (aksi, label, utama) => `<button class="tombol${utama ? " utama" : ""} kecil" type="button" data-pb="${aksi}" data-id="${p.id}">${label}</button>`;
   if (p.status === "diajukan" && stafPbk()) t.push(b("tinjau", "Tinjau", true), b("gabung", "Gabung"), b("tolak", "Tolak"));
   if (p.status === "ditinjau" && kepalaPbk()) t.push(b("tahu", "Mengetahui", true), b("tolak", "Tolak"));
-  if (["ditinjau", "diketahui"].includes(p.status) && stafPbk() && p.perbaikan === "belum") t.push(b("prioritas", "Ubah prioritas"));
+  if (["ditinjau", "diketahui"].includes(p.status) && stafPbk() && p.perbaikan === "belum") t.push(b("prioritas", "Ubah prioritas/tanggapan"));
   if (belumPbk(p) && stafPbk()) t.push(b("diperbaiki", "Sudah diperbaiki", true));
-  if (p.perbaikan === "sudah" && stafPbk()) t.push(b("belum", "Batalkan tanda"));
+  if (p.perbaikan === "sudah" && stafPbk()) t.push(b("diperbaiki", p.n_foto_sesudah ? "Ubah hasil" : "Tambah foto hasil"), b("belum", "Batalkan tanda"));
   if (p.status === "diajukan" && (p.oleh_id === S.akses.id || stafPbk())) t.push(b("batal", "Batalkan"));
   return t.join(" ");
 }
+/* Tanda untuk pengusul (21 Nov 2026): ada kabar untuk usulannya (sudah diperbaiki, tanggapan Staf Sarpras, atau ditolak)
+   yang belum dilihat. Hilang setelah menu ini dibuka. */
+const pbBelumDilihat = () => stafPbk() || !S.akses ? [] : S.perbaikan.filter((p) => p.oleh_id === S.akses.id && p.kabar_waktu && (!p.dilihat_pengusul || p.kabar_waktu > p.dilihat_pengusul));
+function ringkasKabarPbk(d) {
+  const n = (f) => d.filter(f).length, sudah = n((p) => p.perbaikan === "sudah"), tolak = n((p) => p.status === "ditolak"), tgp = d.length - sudah - tolak;
+  return [sudah ? `${sudah} sudah diperbaiki` : "", tgp ? `${tgp} mendapat tanggapan Staf Sarpras` : "", tolak ? `${tolak} ditolak` : ""].filter(Boolean).join(", ");
+}
+function tampilKabarPbk() {
+  const el = $("kabar-pbk"); if (!el) return;
+  const d = pbBelumDilihat();
+  el.hidden = !d.length || S.tab === "perbaikan";
+  if (el.hidden) return;
+  el.innerHTML = `<p class="catatan kabar">${ikon("centang")}<span><b>Ada kabar untuk ${d.length} usulan perbaikan Anda:</b> ${esc(ringkasKabarPbk(d))}.</span><button class="tombol kecil" type="button" id="kabar-pbk-buka">Lihat</button></p>`;
+  $("kabar-pbk-buka").onclick = () => buka("perbaikan");
+}
+async function tandaiDilihatPbk() {
+  const baru = pbBelumDilihat();
+  if (!baru.length) return;
+  S.pbBaru = [...new Set([...(S.pbBaru || []), ...baru.map((p) => p.id)])];
+  baru.forEach((p) => { p.dilihat_pengusul = new Date().toISOString(); });
+  // Pastikan usulan yang mendapat kabar terlihat (saringan bawaan menyembunyikan yang sudah diperbaiki/ditolak).
+  const tampak = (s) => baru.every((p) => cocokSaring(p, s));
+  if (!tampak(S.saringPbk) || S.ruangPbk) { S.saringPbk = tampak("aktif") ? "aktif" : tampak("sudah") ? "sudah" : "semua"; S.ruangPbk = ""; segarkan(); }
+  toast(`Kabar untuk usulan Anda: ${ringkasKabarPbk(baru)}`);
+  await rpc("sp_perbaikan_dilihat", { p_pin: S.pin }).catch(() => null);
+}
 TAB.perbaikan.sesudah = () => {
+  tandaiDilihatPbk();
   $("pb-saring").addEventListener("input", (e) => { S.saringPbk = e.target.value; segarkan(); });
   $("pb-ruang").addEventListener("input", (e) => { S.ruangPbk = e.target.value; segarkan(); });
   $("pb-unduh").onclick = unduhPerbaikan;
@@ -109,7 +144,7 @@ function pilihanTempatPbk() {
 function formAjukanPbk() {
   const tempat = pilihanTempatPbk();
   if (!tempat.length) return toast("Anda belum memegang ruang atau kelas.");
-  let foto = [];
+  let foto = () => [];
   dialog({ judul: "Ajukan perbaikan", isi: `<div class="isian-grid">
       <label class="f lebar" for="pb-tempat">Ruang/kelas<select id="pb-tempat">${opsi(tempat, tempat[0][0])}</select></label>
       <label class="f" for="pb-jenis">Yang rusak<select id="pb-jenis">${opsi([["barang", "Barang inventaris"], ["bangunan", "Bangunan & lainnya"]], "barang")}</select></label>
@@ -118,15 +153,11 @@ function formAjukanPbk() {
       <label class="f lebar" for="pb-uraian">Uraian kerusakan<textarea id="pb-uraian" rows="3" maxlength="500" required placeholder="mis. Plafon bocor di pojok belakang, air menetes saat hujan"></textarea></label></div>
     <p class="f" style="margin:var(--j3) 0 var(--j1)">Dampak</p>
     <div class="pilih-gerak" role="radiogroup" aria-label="Dampak">${Object.entries(DAMPAK).map(([k, [n]], i) => `<label><input type="radio" name="pb-dampak" value="${k}"${i === 1 ? " checked" : ""}>${n}</label>`).join("")}</div>
-    <p class="f" style="margin:var(--j3) 0 var(--j1)">Foto keadaan (paling banyak 2, opsional)</p>
-    <div class="pb-foto-aksi">
-      <label class="tombol" for="pb-kamera">${ikon("kamera")}Ambil foto<input id="pb-kamera" class="pb-berkas" type="file" accept="image/*" capture="environment"></label>
-      <label class="tombol" for="pb-foto">${ikon("gambar")}Pilih dari galeri<input id="pb-foto" class="pb-berkas" type="file" accept="image/*" multiple></label></div>
-    <div id="pb-pratinjau" class="pb-pratinjau"></div>
+    ${htmlPilihFoto("Foto keadaan (paling banyak 2, opsional)")}
     <p class="kecil" id="pb-info"></p>`, kaki: kakiSimpan("Kirim"),
     onSimpan: async () => {
       const [jt, kode] = $("pb-tempat").value.split(/:(.*)/s), jenis = $("pb-jenis").value;
-      const data = { jenis, uraian: $("pb-uraian").value, dampak: document.querySelector('input[name="pb-dampak"]:checked').value, foto };
+      const data = { jenis, uraian: $("pb-uraian").value, dampak: document.querySelector('input[name="pb-dampak"]:checked').value, foto: foto() };
       if (jt === "k") data.rombel = kode; else data.ruang = kode;
       if (jenis === "barang") { if (!$("pb-alat").value) throw new Error("Pilih barangnya, atau pilih Bangunan & lainnya."); data.alat = +$("pb-alat").value; }
       else data.nama = $("pb-bagian").value;
@@ -144,8 +175,17 @@ function formAjukanPbk() {
   };
   const perJenis = () => { const j = $("pb-jenis").value; document.querySelectorAll(".pb-barang").forEach((x) => { x.hidden = j !== "barang"; }); document.querySelectorAll(".pb-bangunan").forEach((x) => { x.hidden = j !== "bangunan"; }); };
   $("pb-tempat").onchange = perTempat; $("pb-jenis").onchange = perJenis; perTempat();
-  /* Foto (12 Nov 2026): "Ambil foto" langsung membuka kamera belakang HP (capture); "Pilih dari galeri" seperti sebelumnya.
-     Foto dari keduanya dikumpulkan, paling banyak 2; tiap foto bisa dihapus dari pratinjau. */
+  foto = pasangPilihFoto([]);
+}
+/* Pemilih foto (12 Nov 2026; dipakai juga untuk foto hasil 21 Nov): "Ambil foto" langsung membuka kamera belakang HP (capture);
+   "Pilih dari galeri" seperti biasa. Foto dari keduanya dikumpulkan, paling banyak 2; tiap foto bisa dihapus dari pratinjau. */
+const htmlPilihFoto = (judul) => `<p class="f" style="margin:var(--j3) 0 var(--j1)">${judul}</p>
+    <div class="pb-foto-aksi">
+      <label class="tombol" for="pb-kamera">${ikon("kamera")}Ambil foto<input id="pb-kamera" class="pb-berkas" type="file" accept="image/*" capture="environment"></label>
+      <label class="tombol" for="pb-foto">${ikon("gambar")}Pilih dari galeri<input id="pb-foto" class="pb-berkas" type="file" accept="image/*" multiple></label></div>
+    <div id="pb-pratinjau" class="pb-pratinjau"></div>`;
+function pasangPilihFoto(awal) {
+  let foto = awal.slice();
   const gambarPratinjau = () => {
     $("pb-pratinjau").innerHTML = foto.map((f, i) => `<span class="pb-foto-kecil"><img src="${f}" alt="Pratinjau foto ${i + 1}"><button type="button" data-hapusfoto="${i}" aria-label="Hapus foto ${i + 1}">${ikon("x")}</button></span>`).join("");
     document.querySelectorAll(".pb-foto-aksi .tombol").forEach((b) => b.classList.toggle("nonaktif", foto.length >= 2));
@@ -163,6 +203,8 @@ function formAjukanPbk() {
   };
   $("pb-kamera").onchange = tambahFoto; $("pb-foto").onchange = tambahFoto;
   $("pb-pratinjau").onclick = (e) => { const b = e.target.closest("[data-hapusfoto]"); if (!b) return; foto.splice(+b.dataset.hapusfoto, 1); gambarPratinjau(); };
+  gambarPratinjau();
+  return () => foto.slice();
 }
 /* Foto diperkecil di HP: sisi terpanjang 1280 px, JPEG; kualitas diturunkan sampai ± 220 KB. */
 function kecilkanFoto(berkas) {
@@ -184,19 +226,45 @@ function kecilkanFoto(berkas) {
     img.src = url;
   });
 }
+/* Foto sebelum (pengusul) dan sesudah (Staf Sarpras) berdampingan; di HP bertumpuk. */
 async function lihatFotoPbk(p) {
   try {
-    const foto = await sibuk(() => rpc("sp_perbaikan_foto", { p_pin: S.pin, p_id: p.id }));
-    dialog({ atas: tempatPbk(p), judul: p.nama, isi: `<p class="sub">${esc(p.uraian)}</p>${foto.map((f, i) => `<img src="${f}" alt="Foto kerusakan ${i + 1}" style="width:100%;border-radius:8px;margin-top:8px">`).join("")}`,
+    const f = await sibuk(() => rpc("sp_perbaikan_foto_lengkap", { p_pin: S.pin, p_id: p.id }));
+    const kolom = (judul, daftar, ket, kosong) => `<figure class="pb-kolom"><figcaption><b>${judul}</b>${ket ? `<span>${esc(ket)}</span>` : ""}</figcaption>
+      ${daftar.length ? daftar.map((x, i) => `<img src="${x}" alt="${judul} ${i + 1}">`).join("") : `<p class="pb-tanpa-foto">${kosong}</p>`}</figure>`;
+    const sudah = p.perbaikan === "sudah";
+    dialog({ atas: tempatPbk(p), judul: p.nama, isi: `<p class="sub">${esc(p.uraian)}</p>
+      <div class="pb-banding${sudah ? "" : " satu"}">
+        ${kolom("Sebelum", f.sebelum, `${p.oleh}, ${tglSingkat(p.dibuat)}`, "Pengusul tidak melampirkan foto.")}
+        ${sudah ? kolom("Sesudah", f.sesudah, `${p.diperbaiki_oleh || "Staf Sarpras"}, ${tglSingkat(p.diperbaiki_tgl)}`, "Tidak ada foto hasil perbaikan.") : ""}
+      </div>${sudah && p.diperbaiki_ket ? `<p class="kecil" style="margin-top:var(--j3)">${esc(p.diperbaiki_ket)}</p>` : ""}`,
       kaki: `<button class="tombol" value="batal" formnovalidate>Tutup</button>`, onSimpan: async () => {} });
   } catch (e) { toast(e.message); }
 }
+/* Tanggapan untuk pengusul (21 Nov 2026): wajib bila perbaikan harus menunggu (Bulan ini/Dianggarkan), supaya pengusul tahu
+   usulannya diperhatikan walau belum disegerakan. Setiap tanggapan baru memunculkan tanda di halaman pengusul. */
+const PERLU_TANGGAPAN = ["bulan", "anggaran"];
 function formPrioritasPbk(p, aksi, proses) {
-  dialog({ atas: tempatPbk(p), judul: aksi === "tinjau" ? "Tinjau usulan" : "Ubah prioritas", isi: `<p class="sub"><b>${esc(p.nama)}</b>: ${esc(p.uraian)}<br>Dampak: ${DAMPAK[p.dampak][0]}${p.jumlah_siswa ? ` · ${p.jumlah_siswa} siswa` : ""}${p.dukungan ? ` · ${p.dukungan} laporan sama` : ""}</p>
+  dialog({ atas: tempatPbk(p), judul: aksi === "tinjau" ? "Tinjau usulan" : "Ubah prioritas dan tanggapan", isi: `<p class="sub"><b>${esc(p.nama)}</b>: ${esc(p.uraian)}<br>Dampak: ${DAMPAK[p.dampak][0]}${p.jumlah_siswa ? ` · ${p.jumlah_siswa} siswa` : ""}${p.dukungan ? ` · ${p.dukungan} laporan sama` : ""}</p>
     <div class="isian-grid"><label class="f" for="pb-prior">Prioritas<select id="pb-prior">${opsi(Object.entries(PRIORITAS), p.prioritas || (p.dampak === "bahaya" ? "segera" : p.dampak === "kbm" ? "pekan" : "bulan"))}</select></label>
-      <label class="f lebar" for="pb-cat">Catatan (cara penanganan, perkiraan, dsb.)<input id="pb-cat" maxlength="300" value="${esc(p.catatan || "")}"></label></div>
+      <label class="f lebar" for="pb-cat"><span id="pb-cat-judul"></span><textarea id="pb-cat" rows="3" maxlength="300" placeholder="mis. Perlu membeli suku cadang; dijadwalkan dari dana pemeliharaan bulan Desember. Sementara, kipas dipindahkan dari ruang guru.">${esc(p.catatan || "")}</textarea></label></div>
+    <p class="kecil" id="pb-cat-info"></p>
     ${aksi === "tinjau" ? `<p class="kecil">Sesudah ditinjau, usulan diteruskan ke Kepala Sekolah untuk diketahui.</p>` : ""}`, kaki: kakiSimpan(aksi === "tinjau" ? "Teruskan ke Kepala Sekolah" : "Simpan"),
-    onSimpan: async () => { await sibuk(() => proses({ prioritas: $("pb-prior").value, catatan: $("pb-cat").value })); tutupDialog(); await selesaiPbk(aksi === "tinjau" ? "Diteruskan ke Kepala Sekolah" : "Prioritas tersimpan"); } });
+    onSimpan: async () => {
+      if (PERLU_TANGGAPAN.includes($("pb-prior").value) && $("pb-cat").value.trim().length < 10)
+        throw new Error("Perbaikan ini perlu menunggu. Tulis tanggapan untuk pengusul: alasannya dan perkiraan waktunya.");
+      await sibuk(() => proses({ prioritas: $("pb-prior").value, catatan: $("pb-cat").value }));
+      tutupDialog(); await selesaiPbk(aksi === "tinjau" ? "Diteruskan ke Kepala Sekolah" : "Prioritas dan tanggapan tersimpan");
+    } });
+  const perPrioritas = () => {
+    const wajib = PERLU_TANGGAPAN.includes($("pb-prior").value);
+    $("pb-cat-judul").textContent = wajib ? "Tanggapan untuk pengusul (wajib)" : "Tanggapan untuk pengusul (opsional)";
+    $("pb-cat").required = wajib;
+    $("pb-cat-info").textContent = wajib
+      ? "Perbaikan ini perlu menunggu. Jelaskan alasannya dan perkiraan waktunya, agar pengusul tahu usulannya diperhatikan."
+      : "Tanggapan terlihat oleh pengusul dan Kepala Sekolah. Pengusul mendapat tanda setiap ada tanggapan baru.";
+  };
+  $("pb-prior").onchange = perPrioritas; perPrioritas();
 }
 function formGabungPbk(p, proses) {
   const lain = S.perbaikan.filter((x) => x.id !== p.id && !["ditolak", "digabung"].includes(x.status))
@@ -206,13 +274,21 @@ function formGabungPbk(p, proses) {
     <label class="f" for="pb-ke">Usulan tujuan<select id="pb-ke">${opsi(lain.map((x) => [x.id, `${tempatPbk(x)} · ${x.nama} · ${x.uraian.slice(0, 50)}`]), lain[0].id)}</select></label>`, kaki: kakiSimpan("Gabungkan"),
     onSimpan: async () => { await sibuk(() => proses({ ke: +$("pb-ke").value })); tutupDialog(); await selesaiPbk("Usulan digabung"); } });
 }
-function formDiperbaikiPbk(p, proses) {
-  const hari = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  dialog({ atas: tempatPbk(p), judul: "Tandai sudah diperbaiki", isi: `<p class="sub"><b>${esc(p.nama)}</b>: ${esc(p.uraian)}</p>
-    <div class="isian-grid"><label class="f" for="pb-tgl">Tanggal diperbaiki<input id="pb-tgl" type="date" max="${hari}" value="${hari}" required></label>
-      <label class="f lebar" for="pb-ket">Keterangan (opsional)<input id="pb-ket" maxlength="300" placeholder="mis. Diganti lampu baru oleh tukang"></label></div>
+/* Tandai sudah diperbaiki, atau ubah hasilnya. Foto hasil (21 Nov 2026) tidak wajib, tetapi dianjurkan:
+   pengusul dan Kepala Sekolah melihatnya berdampingan dengan foto keadaan sebelum. */
+async function formDiperbaikiPbk(p, proses) {
+  const hari = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10), ubah = p.perbaikan === "sudah";
+  let awal = [];
+  if (ubah && p.n_foto_sesudah) { try { awal = (await sibuk(() => rpc("sp_perbaikan_foto_lengkap", { p_pin: S.pin, p_id: p.id }))).sesudah; } catch (e) { return toast(e.message); } }
+  let foto = () => [];
+  dialog({ atas: tempatPbk(p), judul: ubah ? "Ubah hasil perbaikan" : "Tandai sudah diperbaiki", isi: `<p class="sub"><b>${esc(p.nama)}</b>: ${esc(p.uraian)}</p>
+    <div class="isian-grid"><label class="f" for="pb-tgl">Tanggal diperbaiki<input id="pb-tgl" type="date" max="${hari}" value="${esc(ubah && p.diperbaiki_tgl ? p.diperbaiki_tgl : hari)}" required></label>
+      <label class="f lebar" for="pb-ket">Keterangan (opsional)<input id="pb-ket" maxlength="300" placeholder="mis. Diganti lampu baru oleh tukang" value="${esc(ubah ? p.diperbaiki_ket || "" : "")}"></label></div>
+    ${htmlPilihFoto("Foto hasil perbaikan (paling banyak 2, tidak wajib)")}
+    <p class="kecil">${p.n_foto ? "Ambil dari sudut yang sama dengan foto pengusul agar mudah dibandingkan. " : ""}Pengusul dan Kepala Sekolah dapat melihat foto ini.</p>
     ${p.alat ? `<p class="catatan">${ikon("info")}<span>Bila kondisi barang berubah (mis. rusak ringan menjadi baik), perbarui juga di kartu barang <b>${esc(p.kode)}</b>.</span></p>` : ""}`, kaki: kakiSimpan("Simpan"),
-    onSimpan: async () => { await sibuk(() => proses({ tgl: $("pb-tgl").value, ket: $("pb-ket").value })); tutupDialog(); await selesaiPbk("Ditandai sudah diperbaiki"); } });
+    onSimpan: async () => { await sibuk(() => proses({ tgl: $("pb-tgl").value, ket: $("pb-ket").value, foto: foto() })); tutupDialog(); await selesaiPbk(ubah ? "Hasil perbaikan diperbarui" : "Ditandai sudah diperbaiki"); } });
+  foto = pasangPilihFoto(awal);
 }
 
 /* ---------------------------------------------------------------- unduhan berkop untuk Kepala Sekolah & bendahara */
